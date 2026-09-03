@@ -193,24 +193,25 @@ pub enum ModelError {
 
 impl ContractGraph {
     pub fn validate(&self) -> Result<(), ModelError> {
-        let source_ids = unique_ids(self.sources.iter().map(|source| source.id.clone()), |id| {
-            ModelError::DuplicateSource(id)
-        })?;
+        let source_ids = unique_ids(
+            self.sources.iter().map(|source| source.id.clone()),
+            ModelError::DuplicateSource,
+        )?;
         let contract_ids = unique_ids(
             self.contracts.iter().map(|contract| contract.id.clone()),
-            |id| ModelError::DuplicateContract(id),
+            ModelError::DuplicateContract,
         )?;
         let representation_ids = unique_ids(
             self.representations
                 .iter()
                 .map(|representation| representation.id.clone()),
-            |id| ModelError::DuplicateRepresentation(id),
+            ModelError::DuplicateRepresentation,
         )?;
         let observation_ids = unique_ids(
             self.observations
                 .iter()
                 .map(|observation| observation.id.clone()),
-            |id| ModelError::DuplicateObservation(id),
+            ModelError::DuplicateObservation,
         )?;
 
         for representation in &self.representations {

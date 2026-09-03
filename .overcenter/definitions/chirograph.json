@@ -346,6 +346,16 @@
       }
     },
     {
+      "id": "sanitize-public-git-history",
+      "priority": 200,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "release-engineer",
+        "skill": "verification-before-completion"
+      }
+    },
+    {
       "id": "validate-kafka-perspectives",
       "priority": 80,
       "requires": [],

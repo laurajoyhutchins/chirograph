@@ -6,9 +6,12 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use chirograph_core::evidence::parse_evidence_json;
-use chirograph_core::model::{AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph};
+use chirograph_core::model::{
+    AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph,
+};
 
-const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph --version\n  chirograph --help\n";
+const HELP: &str =
+    "Usage:\n  chirograph inspect <evidence.json>\n  chirograph --version\n  chirograph --help\n";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -49,7 +52,11 @@ fn render_graph(graph: &ContractGraph) -> Result<String, chirograph_core::model:
     contracts.sort_by(|left, right| left.id.cmp(&right.id));
 
     for contract in contracts {
-        output.push_str(&format!("contract {} — {}\n", contract.id.as_str(), contract.name));
+        output.push_str(&format!(
+            "contract {} — {}\n",
+            contract.id.as_str(),
+            contract.name
+        ));
 
         let mut clauses = graph
             .clauses

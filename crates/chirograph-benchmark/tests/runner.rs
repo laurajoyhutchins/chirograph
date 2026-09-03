@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use chirograph_benchmark::model::{
-    GOLDEN_SCHEMA, SPECIMEN_SCHEMA, BenchmarkCase, GoldenV1, SpecimenV1, UpstreamV1,
+    BenchmarkCase, GOLDEN_SCHEMA, GoldenV1, SPECIMEN_SCHEMA, SpecimenV1, UpstreamV1,
 };
 use chirograph_benchmark::runner::run_case;
 use chirograph_benchmark::score::CaseStatus;
@@ -91,7 +91,12 @@ fn classifies_public_process_boundary_fail_closed() {
     let result = run_case(&benchmark_case, &nonzero);
     assert_eq!(result.status, CaseStatus::ExecutionFailure);
     assert!(result.score.is_none());
-    assert!(result.diagnostics.iter().any(|item| item.contains("process_exit")));
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .any(|item| item.contains("process_exit"))
+    );
 
     let malformed = executable(&root, "printf 'not-json\\n'");
     let result = run_case(&benchmark_case, &malformed);

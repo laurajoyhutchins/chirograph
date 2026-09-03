@@ -1,5 +1,5 @@
 use chirograph_core::model::{Revision, SourceId};
-use chirograph_tree_sitter::{parse_utf8, SourceProvenance};
+use chirograph_tree_sitter::{SourceProvenance, parse_utf8};
 
 fn provenance(revision: Revision) -> SourceProvenance {
     SourceProvenance {

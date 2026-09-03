@@ -97,8 +97,7 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
     }
 
     let cases = discover()?;
-    let selected =
-        select_cases(&cases, &options.selector).map_err(|error| error.to_string())?;
+    let selected = select_cases(&cases, &options.selector).map_err(|error| error.to_string())?;
     match options.format {
         OutputFormat::Human => {
             for case in selected {
@@ -106,7 +105,10 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
             }
         }
         OutputFormat::Json => {
-            let ids = selected.iter().map(|case| case.id.as_str()).collect::<Vec<_>>();
+            let ids = selected
+                .iter()
+                .map(|case| case.id.as_str())
+                .collect::<Vec<_>>();
             println!(
                 "{}",
                 serde_json::to_string(&ids).map_err(|error| error.to_string())?

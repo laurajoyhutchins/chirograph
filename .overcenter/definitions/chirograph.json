@@ -1,0 +1,16 @@
+{
+  "schema": "overcenter-project-definition-v1",
+  "project_ref": "github:laurajoyhutchins/chirograph",
+  "transitions": [
+    {
+      "id": "bootstrap-rust-workspace",
+      "priority": 100,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "test-driven-development"
+      }
+    }
+  ]
+}

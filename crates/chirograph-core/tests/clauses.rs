@@ -30,72 +30,73 @@ fn clause_graph() -> ContractGraph {
     let implementation_observation = observation_id("obs-source-old-oid");
     let clause = clause_id("old-oid-must-match");
 
-    let mut graph = ContractGraph::default();
-    graph.sources = vec![
-        Source {
-            id: help_source.clone(),
-            kind: SourceKind::Executable,
-            locator: "/usr/bin/git".into(),
-        },
-        Source {
-            id: implementation_source.clone(),
-            kind: SourceKind::Repository,
-            locator: "refs.c".into(),
-        },
-    ];
-    graph.contracts = vec![Contract {
-        id: contract.clone(),
-        name: "git update-ref".into(),
-        facets: vec![ContractFacet::Concurrency],
-    }];
-    graph.representations = vec![
-        Representation {
-            id: help_representation.clone(),
-            contract: contract.clone(),
-            source: help_source.clone(),
-            kind: RepresentationKind::ExecutableSurface,
-            locator: "git update-ref --help".into(),
+    ContractGraph {
+        sources: vec![
+            Source {
+                id: help_source.clone(),
+                kind: SourceKind::Executable,
+                locator: "/usr/bin/git".into(),
+            },
+            Source {
+                id: implementation_source.clone(),
+                kind: SourceKind::Repository,
+                locator: "refs.c".into(),
+            },
+        ],
+        contracts: vec![Contract {
+            id: contract.clone(),
+            name: "git update-ref".into(),
             facets: vec![ContractFacet::Concurrency],
-        },
-        Representation {
-            id: implementation_representation.clone(),
-            contract: contract.clone(),
-            source: implementation_source.clone(),
-            kind: RepresentationKind::SourceCode,
-            locator: "refs.c:update_ref".into(),
-            facets: vec![ContractFacet::Concurrency],
-        },
-    ];
-    graph.observations = vec![
-        Observation {
-            id: help_observation.clone(),
-            source: help_source,
-            revision: Revision::Exact("git 2.47.3".into()),
-            locator: "update-ref help".into(),
-            fact: "old object id must match the current ref value".into(),
-        },
-        Observation {
-            id: implementation_observation.clone(),
-            source: implementation_source,
-            revision: Revision::Exact("git 2.47.3".into()),
-            locator: "refs.c:update_ref".into(),
-            fact: "implementation rejects an old object id mismatch".into(),
-        },
-    ];
-    graph.clauses = vec![ContractClause {
-        id: clause.clone(),
-        contract: contract.clone(),
-        facet: ContractFacet::Concurrency,
-        kind: ClauseKind::Requirement,
-        statement: "the supplied old object id must match the current ref value".into(),
-    }];
-    graph.clause_assertions = vec![ClauseAssertion {
-        clause,
-        representation: help_representation,
-        stance: ClauseStance::Supports,
-        evidence: vec![help_observation],
-    }];
-    graph
+        }],
+        representations: vec![
+            Representation {
+                id: help_representation.clone(),
+                contract: contract.clone(),
+                source: help_source.clone(),
+                kind: RepresentationKind::ExecutableSurface,
+                locator: "git update-ref --help".into(),
+                facets: vec![ContractFacet::Concurrency],
+            },
+            Representation {
+                id: implementation_representation,
+                contract: contract.clone(),
+                source: implementation_source.clone(),
+                kind: RepresentationKind::SourceCode,
+                locator: "refs.c:update_ref".into(),
+                facets: vec![ContractFacet::Concurrency],
+            },
+        ],
+        observations: vec![
+            Observation {
+                id: help_observation.clone(),
+                source: help_source,
+                revision: Revision::Exact("git 2.47.3".into()),
+                locator: "update-ref help".into(),
+                fact: "old object id must match the current ref value".into(),
+            },
+            Observation {
+                id: implementation_observation,
+                source: implementation_source,
+                revision: Revision::Exact("git 2.47.3".into()),
+                locator: "refs.c:update_ref".into(),
+                fact: "implementation rejects an old object id mismatch".into(),
+            },
+        ],
+        clauses: vec![ContractClause {
+            id: clause.clone(),
+            contract,
+            facet: ContractFacet::Concurrency,
+            kind: ClauseKind::Requirement,
+            statement: "the supplied old object id must match the current ref value".into(),
+        }],
+        clause_assertions: vec![ClauseAssertion {
+            clause,
+            representation: help_representation,
+            stance: ClauseStance::Supports,
+            evidence: vec![help_observation],
+        }],
+        ..Default::default()
+    }
 }
 
 #[test]

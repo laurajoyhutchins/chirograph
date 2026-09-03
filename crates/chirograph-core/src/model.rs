@@ -175,6 +175,16 @@ pub enum ModelError {
     UnknownContract(ContractId),
     UnknownRepresentation(RepresentationId),
     UnknownObservation(ObservationId),
+    InvalidExactRevision(ObservationId),
+    RelationEvidenceRequired {
+        from: NodeRef,
+        to: NodeRef,
+        kind: RelationKind,
+    },
+    AuthorityEvidenceRequired {
+        contract: ContractId,
+        representation: RepresentationId,
+    },
     AuthorityContractMismatch {
         contract: ContractId,
         representation: RepresentationId,
@@ -216,11 +226,23 @@ impl ContractGraph {
             if !source_ids.contains(&observation.source) {
                 return Err(ModelError::UnknownSource(observation.source.clone()));
             }
+            if let Revision::Exact(revision) = &observation.revision
+                && (revision.is_empty() || revision.trim() != revision)
+            {
+                return Err(ModelError::InvalidExactRevision(observation.id.clone()));
+            }
         }
 
         for relation in &self.relations {
             validate_node(&relation.from, &contract_ids, &representation_ids)?;
             validate_node(&relation.to, &contract_ids, &representation_ids)?;
+            if relation.basis.is_empty() {
+                return Err(ModelError::RelationEvidenceRequired {
+                    from: relation.from.clone(),
+                    to: relation.to.clone(),
+                    kind: relation.kind,
+                });
+            }
             validate_observations(&relation.basis, &observation_ids)?;
         }
 
@@ -239,6 +261,12 @@ impl ContractGraph {
             };
             if representation.contract != claim.contract {
                 return Err(ModelError::AuthorityContractMismatch {
+                    contract: claim.contract.clone(),
+                    representation: claim.representation.clone(),
+                });
+            }
+            if claim.evidence.is_empty() {
+                return Err(ModelError::AuthorityEvidenceRequired {
                     contract: claim.contract.clone(),
                     representation: claim.representation.clone(),
                 });
@@ -353,7 +381,7 @@ mod tests {
             authority_claims: vec![AuthorityClaim {
                 contract,
                 representation,
-                basis: AuthorityBasis::ObservedBehavior,
+                basis: AuthorityBasis::Documentation,
                 evidence: vec![observation],
             }],
         }
@@ -386,10 +414,41 @@ mod tests {
     #[test]
     fn rejects_relation_without_observation_basis() {
         let mut graph = graph();
+        let from = graph.relations[0].from.clone();
+        let to = graph.relations[0].to.clone();
+        graph.relations[0].basis.clear();
+        assert_eq!(
+            graph.validate(),
+            Err(ModelError::RelationEvidenceRequired {
+                from,
+                to,
+                kind: RelationKind::Documents,
+            })
+        );
+    }
+
+    #[test]
+    fn rejects_relation_with_unknown_observation_basis() {
+        let mut graph = graph();
         graph.relations[0].basis = vec![observation_id("missing")];
         assert_eq!(
             graph.validate(),
             Err(ModelError::UnknownObservation(observation_id("missing")))
+        );
+    }
+
+    #[test]
+    fn rejects_authority_claim_without_evidence() {
+        let mut graph = graph();
+        let contract = graph.authority_claims[0].contract.clone();
+        let representation = graph.authority_claims[0].representation.clone();
+        graph.authority_claims[0].evidence.clear();
+        assert_eq!(
+            graph.validate(),
+            Err(ModelError::AuthorityEvidenceRequired {
+                contract,
+                representation,
+            })
         );
     }
 
@@ -409,6 +468,17 @@ mod tests {
                 contract: other,
                 representation: representation_id("git-update-ref-help"),
             })
+        );
+    }
+
+    #[test]
+    fn rejects_empty_exact_revision() {
+        let mut graph = graph();
+        let observation = graph.observations[0].id.clone();
+        graph.observations[0].revision = Revision::Exact(String::new());
+        assert_eq!(
+            graph.validate(),
+            Err(ModelError::InvalidExactRevision(observation))
         );
     }
 

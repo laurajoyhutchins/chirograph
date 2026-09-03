@@ -43,7 +43,9 @@ impl fmt::Display for JavaAdapterError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Language(message) => write!(formatter, "cannot load Java grammar: {message}"),
-            Self::ParseFailed => formatter.write_str("Tree-sitter did not produce a Java syntax tree"),
+            Self::ParseFailed => {
+                formatter.write_str("Tree-sitter did not produce a Java syntax tree")
+            }
             Self::SyntaxError => formatter.write_str("Java source contains syntax errors"),
         }
     }

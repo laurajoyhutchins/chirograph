@@ -54,6 +54,13 @@
       "revision": { "kind": "exact", "value": "example-rev-1" },
       "locator": "tests/retry.rs",
       "fact": "test requires reconciliation before retrying an indeterminate mutation"
+    },
+    {
+      "id": "retry.runtime.observation",
+      "source": "retry.repo",
+      "revision": { "kind": "exact", "value": "example-rev-1" },
+      "locator": "src/retry.rs",
+      "fact": "runtime immediately retries the mutation after an indeterminate transport failure without authoritative reconciliation"
     }
   ],
   "clauses": [
@@ -77,6 +84,12 @@
       "representation": "retry.test",
       "stance": "supports",
       "evidence": ["retry.test.observation"]
+    },
+    {
+      "clause": "retry-after-indeterminate-does-not-duplicate",
+      "representation": "retry.runtime",
+      "stance": "contradicts",
+      "evidence": ["retry.runtime.observation"]
     }
   ],
   "relations": [],

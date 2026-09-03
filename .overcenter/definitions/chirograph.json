@@ -73,6 +73,16 @@
       }
     },
     {
+      "id": "implement-java-tree-sitter-adapter",
+      "priority": 90,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Implement a generic Java acquisition adapter for Chirograph using Tree-sitter Java, not Kafka-specific parsing. Keep parsing language-aware and framework-agnostic. Introduce deterministic provenance-rich Java facts/observations for a narrow useful v0 covering declarations/constants/literals, method calls, conditionals/throws, comments or documentation associations, and test assertions where safely extractable. Emit or support ordinary chirograph-evidence-v1 rather than adding Java concepts to chirograph-core. Use the existing Kafka producer-idempotence field test at exact upstream revision 5e3bc31a7dbc354155932e38ab35d11dd71b97bf as the acceptance specimen: automate meaningful evidence acquisition that previously required hand-authored JSON, preserve exact source revision/location provenance, and ensure Chirograph still exposes the documented max.in.flight fallback disagreement as CONTESTED. Prefer a small, testable adapter over whole-program semantic analysis; do not implement a Java parser. Add tests and CI coverage, document capability and limitations, and finish with exact commit/PR/CI evidence."
+      }
+    },
+    {
       "id": "prove-cross-representation-drift",
       "priority": 40,
       "requires": [

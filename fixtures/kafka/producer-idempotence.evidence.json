@@ -1,0 +1,370 @@
+{
+  "schema": "chirograph-evidence-v1",
+  "sources": [
+    {
+      "id": "kafka.repo",
+      "kind": "repository",
+      "locator": "https://github.com/apache/kafka"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "kafka.producer.idempotence",
+      "name": "Kafka producer idempotence configuration",
+      "facets": [
+        "structural",
+        "semantic",
+        "failure",
+        "concurrency",
+        "recovery"
+      ]
+    }
+  ],
+  "representations": [
+    {
+      "id": "kafka.producer.idempotence.configdef",
+      "contract": "kafka.producer.idempotence",
+      "source": "kafka.repo",
+      "kind": "schema",
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#CONFIG",
+      "facets": ["structural"]
+    },
+    {
+      "id": "kafka.producer.idempotence.doc",
+      "contract": "kafka.producer.idempotence",
+      "source": "kafka.repo",
+      "kind": "documentation",
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#ENABLE_IDEMPOTENCE_DOC",
+      "facets": ["semantic", "failure", "concurrency", "recovery"]
+    },
+    {
+      "id": "kafka.producer.idempotence.validator",
+      "contract": "kafka.producer.idempotence",
+      "source": "kafka.repo",
+      "kind": "validator",
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#postProcessAndValidateIdempotenceConfigs",
+      "facets": ["failure", "concurrency", "recovery"]
+    },
+    {
+      "id": "kafka.producer.idempotence.test",
+      "contract": "kafka.producer.idempotence",
+      "source": "kafka.repo",
+      "kind": "test",
+      "locator": "clients/src/test/java/org/apache/kafka/clients/producer/KafkaProducerTest.java",
+      "facets": ["failure", "concurrency", "recovery"]
+    },
+    {
+      "id": "kafka.producer.idempotence.upgrade-note",
+      "contract": "kafka.producer.idempotence",
+      "source": "kafka.repo",
+      "kind": "documentation",
+      "locator": "docs/getting-started/upgrade.md",
+      "facets": ["failure", "concurrency"]
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs.configdef.default",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#CONFIG",
+      "fact": "The producer ConfigDef defines enable.idempotence as a boolean with default true."
+    },
+    {
+      "id": "obs.doc.semantic",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#ENABLE_IDEMPOTENCE_DOC",
+      "fact": "The enable.idempotence documentation says true ensures exactly one copy of each message is written in the stream."
+    },
+    {
+      "id": "obs.doc.requirements",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#ENABLE_IDEMPOTENCE_DOC",
+      "fact": "The enable.idempotence documentation requires max.in.flight.requests.per.connection <= 5, retries > 0, and acks=all."
+    },
+    {
+      "id": "obs.doc.fallback",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#ENABLE_IDEMPOTENCE_DOC",
+      "fact": "The documentation says that if conflicting configurations are set and idempotence is not explicitly enabled, idempotence is disabled; if idempotence is explicitly enabled, conflicting configurations cause ConfigException."
+    },
+    {
+      "id": "obs.validator.max-in-flight",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#postProcessAndValidateIdempotenceConfigs",
+      "fact": "When idempotence is enabled and max.in.flight.requests.per.connection exceeds 5, the validator throws ConfigException unconditionally, without checking whether enable.idempotence was explicitly configured."
+    },
+    {
+      "id": "obs.validator.retries-acks",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java#postProcessAndValidateIdempotenceConfigs",
+      "fact": "For retries=0 or acks!=all, the validator disables idempotence when enable.idempotence was not explicitly configured, but throws ConfigException when idempotence was explicitly enabled."
+    },
+    {
+      "id": "obs.test.explicit-max-in-flight",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "clients/src/test/java/org/apache/kafka/clients/producer/KafkaProducerTest.java",
+      "fact": "KafkaProducerTest covers enable.idempotence=true with max.in.flight.requests.per.connection=6 and expects ProducerConfig construction to throw ConfigException."
+    },
+    {
+      "id": "obs.upgrade.max-in-flight",
+      "source": "kafka.repo",
+      "revision": {
+        "kind": "exact",
+        "value": "5e3bc31a7dbc354155932e38ab35d11dd71b97bf"
+      },
+      "locator": "docs/getting-started/upgrade.md",
+      "fact": "The upgrade notes say enable.idempotence will no longer automatically fall back when max.in.flight.requests.per.connection exceeds 5."
+    }
+  ],
+  "clauses": [
+    {
+      "id": "clause.default-enabled",
+      "contract": "kafka.producer.idempotence",
+      "facet": "structural",
+      "kind": "guarantee",
+      "statement": "enable.idempotence defaults to true."
+    },
+    {
+      "id": "clause.single-copy",
+      "contract": "kafka.producer.idempotence",
+      "facet": "semantic",
+      "kind": "guarantee",
+      "statement": "With idempotence enabled, the producer ensures exactly one copy of each message is written in the stream."
+    },
+    {
+      "id": "clause.max-in-flight-limit",
+      "contract": "kafka.producer.idempotence",
+      "facet": "concurrency",
+      "kind": "requirement",
+      "statement": "Idempotence requires max.in.flight.requests.per.connection to be at most 5."
+    },
+    {
+      "id": "clause.implicit-max-in-flight-fallback",
+      "contract": "kafka.producer.idempotence",
+      "facet": "failure",
+      "kind": "guarantee",
+      "statement": "When enable.idempotence is not explicitly configured and max.in.flight.requests.per.connection exceeds 5, producer configuration disables idempotence instead of failing construction."
+    },
+    {
+      "id": "clause.explicit-max-in-flight-failure",
+      "contract": "kafka.producer.idempotence",
+      "facet": "failure",
+      "kind": "guarantee",
+      "statement": "When enable.idempotence=true is explicitly configured and max.in.flight.requests.per.connection exceeds 5, producer configuration fails with ConfigException."
+    },
+    {
+      "id": "clause.retries-positive",
+      "contract": "kafka.producer.idempotence",
+      "facet": "recovery",
+      "kind": "requirement",
+      "statement": "Idempotence requires retries to be greater than 0."
+    }
+  ],
+  "clause_assertions": [
+    {
+      "clause": "clause.default-enabled",
+      "representation": "kafka.producer.idempotence.configdef",
+      "stance": "supports",
+      "evidence": ["obs.configdef.default"]
+    },
+    {
+      "clause": "clause.single-copy",
+      "representation": "kafka.producer.idempotence.doc",
+      "stance": "supports",
+      "evidence": ["obs.doc.semantic"]
+    },
+    {
+      "clause": "clause.max-in-flight-limit",
+      "representation": "kafka.producer.idempotence.doc",
+      "stance": "supports",
+      "evidence": ["obs.doc.requirements"]
+    },
+    {
+      "clause": "clause.max-in-flight-limit",
+      "representation": "kafka.producer.idempotence.validator",
+      "stance": "supports",
+      "evidence": ["obs.validator.max-in-flight"]
+    },
+    {
+      "clause": "clause.max-in-flight-limit",
+      "representation": "kafka.producer.idempotence.test",
+      "stance": "supports",
+      "evidence": ["obs.test.explicit-max-in-flight"]
+    },
+    {
+      "clause": "clause.implicit-max-in-flight-fallback",
+      "representation": "kafka.producer.idempotence.doc",
+      "stance": "supports",
+      "evidence": ["obs.doc.fallback"]
+    },
+    {
+      "clause": "clause.implicit-max-in-flight-fallback",
+      "representation": "kafka.producer.idempotence.validator",
+      "stance": "contradicts",
+      "evidence": ["obs.validator.max-in-flight"]
+    },
+    {
+      "clause": "clause.implicit-max-in-flight-fallback",
+      "representation": "kafka.producer.idempotence.upgrade-note",
+      "stance": "contradicts",
+      "evidence": ["obs.upgrade.max-in-flight"]
+    },
+    {
+      "clause": "clause.explicit-max-in-flight-failure",
+      "representation": "kafka.producer.idempotence.doc",
+      "stance": "supports",
+      "evidence": ["obs.doc.fallback", "obs.doc.requirements"]
+    },
+    {
+      "clause": "clause.explicit-max-in-flight-failure",
+      "representation": "kafka.producer.idempotence.validator",
+      "stance": "supports",
+      "evidence": ["obs.validator.max-in-flight"]
+    },
+    {
+      "clause": "clause.explicit-max-in-flight-failure",
+      "representation": "kafka.producer.idempotence.test",
+      "stance": "supports",
+      "evidence": ["obs.test.explicit-max-in-flight"]
+    },
+    {
+      "clause": "clause.retries-positive",
+      "representation": "kafka.producer.idempotence.doc",
+      "stance": "supports",
+      "evidence": ["obs.doc.requirements"]
+    },
+    {
+      "clause": "clause.retries-positive",
+      "representation": "kafka.producer.idempotence.validator",
+      "stance": "supports",
+      "evidence": ["obs.validator.retries-acks"]
+    }
+  ],
+  "relations": [
+    {
+      "from": {
+        "kind": "representation",
+        "id": "kafka.producer.idempotence.configdef"
+      },
+      "to": {
+        "kind": "contract",
+        "id": "kafka.producer.idempotence"
+      },
+      "kind": "defines",
+      "basis": ["obs.configdef.default"]
+    },
+    {
+      "from": {
+        "kind": "representation",
+        "id": "kafka.producer.idempotence.doc"
+      },
+      "to": {
+        "kind": "contract",
+        "id": "kafka.producer.idempotence"
+      },
+      "kind": "documents",
+      "basis": ["obs.doc.semantic", "obs.doc.requirements", "obs.doc.fallback"]
+    },
+    {
+      "from": {
+        "kind": "representation",
+        "id": "kafka.producer.idempotence.validator"
+      },
+      "to": {
+        "kind": "contract",
+        "id": "kafka.producer.idempotence"
+      },
+      "kind": "validates",
+      "basis": ["obs.validator.max-in-flight", "obs.validator.retries-acks"]
+    },
+    {
+      "from": {
+        "kind": "representation",
+        "id": "kafka.producer.idempotence.test"
+      },
+      "to": {
+        "kind": "representation",
+        "id": "kafka.producer.idempotence.validator"
+      },
+      "kind": "validates",
+      "basis": ["obs.test.explicit-max-in-flight"]
+    },
+    {
+      "from": {
+        "kind": "representation",
+        "id": "kafka.producer.idempotence.doc"
+      },
+      "to": {
+        "kind": "representation",
+        "id": "kafka.producer.idempotence.validator"
+      },
+      "kind": "conflicts_with",
+      "basis": ["obs.doc.fallback", "obs.validator.max-in-flight", "obs.upgrade.max-in-flight"]
+    }
+  ],
+  "authority_claims": [
+    {
+      "contract": "kafka.producer.idempotence",
+      "representation": "kafka.producer.idempotence.configdef",
+      "facet": "structural",
+      "basis": "mechanical_enforcement",
+      "evidence": ["obs.configdef.default"]
+    },
+    {
+      "contract": "kafka.producer.idempotence",
+      "representation": "kafka.producer.idempotence.doc",
+      "facet": "semantic",
+      "basis": "documentation",
+      "evidence": ["obs.doc.semantic"]
+    },
+    {
+      "contract": "kafka.producer.idempotence",
+      "representation": "kafka.producer.idempotence.validator",
+      "facet": "failure",
+      "basis": "mechanical_enforcement",
+      "evidence": ["obs.validator.max-in-flight", "obs.validator.retries-acks"]
+    },
+    {
+      "contract": "kafka.producer.idempotence",
+      "representation": "kafka.producer.idempotence.validator",
+      "facet": "concurrency",
+      "basis": "mechanical_enforcement",
+      "evidence": ["obs.validator.max-in-flight"]
+    },
+    {
+      "contract": "kafka.producer.idempotence",
+      "representation": "kafka.producer.idempotence.validator",
+      "facet": "recovery",
+      "basis": "mechanical_enforcement",
+      "evidence": ["obs.validator.retries-acks"]
+    }
+  ]
+}

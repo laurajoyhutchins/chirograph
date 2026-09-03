@@ -2,7 +2,9 @@
 
 //! Hermetic benchmark framework for Chirograph.
 
+pub mod aggregate;
 pub mod corpus;
 pub mod model;
+pub mod report;
 pub mod score;
 pub mod selector;

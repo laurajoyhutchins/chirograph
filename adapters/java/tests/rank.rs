@@ -34,14 +34,23 @@ fn ranks_semantically_related_facts_ahead_of_java_noise() {
     let candidates = rank_java_evidence(
         &acquisition,
         "idempotence max.in.flight",
-        &[JavaFactKind::FieldDeclaration, JavaFactKind::ConditionalThrow],
+        &[
+            JavaFactKind::FieldDeclaration,
+            JavaFactKind::ConditionalThrow,
+        ],
     );
 
     assert_eq!(candidates.len(), 4);
     assert_eq!(candidates[0].fact.kind, JavaFactKind::ConditionalThrow);
-    assert_eq!(candidates[0].matched_terms, ["flight", "idempotence", "max"]);
+    assert_eq!(
+        candidates[0].matched_terms,
+        ["flight", "idempotence", "max"]
+    );
     assert_eq!(candidates[1].fact.kind, JavaFactKind::FieldDeclaration);
-    assert_eq!(candidates[1].matched_terms, ["flight", "idempotence", "max"]);
+    assert_eq!(
+        candidates[1].matched_terms,
+        ["flight", "idempotence", "max"]
+    );
     assert!(candidates[0].score > candidates[2].score);
     assert!(candidates[1].score > candidates[2].score);
 }
@@ -77,7 +86,16 @@ fn candidate_observations_preserve_exact_revision_and_locator() {
     );
 
     let candidate = &candidates[0];
-    assert_eq!(candidate.observation.revision, acquisition.observations[candidate.fact_index].revision);
-    assert_eq!(candidate.observation.locator, acquisition.observations[candidate.fact_index].locator);
-    assert_eq!(candidate.observation.id, acquisition.observations[candidate.fact_index].id);
+    assert_eq!(
+        candidate.observation.revision,
+        acquisition.observations[candidate.fact_index].revision
+    );
+    assert_eq!(
+        candidate.observation.locator,
+        acquisition.observations[candidate.fact_index].locator
+    );
+    assert_eq!(
+        candidate.observation.id,
+        acquisition.observations[candidate.fact_index].id
+    );
 }

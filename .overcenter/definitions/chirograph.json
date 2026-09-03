@@ -13,6 +13,18 @@
       }
     },
     {
+      "id": "formalize-contract-clauses",
+      "priority": 80,
+      "requires": [
+        "formalize-execution-model"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "test-driven-development"
+      }
+    },
+    {
       "id": "formalize-execution-model",
       "priority": 90,
       "requires": [

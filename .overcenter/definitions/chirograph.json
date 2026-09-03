@@ -25,6 +25,102 @@
       }
     },
     {
+      "id": "curate-benchmark-arrow",
+      "priority": 80,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Arrow case arrow/cross-language-schema/field-and-schema from apache/arrow@1b0b16a8f68c0082534aa185c0bb4052614df924 using complete Schema.fbs, C++ type.h, and Python/Cython binding declarations. Do not invent a Java fixture absent from that exact revision."
+      }
+    },
+    {
+      "id": "curate-benchmark-cargo",
+      "priority": 86,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Cargo case cargo/schema-enum-drift/toml-debug-info-spellings from rust-lang/cargo@2ceefa0090080354b80cc2f5415039bdb0d2bf0b using complete verbatim manifest Rust and generated schema files. Golden truth must encode cargo.profile.debug-info, source authority, generated projection, and expected contested enum-spelling drift. Add no Cargo-specific benchmark code."
+      }
+    },
+    {
+      "id": "curate-benchmark-envoy",
+      "priority": 81,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Envoy case envoy/v2-v3-lifecycle/config-source from envoyproxy/envoy@6609c01e330fb84049d54a9dbffae8609b1ec9f7. Preserve v2 FROZEN versus v3 ACTIVE lifecycle and v3 structural authority using complete versioning/v2/v3 Proto files."
+      }
+    },
+    {
+      "id": "curate-benchmark-kafka",
+      "priority": 85,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Kafka case kafka/message-spec-generation/produce-request-data from apache/kafka@b57cf6e56eb59a952db7236b4da67cc2fdbb8cdf using complete ProduceRequest spec/generator/wrapper files. Golden truth centers one logical produce-request contract and treats generator helpers as manifestations/machinery, not extra contracts."
+      }
+    },
+    {
+      "id": "curate-benchmark-kubernetes",
+      "priority": 84,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Kubernetes case kubernetes/go-protobuf-openapi/core-v1-pod from kubernetes/kubernetes@82ca8014fabed9e61cf6c14560cdb9f1e4e1d067 using complete Go, generated.proto, generated.pb.go, and generated OpenAPI files. Golden truth stays narrow around core/v1 Pod to stress false-contract restraint."
+      }
+    },
+    {
+      "id": "curate-benchmark-pydantic",
+      "priority": 83,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Pydantic case pydantic/validation-vs-serialization/json-schema-mode from pydantic/pydantic@001dea020e0809844e5b17666432c9135a976f46. Model validation and serialization as intentional perspectives, not drift. Add no Pydantic-specific runtime probe under benchmark/."
+      }
+    },
+    {
+      "id": "curate-benchmark-rails",
+      "priority": 82,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Rails case rails/migration-db-schema-authority/schema-dump-current-state from rails/rails@2164c6c6f7fb91cc1caff5ee4b05931445de42ea. Preserve live database current-state authority, generated schema dump, and migrations as historical change instructions."
+      }
+    },
+    {
+      "id": "curate-benchmark-temporal",
+      "priority": 79,
+      "requires": [
+        "implement-benchmark-source-maintenance"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Curate data-only Temporal case temporal/multi-dialect-persistence/executions-table from temporalio/temporal@cd667daadb88d189df0302d8f473858ee7168ce5 using complete MySQL, PostgreSQL, Cassandra schemas and persistence test references. Preserve dialect-specific manifestations without fake global dialect authority."
+      }
+    },
+    {
       "id": "define-evidence-interchange",
       "priority": 70,
       "requires": [
@@ -34,6 +130,25 @@
         "kind": "agent",
         "role": "implementation",
         "skill": "test-driven-development"
+      }
+    },
+    {
+      "id": "establish-contract-benchmark-baseline",
+      "priority": 75,
+      "requires": [
+        "curate-benchmark-arrow",
+        "curate-benchmark-cargo",
+        "curate-benchmark-envoy",
+        "curate-benchmark-kafka",
+        "curate-benchmark-kubernetes",
+        "curate-benchmark-pydantic",
+        "curate-benchmark-rails",
+        "curate-benchmark-temporal"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "verification",
+        "skill": "Use test-driven development. Add reviewed benchmark baseline semantics: execution-failure to scored is improvement, scored to failure is regression, higher-is-better metrics may not decrease, false rate may not increase, and inflation may not move farther from 1.0. Store specimen/golden digests. Preserve honest execution failures."
       }
     },
     {
@@ -68,6 +183,76 @@
         "kind": "agent",
         "role": "implementation",
         "skill": "test-driven-development"
+      }
+    },
+    {
+      "id": "implement-benchmark-corpus-model",
+      "priority": 92,
+      "requires": [
+        "implement-benchmark-graph-json"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Add the chirograph-benchmark crate and strict data-only benchmark/<repository>/<scenario>/<case>/ corpus model. Validate exact revisions, fixture SHA-256, golden references, and reject executable benchmark glue outside fixture/."
+      }
+    },
+    {
+      "id": "implement-benchmark-graph-json",
+      "priority": 93,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Add a canonical chirograph-graph-v1 JSON projection in chirograph-core with explicit wire DTOs, deterministic ordering, graph validation before encoding, and mechanically computed clause assessments. Do not make internal Rust struct layout the public wire API."
+      }
+    },
+    {
+      "id": "implement-benchmark-runner",
+      "priority": 89,
+      "requires": [
+        "implement-benchmark-scoring"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Benchmark runner must invoke only public `chirograph analyze <fixture-dir> --format graph-json`. Classify nonzero exit as execution-failure, malformed successful output as invalid-output, and only valid canonical graph as scored. Do not privately dispatch adapters."
+      }
+    },
+    {
+      "id": "implement-benchmark-scoring",
+      "priority": 90,
+      "requires": [
+        "implement-benchmark-selectors"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development. Score final canonical graphs with strict contract identity, contract precision/recall/F1, false-contract rate, inflation, facet-scoped authority, relationship precision/recall, lifecycle when observable, findings, macro and micro aggregates. No fuzzy matching or composite score."
+      }
+    },
+    {
+      "id": "implement-benchmark-selectors",
+      "priority": 91,
+      "requires": [
+        "implement-benchmark-corpus-model"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Add cargo benchmark selectors for all, repository, scenario:<name>, repository/scenario, and exact case. Keep the CLI small and deterministic."
+      }
+    },
+    {
+      "id": "implement-benchmark-source-maintenance",
+      "priority": 88,
+      "requires": [
+        "implement-benchmark-runner"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Add explicit exact-revision source verification and refresh using generic Git retrieval. Normal benchmark scoring remains offline. Refresh may update fixture bytes and specimen revision/digests but never golden truth."
       }
     },
     {
@@ -161,18 +346,6 @@
       }
     },
     {
-      "id": "validate-cargo-rust-specimen",
-      "priority": 92,
-      "requires": [
-        "implement-rust-tree-sitter-adapter"
-      ],
-      "executor": {
-        "kind": "agent",
-        "role": "contract-analysis-engineer",
-        "skill": "Implement Task 3 of docs/superpowers/plans/2026-09-03-tree-sitter-rust-cargo-slice.md. Add benchmarks/cargo/schema-enum-drift using exact Cargo revision 2ceefa0090080354b80cc2f5415039bdb0d2bf0b and the two pinned SHA-256 fixture digests documented in the plan. Acquire the Rust side through the generic adapter, parse the generated schema through serde_json, keep Cargo-specific stance mapping in the benchmark layer, and require ordinary chirograph-evidence-v1 to assess the clause CONTESTED. Runtime source retrieval is not part of benchmark scoring. Run the full repository verification suite and finish with exact revision/hash/test/commit evidence."
-      }
-    },
-    {
       "id": "validate-kafka-perspectives",
       "priority": 80,
       "requires": [],
@@ -192,6 +365,18 @@
         "kind": "agent",
         "role": "implementation",
         "skill": "test-driven-development"
+      }
+    },
+    {
+      "id": "wire-contract-benchmark-ci",
+      "priority": 74,
+      "requires": [
+        "establish-contract-benchmark-baseline"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "verification",
+        "skill": "Wire hermetic `cargo benchmark all --baseline benchmark/baseline.json` into CI after building chirograph-cli. Add concise benchmark methodology docs. Do not run live source verification in normal CI. Finish with full fmt/check/clippy/test/benchmark evidence."
       }
     }
   ]

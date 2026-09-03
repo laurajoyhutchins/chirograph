@@ -35,6 +35,20 @@ jobs:
             adapters/overcenter/fixtures/classifications.json \
             > /tmp/overcenter-evidence.json
           cargo run --quiet -p chirograph-cli -- inspect /tmp/overcenter-evidence.json
+      - name: Field-test Java acquisition against Kafka
+        run: |
+          KAFKA_REV=5e3bc31a7dbc354155932e38ab35d11dd71b97bf
+          curl -fsSL \
+            "https://raw.githubusercontent.com/apache/kafka/${KAFKA_REV}/clients/src/main/java/org/apache/kafka/clients/producer/ProducerConfig.java" \
+            > /tmp/ProducerConfig.java
+          cargo run --quiet -p chirograph-java-adapter --example kafka_idempotence -- \
+            /tmp/ProducerConfig.java \
+            > /tmp/kafka-java-evidence.json
+          cargo run --quiet -p chirograph-cli -- inspect /tmp/kafka-java-evidence.json \
+            | tee /tmp/kafka-java-assessment.txt
+          grep -F \
+            "clause.implicit-max-in-flight-fallback [guarantee] CONTESTED" \
+            /tmp/kafka-java-assessment.txt
       - name: Install pinned Pydantic specimen
         run: python -m pip install 'pydantic @ git+https://github.com/pydantic/pydantic.git@001dea020e0809844e5b17666432c9135a976f46'
       - name: Test Pydantic perspective adapter

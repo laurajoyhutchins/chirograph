@@ -3,6 +3,7 @@
 //! Language-agnostic core for Chirograph.
 
 pub mod evidence;
+pub mod graph_json;
 pub mod model;
 
 /// Returns the Chirograph core package version.

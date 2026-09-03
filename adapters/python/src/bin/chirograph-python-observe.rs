@@ -61,7 +61,8 @@ fn run(args: Vec<String>) -> Result<String, String> {
         return Err("exact revision must be non-empty and trimmed".into());
     }
 
-    let source = fs::read_to_string(path).map_err(|error| format!("cannot read {path}: {error}"))?;
+    let source =
+        fs::read_to_string(path).map_err(|error| format!("cannot read {path}: {error}"))?;
     let source_id = SourceId::new(source_id_value.clone())
         .map_err(|error| format!("invalid source id: {error:?}"))?;
     let PythonAcquisition {

@@ -6,5 +6,6 @@ pub mod aggregate;
 pub mod corpus;
 pub mod model;
 pub mod report;
+pub mod runner;
 pub mod score;
 pub mod selector;

@@ -1,6 +1,9 @@
 use std::path::{Path, PathBuf};
 
+use chirograph_benchmark::aggregate::aggregate_report;
 use chirograph_benchmark::corpus::discover_corpus;
+use chirograph_benchmark::report::{render_human_report, render_json_report};
+use chirograph_benchmark::runner::{resolve_chirograph_bin, run_case};
 use chirograph_benchmark::selector::select_cases;
 
 const HELP: &str = "Chirograph contract benchmark\n\n\
@@ -89,31 +92,22 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
             path.display()
         ));
     }
-    if let Some(path) = &options.chirograph_bin {
-        return Err(format!(
-            "product execution with {} is added by the runner task",
-            path.display()
-        ));
-    }
 
     let cases = discover()?;
     let selected = select_cases(&cases, &options.selector).map_err(|error| error.to_string())?;
+    let chirograph_bin = resolve_chirograph_bin(options.chirograph_bin.as_deref())?;
+    let results = selected
+        .iter()
+        .map(|case| run_case(case, &chirograph_bin))
+        .collect::<Vec<_>>();
+    let report = aggregate_report(&results);
+
     match options.format {
-        OutputFormat::Human => {
-            for case in selected {
-                println!("{}", case.id);
-            }
-        }
-        OutputFormat::Json => {
-            let ids = selected
-                .iter()
-                .map(|case| case.id.as_str())
-                .collect::<Vec<_>>();
-            println!(
-                "{}",
-                serde_json::to_string(&ids).map_err(|error| error.to_string())?
-            );
-        }
+        OutputFormat::Human => print!("{}", render_human_report(&report)),
+        OutputFormat::Json => println!(
+            "{}",
+            render_json_report(&report).map_err(|error| error.to_string())?
+        ),
     }
     Ok(())
 }

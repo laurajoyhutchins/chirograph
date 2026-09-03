@@ -32,3 +32,5 @@ jobs:
             adapters/overcenter/fixtures/classifications.json \
             > /tmp/overcenter-evidence.json
           cargo run --quiet -p chirograph-cli -- inspect /tmp/overcenter-evidence.json
+      - name: Validate Kafka producer idempotence field test through Chirograph
+        run: cargo run --quiet -p chirograph-cli -- inspect fixtures/kafka/producer-idempotence.evidence.json

@@ -46,5 +46,3 @@ Parsing fails closed when Tree-sitter reports syntax errors.
 The selected observations are emitted as ordinary `chirograph-evidence-v1` and passed to the normal Chirograph inspector. Higher-level specimen logic still makes the explicit judgment that the documentation supports the fallback clause while the validator contradicts it.
 
 The acceptance result remains `CONTESTED` for the implicit `max.in.flight.requests.per.connection > 5` fallback clause, with the mechanically enforced validator authoritative for the failure facet.
-
-Verified on Chirograph head `39288bc72d5f6eac09731a4eb96c029d270a78a6` by GitHub Actions run `33721735862`.

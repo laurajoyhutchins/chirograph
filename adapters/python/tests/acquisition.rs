@@ -3,25 +3,25 @@ use chirograph_python_adapter::{
     PythonAdapterError, PythonFactKind, extract_python_facts, observe_python_source,
 };
 
-const SOURCE: &str = r#"\"\"\"Module contract docs.\"\"\"
+const SOURCE: &str = r#""""Module contract docs."""
 
 from typing import Any
 
 class ValidatorModel(BaseModel):
-    \"\"\"Validation model docs.\"\"\"
+    """Validation model docs."""
     value: str
 
-    @field_validator(\"value\", mode=\"before\", json_schema_input_type=int | str)
+    @field_validator("value", mode="before", json_schema_input_type=int | str)
     @classmethod
     def cast_ints(cls, value: Any) -> Any:
         # Normalize integers before validation.
         if isinstance(value, int):
             return str(value)
-        raise ValueError(\"unsupported\")
+        raise ValueError("unsupported")
 
 def test_validator():
-    result = ValidatorModel(value=\"x\")
-    assert result.value == \"x\"
+    result = ValidatorModel(value="x")
+    assert result.value == "x"
 "#;
 
 #[test]

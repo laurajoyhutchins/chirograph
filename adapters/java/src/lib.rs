@@ -178,7 +178,9 @@ fn lexical_terms(value: &str) -> BTreeSet<String> {
             continue;
         }
 
-        let previous = index.checked_sub(1).and_then(|position| chars.get(position));
+        let previous = index
+            .checked_sub(1)
+            .and_then(|position| chars.get(position));
         let next = chars.get(index + 1);
         let camel_boundary = character.is_ascii_uppercase()
             && !current.is_empty()

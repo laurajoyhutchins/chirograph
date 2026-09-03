@@ -55,7 +55,11 @@ fn extracts_python_contract_relevant_facts_without_framework_knowledge() {
     assert!(facts.iter().any(|fact| fact.kind == PythonFactKind::Return));
     assert!(facts.iter().any(|fact| fact.kind == PythonFactKind::Raise));
     assert!(facts.iter().any(|fact| fact.kind == PythonFactKind::Call));
-    assert!(facts.iter().any(|fact| fact.kind == PythonFactKind::Comment));
+    assert!(
+        facts
+            .iter()
+            .any(|fact| fact.kind == PythonFactKind::Comment)
+    );
     assert_eq!(
         facts
             .iter()
@@ -63,7 +67,11 @@ fn extracts_python_contract_relevant_facts_without_framework_knowledge() {
             .count(),
         2
     );
-    assert!(facts.iter().any(|fact| fact.kind == PythonFactKind::TestAssertion));
+    assert!(
+        facts
+            .iter()
+            .any(|fact| fact.kind == PythonFactKind::TestAssertion)
+    );
 }
 
 #[test]
@@ -86,13 +94,9 @@ fn preserves_exact_byte_and_source_spans() {
 fn emits_core_observations_at_the_supplied_exact_revision() {
     let source_id = SourceId::new("python.fixture").expect("valid source id");
     let revision = Revision::Exact("0123456789abcdef0123456789abcdef01234567".into());
-    let acquisition = observe_python_source(
-        source_id.clone(),
-        revision.clone(),
-        "models.py",
-        SOURCE,
-    )
-    .expect("valid Python should be observed");
+    let acquisition =
+        observe_python_source(source_id.clone(), revision.clone(), "models.py", SOURCE)
+            .expect("valid Python should be observed");
 
     assert_eq!(acquisition.facts.len(), acquisition.observations.len());
     assert!(!acquisition.observations.is_empty());

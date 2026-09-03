@@ -28,7 +28,8 @@ fn main() -> ExitCode {
 
 fn run(args: Vec<String>) -> Result<String, String> {
     match args.as_slice() {
-        [] | [arg] if arg == "--help" || arg == "-h" => Ok(HELP.into()),
+        [] => Ok(HELP.into()),
+        [arg] if arg == "--help" || arg == "-h" => Ok(HELP.into()),
         [arg] if arg == "--version" || arg == "-V" => {
             Ok(format!("chirograph {}\n", chirograph_core::version()))
         }

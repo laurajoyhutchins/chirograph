@@ -1,0 +1,21 @@
+{
+  "schema": "contract-evidence-classifications-v1",
+  "candidates": {
+    "typescript:src/model.ts#Example": {
+      "logical_contract": "example.model",
+      "significance": "boundary-internal",
+      "semver_kind": "internal-module-layout"
+    },
+    "postgres:public.example#table": {
+      "significance": "projection",
+      "projection_of": "example.model"
+    },
+    "typescript:src/store.ts#ExampleStore": {
+      "logical_contract": "example.store",
+      "significance": "boundary-internal",
+      "relationships": [
+        { "kind": "persists-as", "target": "example.model" }
+      ]
+    }
+  }
+}

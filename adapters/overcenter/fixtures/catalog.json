@@ -1,0 +1,32 @@
+{
+  "schema": "contract-evidence-catalog-v1",
+  "candidates": [
+    {
+      "source_identity": "typescript:src/model.ts#Example",
+      "source_kind": "typescript",
+      "source_location": { "path": "src/model.ts", "anchor": "Example" },
+      "symbol_or_boundary": "Example",
+      "structural_fingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "structure": { "fields": ["id"] },
+      "observed_relationships": []
+    },
+    {
+      "source_identity": "postgres:public.example#table",
+      "source_kind": "postgres",
+      "source_location": { "path": "public.example", "anchor": "table" },
+      "symbol_or_boundary": "public.example",
+      "structural_fingerprint": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "structure": { "columns": ["id"] },
+      "observed_relationships": []
+    },
+    {
+      "source_identity": "typescript:src/store.ts#ExampleStore",
+      "source_kind": "typescript",
+      "source_location": { "path": "src/store.ts", "anchor": "ExampleStore" },
+      "symbol_or_boundary": "ExampleStore",
+      "structural_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "structure": { "methods": ["put"] },
+      "observed_relationships": []
+    }
+  ]
+}

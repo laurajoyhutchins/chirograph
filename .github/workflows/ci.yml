@@ -23,3 +23,12 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Run tests
         run: cargo test --workspace --all-features
+      - name: Test Overcenter adapter
+        run: node --test adapters/overcenter/convert.test.mjs
+      - name: Validate adapted evidence through Chirograph
+        run: |
+          node adapters/overcenter/convert.mjs \
+            adapters/overcenter/fixtures/catalog.json \
+            adapters/overcenter/fixtures/classifications.json \
+            > /tmp/overcenter-evidence.json
+          cargo run --quiet -p chirograph-cli -- inspect /tmp/overcenter-evidence.json

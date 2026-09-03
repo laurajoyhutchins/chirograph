@@ -39,6 +39,7 @@ id_type!(ClauseId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ContractFacet {
+    Structural,
     Executable,
     Semantic,
     Failure,

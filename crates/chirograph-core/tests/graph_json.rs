@@ -122,3 +122,11 @@ fn encodes_valid_graph_in_canonical_order() {
     assert_eq!(value["clause_assessments"][0]["status"], "contested");
     assert_eq!(value["lifecycle"], serde_json::json!([]));
 }
+
+#[test]
+fn refuses_invalid_graph() {
+    let mut graph = fixture_graph_with_reversed_vectors();
+    graph.sources.clear();
+
+    assert!(encode_graph_json(&graph).is_err());
+}

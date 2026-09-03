@@ -136,7 +136,9 @@ fn collect_facts(node: Node<'_>, source: &[u8], path: &str, facts: &mut Vec<Pyth
             kind: PythonFactKind::ClassDefinition,
             path: path.into(),
             span: span(node),
-            name: node.child_by_field_name("name").map(|value| text(value, source)),
+            name: node
+                .child_by_field_name("name")
+                .map(|value| text(value, source)),
             annotation: None,
             condition: None,
             text: text(node, source),
@@ -145,7 +147,9 @@ fn collect_facts(node: Node<'_>, source: &[u8], path: &str, facts: &mut Vec<Pyth
             kind: PythonFactKind::FunctionDefinition,
             path: path.into(),
             span: span(node),
-            name: node.child_by_field_name("name").map(|value| text(value, source)),
+            name: node
+                .child_by_field_name("name")
+                .map(|value| text(value, source)),
             annotation: node
                 .child_by_field_name("return_type")
                 .map(|value| text(value, source)),
@@ -156,7 +160,9 @@ fn collect_facts(node: Node<'_>, source: &[u8], path: &str, facts: &mut Vec<Pyth
             kind: PythonFactKind::AnnotatedAssignment,
             path: path.into(),
             span: span(node),
-            name: node.child_by_field_name("left").map(|value| text(value, source)),
+            name: node
+                .child_by_field_name("left")
+                .map(|value| text(value, source)),
             annotation: node
                 .child_by_field_name("type")
                 .map(|value| text(value, source)),
@@ -203,12 +209,9 @@ fn collect_facts(node: Node<'_>, source: &[u8], path: &str, facts: &mut Vec<Pyth
             source,
             path,
         )),
-        "expression_statement" if is_docstring_statement(node) => facts.push(simple_fact(
-            PythonFactKind::Docstring,
-            node,
-            source,
-            path,
-        )),
+        "expression_statement" if is_docstring_statement(node) => {
+            facts.push(simple_fact(PythonFactKind::Docstring, node, source, path))
+        }
         _ => {}
     }
 

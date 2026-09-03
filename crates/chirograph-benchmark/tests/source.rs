@@ -4,12 +4,10 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use chirograph_benchmark::model::{
-    BenchmarkCase, FixtureFileV1, GOLDEN_SCHEMA, GoldenV1, SPECIMEN_SCHEMA, SpecimenV1,
-    UpstreamV1, parse_specimen_yaml,
+    BenchmarkCase, FixtureFileV1, GOLDEN_SCHEMA, GoldenV1, SPECIMEN_SCHEMA, SpecimenV1, UpstreamV1,
+    parse_specimen_yaml,
 };
-use chirograph_benchmark::source::{
-    SourceError, SourceFetcher, refresh_sources, verify_sources,
-};
+use chirograph_benchmark::source::{SourceError, SourceFetcher, refresh_sources, verify_sources};
 use sha2::{Digest, Sha256};
 
 static NEXT_TEMP: AtomicU64 = AtomicU64::new(0);
@@ -32,12 +30,7 @@ impl FakeFetcher {
 }
 
 impl SourceFetcher for FakeFetcher {
-    fn fetch(
-        &self,
-        repository: &str,
-        revision: &str,
-        path: &str,
-    ) -> Result<Vec<u8>, SourceError> {
+    fn fetch(&self, repository: &str, revision: &str, path: &str) -> Result<Vec<u8>, SourceError> {
         self.files
             .get(&(repository.to_owned(), revision.to_owned(), path.to_owned()))
             .cloned()
@@ -117,14 +110,13 @@ fn verify_is_read_only_and_rejects_remote_mismatch() {
     let specimen_before = fs::read(&case.specimen_path).expect("specimen before");
     let golden_before = fs::read(&case.golden_path).expect("golden before");
 
-    let matching = FakeFetcher::default().with(
-        "owner/repo",
-        OLD_REVISION,
-        "src/lib.rs",
-        b"same bytes\n",
-    );
+    let matching =
+        FakeFetcher::default().with("owner/repo", OLD_REVISION, "src/lib.rs", b"same bytes\n");
     verify_sources(std::slice::from_ref(&case), &matching).expect("matching source verifies");
-    assert_eq!(fs::read(root.join("fixture/src/lib.rs")).unwrap(), fixture_before);
+    assert_eq!(
+        fs::read(root.join("fixture/src/lib.rs")).unwrap(),
+        fixture_before
+    );
     assert_eq!(fs::read(&case.specimen_path).unwrap(), specimen_before);
     assert_eq!(fs::read(&case.golden_path).unwrap(), golden_before);
 
@@ -185,7 +177,10 @@ fn refresh_rejects_symbolic_revision_before_mutating() {
     )
     .expect_err("symbolic revision must fail");
     assert!(matches!(error, SourceError::InvalidRevision(_)));
-    assert_eq!(fs::read(root.join("fixture/src/lib.rs")).unwrap(), fixture_before);
+    assert_eq!(
+        fs::read(root.join("fixture/src/lib.rs")).unwrap(),
+        fixture_before
+    );
     assert_eq!(fs::read(&case.specimen_path).unwrap(), specimen_before);
     assert_eq!(fs::read(&case.golden_path).unwrap(), golden_before);
 

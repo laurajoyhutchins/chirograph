@@ -10,17 +10,17 @@ See [`docs/model.md`](docs/model.md) for the model and invariants.
 
 - `crates/chirograph-core` — language-agnostic contract graph and analysis core
 - `crates/chirograph-cli` — `chirograph` command-line executable
-- `adapters/java` — Tree-sitter-backed Java syntax acquisition into provenance-rich Chirograph observations
 - `adapters/overcenter` — adapter for Overcenter's existing contract-evidence catalog
 - `adapters/pydantic` — read-only external specimen proving perspective-sensitive contract analysis
+- `adapters/java` — Tree-sitter Java acquisition and deterministic evidence-candidate ranking
 
 ## External specimens
 
-The Java adapter includes a Kafka producer-idempotence specimen pinned to an exact upstream commit. CI parses Kafka's real `ProducerConfig.java` with Tree-sitter, emits ordinary `chirograph-evidence-v1`, and verifies that Chirograph preserves the documentation-versus-validator fallback disagreement as contested. See [`adapters/java/README.md`](adapters/java/README.md).
-
 The Pydantic specimen observes an exact upstream release revision and feeds public validation, serialization, JSON Schema, annotation, computed-field, and runtime-output observations into ordinary `chirograph-evidence-v1`. It proves that intentionally different validation and serialization perspectives remain consistent while a stale schema contradicting the same validation-input clause becomes contested.
 
-See [`adapters/pydantic/README.md`](adapters/pydantic/README.md).
+The Java adapter field-test observes Apache Kafka at an exact upstream revision. Tree-sitter acquires source facts, the generic ranker narrows them to semantically relevant evidence candidates, and ordinary Chirograph analysis preserves the producer-idempotence documentation-versus-validator drift as a contested failure clause. Candidate ranking does not infer clause stance or authority.
+
+See [`adapters/pydantic/README.md`](adapters/pydantic/README.md) and [`adapters/java/README.md`](adapters/java/README.md).
 
 ## Development
 

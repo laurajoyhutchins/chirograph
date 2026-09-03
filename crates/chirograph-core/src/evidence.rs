@@ -432,6 +432,7 @@ fn invalid_value(field: &str, value: &str) -> EvidenceError {
 
 fn parse_facet(value: &str) -> Result<ContractFacet, EvidenceError> {
     match value {
+        "structural" => Ok(ContractFacet::Structural),
         "executable" => Ok(ContractFacet::Executable),
         "semantic" => Ok(ContractFacet::Semantic),
         "failure" => Ok(ContractFacet::Failure),
@@ -444,6 +445,7 @@ fn parse_facet(value: &str) -> Result<ContractFacet, EvidenceError> {
 
 const fn facet_name(value: ContractFacet) -> &'static str {
     match value {
+        ContractFacet::Structural => "structural",
         ContractFacet::Executable => "executable",
         ContractFacet::Semantic => "semantic",
         ContractFacet::Failure => "failure",

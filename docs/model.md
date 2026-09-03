@@ -31,8 +31,9 @@ The durable concepts are:
 
 ## Contract facets
 
-A logical contract can span six facets:
+A logical contract can span seven facets:
 
+- **Structural** — shape, fields, types, constraints, and representation-level schema meaning.
 - **Executable** — invocation surface, accepted inputs, outputs, environment, and observable process/API behavior.
 - **Semantic** — what state or meaning the operation establishes.
 - **Failure** — failure classes and what can safely be concluded after each failure.

@@ -154,9 +154,9 @@ fn validate_fixture_bytes(root: &Path, files: &[FixtureFileV1]) -> Result<(), Co
             )));
         }
         let relative = normalized_relative(root, &path)?;
-        let declared_file = declared.get(relative.as_str()).ok_or_else(|| {
-            CorpusError::invalid(format!("undeclared fixture file: {relative}"))
-        })?;
+        let declared_file = declared
+            .get(relative.as_str())
+            .ok_or_else(|| CorpusError::invalid(format!("undeclared fixture file: {relative}")))?;
         let bytes = fs::read(&path)
             .map_err(|error| CorpusError::invalid(format!("{}: {error}", path.display())))?;
         let digest = format!("{:x}", Sha256::digest(&bytes));
@@ -186,9 +186,9 @@ fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, CorpusError> {
 
 fn collect_fixture_files(root: &Path, output: &mut Vec<PathBuf>) -> Result<(), CorpusError> {
     for entry in read_dir_sorted(root)? {
-        let file_type = entry
-            .file_type()
-            .map_err(|error| CorpusError::invalid(format!("{}: {error}", entry.path().display())))?;
+        let file_type = entry.file_type().map_err(|error| {
+            CorpusError::invalid(format!("{}: {error}", entry.path().display()))
+        })?;
         if file_type.is_symlink() {
             return Err(CorpusError::invalid(format!(
                 "fixture symlinks are not allowed: {}",
@@ -212,9 +212,9 @@ fn collect_fixture_files(root: &Path, output: &mut Vec<PathBuf>) -> Result<(), C
 fn directory_children(root: &Path, allowed_files: &[&str]) -> Result<Vec<PathBuf>, CorpusError> {
     let mut output = Vec::new();
     for entry in read_dir_sorted(root)? {
-        let file_type = entry
-            .file_type()
-            .map_err(|error| CorpusError::invalid(format!("{}: {error}", entry.path().display())))?;
+        let file_type = entry.file_type().map_err(|error| {
+            CorpusError::invalid(format!("{}: {error}", entry.path().display()))
+        })?;
         if file_type.is_dir() {
             output.push(entry.path());
             continue;
@@ -245,7 +245,10 @@ fn read_dir_sorted(root: &Path) -> Result<Vec<fs::DirEntry>, CorpusError> {
 
 fn normalized_relative(root: &Path, path: &Path) -> Result<String, CorpusError> {
     let relative = path.strip_prefix(root).map_err(|_| {
-        CorpusError::invalid(format!("fixture path escapes case root: {}", path.display()))
+        CorpusError::invalid(format!(
+            "fixture path escapes case root: {}",
+            path.display()
+        ))
     })?;
     let mut components = Vec::new();
     for component in relative.components() {

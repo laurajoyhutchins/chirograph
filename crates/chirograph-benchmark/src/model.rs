@@ -275,12 +275,14 @@ pub fn validate_golden(value: &GoldenV1) -> Result<(), BenchmarkModelError> {
     for representation in &value.representations {
         require_identifier(&representation.id, "representation.id")?;
         require_identifier(&representation.locator, "representation.locator")?;
-        let contract = contracts.get(representation.contract.as_str()).ok_or_else(|| {
-            BenchmarkModelError::invalid(format!(
-                "unknown representation contract: {}",
-                representation.contract
-            ))
-        })?;
+        let contract = contracts
+            .get(representation.contract.as_str())
+            .ok_or_else(|| {
+                BenchmarkModelError::invalid(format!(
+                    "unknown representation contract: {}",
+                    representation.contract
+                ))
+            })?;
         if !REPRESENTATION_KINDS.contains(&representation.kind.as_str()) {
             return Err(BenchmarkModelError::invalid(format!(
                 "unsupported representation kind: {}",
@@ -343,13 +345,16 @@ pub fn validate_golden(value: &GoldenV1) -> Result<(), BenchmarkModelError> {
                     claim.representation
                 ))
             })?;
-        if representation.contract != claim.contract || !contracts.contains_key(claim.contract.as_str()) {
+        if representation.contract != claim.contract
+            || !contracts.contains_key(claim.contract.as_str())
+        {
             return Err(BenchmarkModelError::invalid(format!(
                 "authority contract mismatch for representation {}",
                 claim.representation
             )));
         }
-        if !FACETS.contains(&claim.facet.as_str()) || !representation.facets.contains(&claim.facet) {
+        if !FACETS.contains(&claim.facet.as_str()) || !representation.facets.contains(&claim.facet)
+        {
             return Err(BenchmarkModelError::invalid(format!(
                 "invalid authority facet: {}",
                 claim.facet
@@ -463,7 +468,9 @@ fn validate_relative_path(
     if value.is_empty()
         || value.starts_with('/')
         || value.starts_with('\\')
-        || value.split(['/', '\\']).any(|part| part == ".." || part.is_empty())
+        || value
+            .split(['/', '\\'])
+            .any(|part| part == ".." || part.is_empty())
         || required_prefix.is_some_and(|prefix| !value.starts_with(prefix))
     {
         return Err(BenchmarkModelError::invalid(format!(

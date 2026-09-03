@@ -94,8 +94,16 @@ fn aggregate_scope(scope: String, results: &[&CaseResult]) -> AggregateResult {
 
 fn macro_score(scores: &[&CaseScore]) -> MacroScore {
     MacroScore {
-        contract_precision: average(scores.iter().filter_map(|score| score.contract_precision.ratio)),
-        contract_recall: average(scores.iter().filter_map(|score| score.contract_recall.ratio)),
+        contract_precision: average(
+            scores
+                .iter()
+                .filter_map(|score| score.contract_precision.ratio),
+        ),
+        contract_recall: average(
+            scores
+                .iter()
+                .filter_map(|score| score.contract_recall.ratio),
+        ),
         contract_f1: average(scores.iter().filter_map(|score| score.contract_f1)),
         false_contract_rate: average(
             scores
@@ -166,10 +174,7 @@ fn micro_score(scores: &[&CaseScore]) -> CaseScore {
     }
 }
 
-fn pool_ratio(
-    scores: &[&CaseScore],
-    metric: impl Fn(&CaseScore) -> &RatioCounts,
-) -> RatioCounts {
+fn pool_ratio(scores: &[&CaseScore], metric: impl Fn(&CaseScore) -> &RatioCounts) -> RatioCounts {
     let (numerator, denominator) = scores.iter().fold((0_u64, 0_u64), |totals, score| {
         let value = metric(score);
         (
@@ -196,9 +201,7 @@ fn pool_lifecycle(scores: &[&CaseScore]) -> Option<RatioCounts> {
 }
 
 fn average(values: impl Iterator<Item = f64>) -> Option<f64> {
-    let (sum, count) = values.fold((0.0, 0_u64), |(sum, count), value| {
-        (sum + value, count + 1)
-    });
+    let (sum, count) = values.fold((0.0, 0_u64), |(sum, count), value| (sum + value, count + 1));
     (count != 0).then_some(sum / count as f64)
 }
 

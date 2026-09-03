@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "adapters/java",
     "crates/chirograph-cli",
     "crates/chirograph-core",
 ]

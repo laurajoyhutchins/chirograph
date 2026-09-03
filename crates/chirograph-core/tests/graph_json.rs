@@ -1,12 +1,15 @@
 use chirograph_core::graph_json::encode_graph_json;
 use chirograph_core::model::{
-    AuthorityBasis, AuthorityClaim, ClauseAssertion, ClauseId, ClauseKind, ClauseStance,
-    Contract, ContractClause, ContractFacet, ContractGraph, ContractId, NodeRef, Observation,
-    ObservationId, Relation, RelationKind, Representation, RepresentationId, RepresentationKind,
-    Revision, Source, SourceId, SourceKind,
+    AuthorityBasis, AuthorityClaim, ClauseAssertion, ClauseId, ClauseKind, ClauseStance, Contract,
+    ContractClause, ContractFacet, ContractGraph, ContractId, NodeRef, Observation, ObservationId,
+    Relation, RelationKind, Representation, RepresentationId, RepresentationKind, Revision, Source,
+    SourceId, SourceKind,
 };
 
-fn id<T>(value: &str, constructor: impl FnOnce(String) -> Result<T, chirograph_core::model::IdentifierError>) -> T {
+fn id<T>(
+    value: &str,
+    constructor: impl FnOnce(String) -> Result<T, chirograph_core::model::IdentifierError>,
+) -> T {
     constructor(value.to_owned()).expect("valid test id")
 }
 
@@ -112,7 +115,10 @@ fn encodes_valid_graph_in_canonical_order() {
     assert_eq!(value["representations"][0]["id"], "example.contract.a");
     assert_eq!(value["representations"][1]["id"], "example.contract.b");
     assert_eq!(value["relations"][0]["kind"], "projects");
-    assert_eq!(value["authority_claims"][0]["basis"], "mechanical-enforcement");
+    assert_eq!(
+        value["authority_claims"][0]["basis"],
+        "mechanical-enforcement"
+    );
     assert_eq!(value["clause_assessments"][0]["status"], "contested");
     assert_eq!(value["lifecycle"], serde_json::json!([]));
 }

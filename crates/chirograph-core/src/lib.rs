@@ -2,6 +2,8 @@
 
 //! Language-agnostic core for Chirograph.
 
+pub mod model;
+
 /// Returns the Chirograph core package version.
 #[must_use]
 pub const fn version() -> &'static str {

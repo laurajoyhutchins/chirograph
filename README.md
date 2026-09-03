@@ -2,11 +2,13 @@
 
 Chirograph is a read-only tool for discovering and explaining logical software contracts across heterogeneous codebases: what representations exist, how they relate, and which source appears to govern them.
 
-The project is intentionally at the bootstrap stage. The Rust workspace currently separates the language-agnostic core from the command-line executable without committing to an extractor API or contract model prematurely.
+The core model separates source-backed observations from derived interpretations. Logical contracts can have executable, semantic, failure, concurrency, recovery, and verification facets, with multiple concrete representations connected by evidence-backed relations and authority claims.
+
+See [`docs/model.md`](docs/model.md) for the model and invariants.
 
 ## Workspace
 
-- `crates/chirograph-core` — language-agnostic analysis core
+- `crates/chirograph-core` — language-agnostic contract graph and analysis core
 - `crates/chirograph-cli` — `chirograph` command-line executable
 
 ## Development

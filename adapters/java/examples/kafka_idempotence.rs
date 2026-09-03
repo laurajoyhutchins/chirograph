@@ -26,8 +26,10 @@ fn run() -> Result<String, String> {
     let path = env::args()
         .nth(1)
         .ok_or_else(|| "usage: kafka_idempotence <ProducerConfig.java>".to_owned())?;
-    let source = fs::read_to_string(&path).map_err(|error| format!("cannot read {path}: {error}"))?;
-    let source_id = SourceId::new("kafka.repo").map_err(|error| format!("invalid source id: {error:?}"))?;
+    let source =
+        fs::read_to_string(&path).map_err(|error| format!("cannot read {path}: {error}"))?;
+    let source_id =
+        SourceId::new("kafka.repo").map_err(|error| format!("invalid source id: {error:?}"))?;
     let acquisition = observe_java_source(
         source_id,
         Revision::Exact(KAFKA_REVISION.into()),
@@ -52,13 +54,10 @@ fn run() -> Result<String, String> {
         .position(|fact| {
             fact.kind == JavaFactKind::ConditionalThrow
                 && fact.name.as_deref() == Some("ConfigException")
-                && fact
-                    .condition
-                    .as_deref()
-                    .is_some_and(|condition| {
-                        condition.contains("MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION_FOR_IDEMPOTENCE")
-                            && condition.contains("inFlightConnection")
-                    })
+                && fact.condition.as_deref().is_some_and(|condition| {
+                    condition.contains("MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION_FOR_IDEMPOTENCE")
+                        && condition.contains("inFlightConnection")
+                })
         })
         .ok_or_else(|| "Kafka max-in-flight ConfigException guard was not observed".to_owned())?;
 

@@ -2,6 +2,7 @@
 
 use chirograph_core::model::{Observation, ObservationId, Revision, SourceId};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use std::fmt;
 use tree_sitter::{Node, Parser};
 
@@ -37,6 +38,15 @@ pub struct JavaFact {
 pub struct JavaAcquisition {
     pub facts: Vec<JavaFact>,
     pub observations: Vec<Observation>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JavaEvidenceCandidate {
+    pub fact_index: usize,
+    pub fact: JavaFact,
+    pub observation: Observation,
+    pub matched_terms: Vec<String>,
+    pub score: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -84,6 +94,55 @@ pub fn observe_java_source(
     })
 }
 
+#[must_use]
+pub fn rank_java_evidence(
+    acquisition: &JavaAcquisition,
+    query: &str,
+    allowed_kinds: &[JavaFactKind],
+) -> Vec<JavaEvidenceCandidate> {
+    let query_terms = lexical_terms(query);
+    if query_terms.is_empty() {
+        return Vec::new();
+    }
+
+    let mut candidates = acquisition
+        .facts
+        .iter()
+        .enumerate()
+        .filter(|(_, fact)| allowed_kinds.is_empty() || allowed_kinds.contains(&fact.kind))
+        .map(|(fact_index, fact)| {
+            let mut fact_terms = lexical_terms(&fact.text);
+            if let Some(name) = &fact.name {
+                fact_terms.extend(lexical_terms(name));
+            }
+            if let Some(condition) = &fact.condition {
+                fact_terms.extend(lexical_terms(condition));
+            }
+            let matched_terms = query_terms
+                .intersection(&fact_terms)
+                .cloned()
+                .collect::<Vec<_>>();
+            let score = matched_terms.len() * 100 + fact_kind_weight(fact.kind);
+            JavaEvidenceCandidate {
+                fact_index,
+                fact: fact.clone(),
+                observation: acquisition.observations[fact_index].clone(),
+                matched_terms,
+                score,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    candidates.sort_by(|left, right| {
+        right
+            .score
+            .cmp(&left.score)
+            .then_with(|| right.matched_terms.len().cmp(&left.matched_terms.len()))
+            .then_with(|| left.fact_index.cmp(&right.fact_index))
+    });
+    candidates
+}
+
 pub fn extract_java_facts(path: &str, source: &str) -> Result<Vec<JavaFact>, JavaAdapterError> {
     let mut parser = Parser::new();
     parser
@@ -106,6 +165,81 @@ pub fn extract_java_facts(path: &str, source: &str) -> Result<Vec<JavaFact>, Jav
             .then_with(|| fact_kind_order(left.kind).cmp(&fact_kind_order(right.kind)))
     });
     Ok(facts)
+}
+
+fn lexical_terms(value: &str) -> BTreeSet<String> {
+    let chars = value.chars().collect::<Vec<_>>();
+    let mut terms = BTreeSet::new();
+    let mut current = String::new();
+
+    for (index, character) in chars.iter().copied().enumerate() {
+        if !character.is_ascii_alphanumeric() {
+            insert_term(&mut terms, &mut current);
+            continue;
+        }
+
+        let previous = index.checked_sub(1).and_then(|position| chars.get(position));
+        let next = chars.get(index + 1);
+        let camel_boundary = character.is_ascii_uppercase()
+            && !current.is_empty()
+            && previous.is_some_and(|value| {
+                value.is_ascii_lowercase()
+                    || value.is_ascii_digit()
+                    || (value.is_ascii_uppercase()
+                        && next.is_some_and(|next| next.is_ascii_lowercase()))
+            });
+        if camel_boundary {
+            insert_term(&mut terms, &mut current);
+        }
+        current.push(character.to_ascii_lowercase());
+    }
+    insert_term(&mut terms, &mut current);
+    terms
+}
+
+fn insert_term(terms: &mut BTreeSet<String>, current: &mut String) {
+    if current.is_empty() {
+        return;
+    }
+    let term = std::mem::take(current);
+    if term.len() >= 2 && !is_stop_word(&term) {
+        terms.insert(term);
+    }
+}
+
+fn is_stop_word(term: &str) -> bool {
+    matches!(
+        term,
+        "a" | "an"
+            | "and"
+            | "are"
+            | "as"
+            | "at"
+            | "be"
+            | "by"
+            | "for"
+            | "from"
+            | "in"
+            | "into"
+            | "is"
+            | "of"
+            | "on"
+            | "or"
+            | "per"
+            | "the"
+            | "to"
+            | "with"
+    )
+}
+
+const fn fact_kind_weight(kind: JavaFactKind) -> usize {
+    match kind {
+        JavaFactKind::ConditionalThrow => 50,
+        JavaFactKind::TestAssertion => 40,
+        JavaFactKind::FieldDeclaration => 30,
+        JavaFactKind::Comment => 20,
+        JavaFactKind::MethodInvocation => 10,
+    }
 }
 
 fn observation_id(source_id: &SourceId, fact: &JavaFact) -> ObservationId {

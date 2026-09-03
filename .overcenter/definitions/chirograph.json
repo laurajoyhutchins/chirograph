@@ -37,6 +37,16 @@
       }
     },
     {
+      "id": "establish-foss-release-foundation",
+      "priority": 95,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "release-engineer",
+        "skill": "Prepare Chirograph for a future FOSS release without changing repository visibility. Use Apache-2.0 as the project-wide default license and add the legal/public trust skeleton discussed with the owner: LICENSE, NOTICE when appropriate, CONTRIBUTING.md with DCO sign-off, SECURITY.md covering untrusted-source parsing and execution/network/privacy boundaries, CODE_OF_CONDUCT.md, and machine-readable license/provenance policy suitable for benchmark fixtures and third-party specimens. Update Cargo package metadata to declare Apache-2.0 where publishable. Add concise public docs for concepts, guarantees/epistemic boundaries, evidence model, adapter authoring, and benchmark methodology, reusing and linking existing docs rather than duplicating them. Update README navigation and positioning. Add practical license/provenance validation to CI if it can be done cleanly without embedding specimen-specific logic. Preserve third-party upstream licenses and provenance; do not relicense copied specimens. Keep Chirograph core general-purpose and do not add specimen-specific benchmark code. Run the repository's full formatting/check/test/clippy suite plus any new metadata/license checks. Finish with exact commit/PR/test evidence and do not make the repository public as part of this transition."
+      }
+    },
+    {
       "id": "formalize-contract-clauses",
       "priority": 80,
       "requires": [

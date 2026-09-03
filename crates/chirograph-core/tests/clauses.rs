@@ -100,7 +100,9 @@ fn clause_graph() -> ContractGraph {
 
 #[test]
 fn accepts_clause_with_source_backed_support() {
-    clause_graph().validate().expect("clause graph should be valid");
+    clause_graph()
+        .validate()
+        .expect("clause graph should be valid");
 }
 
 #[test]
@@ -126,7 +128,9 @@ fn assessment_exposes_cross_representation_disagreement() {
         stance: ClauseStance::Contradicts,
         evidence: vec![observation_id("obs-source-old-oid")],
     });
-    graph.validate().expect("contested clause should still be valid evidence");
+    graph
+        .validate()
+        .expect("contested clause should still be valid evidence");
 
     assert_eq!(
         graph.assess_clause(&clause),

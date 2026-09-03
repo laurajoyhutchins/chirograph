@@ -41,12 +41,7 @@ fn preserves_exact_revision_and_source_coordinates() {
 #[test]
 fn malformed_regions_are_reported_without_inventing_clean_parse_state() {
     let language = tree_sitter_rust::LANGUAGE.into();
-    let parsed = parse_utf8(
-        &language,
-        b"fn broken( {",
-        provenance(Revision::Unknown),
-    )
-    .unwrap();
+    let parsed = parse_utf8(&language, b"fn broken( {", provenance(Revision::Unknown)).unwrap();
 
     assert!(!parsed.diagnostics().is_empty());
 }
@@ -91,11 +86,7 @@ fn preorder_is_deterministic() {
 #[test]
 fn invalid_utf8_is_rejected_before_parsing() {
     let language = tree_sitter_rust::LANGUAGE.into();
-    let result = parse_utf8(
-        &language,
-        &[0xff],
-        provenance(Revision::Unknown),
-    );
+    let result = parse_utf8(&language, &[0xff], provenance(Revision::Unknown));
 
     assert!(matches!(result, Err(ParseError::InvalidUtf8(0))));
 }

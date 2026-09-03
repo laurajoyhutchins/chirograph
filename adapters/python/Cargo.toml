@@ -1,0 +1,17 @@
+[package]
+name = "chirograph-python-adapter"
+description = "Tree-sitter-backed Python acquisition adapter for Chirograph"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[[test]]
+name = "acquisition"
+path = "tests/acquisition.rs"
+
+[dependencies]
+chirograph-core = { path = "../../crates/chirograph-core" }
+serde = { version = "1.0", features = ["derive"] }
+tree-sitter = "0.25"
+tree-sitter-python = "0.25"

@@ -10,14 +10,16 @@ See [`docs/model.md`](docs/model.md) for the model and invariants.
 
 - `crates/chirograph-core` — language-agnostic contract graph and analysis core
 - `crates/chirograph-cli` — `chirograph` command-line executable
+- `adapters/python` — generic Tree-sitter-backed Python source acquisition
 - `adapters/overcenter` — adapter for Overcenter's existing contract-evidence catalog
-- `adapters/pydantic` — read-only external specimen proving perspective-sensitive contract analysis
+- `specimens/python_runtime.py` — generic Python executable-observation boundary for specimens
+- `specimens/pydantic` — external specimen proving perspective-sensitive contract analysis over the generic Python boundaries
 
 ## External specimens
 
-The Pydantic specimen observes an exact upstream release revision and feeds public validation, serialization, JSON Schema, annotation, computed-field, and runtime-output observations into ordinary `chirograph-evidence-v1`. It proves that intentionally different validation and serialization perspectives remain consistent while a stale schema contradicting the same validation-input clause becomes contested.
+The Pydantic specimen observes exact Chirograph source and upstream Pydantic revisions. Static Python facts come from the generic Tree-sitter adapter; executable validation, serialization, JSON Schema, computed-field, and runtime-output observations come through the generic Python runtime probe boundary. The specimen proves that intentionally different validation and serialization perspectives remain consistent while a stale schema contradicting the same validation-input clause becomes contested.
 
-See [`adapters/pydantic/README.md`](adapters/pydantic/README.md).
+See [`specimens/pydantic/README.md`](specimens/pydantic/README.md).
 
 ## Development
 

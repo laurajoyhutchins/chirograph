@@ -1,0 +1,84 @@
+{
+  "schema": "chirograph-evidence-v1",
+  "sources": [
+    {
+      "id": "retry.repo",
+      "kind": "repository",
+      "locator": "https://example.invalid/retry-system"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "mutation.retry-safety",
+      "name": "Mutation retry safety",
+      "facets": ["recovery"]
+    }
+  ],
+  "representations": [
+    {
+      "id": "retry.docs",
+      "contract": "mutation.retry-safety",
+      "source": "retry.repo",
+      "kind": "documentation",
+      "locator": "docs/retry.md",
+      "facets": ["recovery"]
+    },
+    {
+      "id": "retry.test",
+      "contract": "mutation.retry-safety",
+      "source": "retry.repo",
+      "kind": "test",
+      "locator": "tests/retry.rs",
+      "facets": ["recovery"]
+    },
+    {
+      "id": "retry.runtime",
+      "contract": "mutation.retry-safety",
+      "source": "retry.repo",
+      "kind": "source_code",
+      "locator": "src/retry.rs",
+      "facets": ["recovery"]
+    }
+  ],
+  "observations": [
+    {
+      "id": "retry.docs.observation",
+      "source": "retry.repo",
+      "revision": { "kind": "exact", "value": "example-rev-1" },
+      "locator": "docs/retry.md",
+      "fact": "documentation says an indeterminate transport failure is reconciled before another mutation attempt"
+    },
+    {
+      "id": "retry.test.observation",
+      "source": "retry.repo",
+      "revision": { "kind": "exact", "value": "example-rev-1" },
+      "locator": "tests/retry.rs",
+      "fact": "test requires reconciliation before retrying an indeterminate mutation"
+    }
+  ],
+  "clauses": [
+    {
+      "id": "retry-after-indeterminate-does-not-duplicate",
+      "contract": "mutation.retry-safety",
+      "facet": "recovery",
+      "kind": "guarantee",
+      "statement": "retry after an indeterminate transport failure does not duplicate the mutation"
+    }
+  ],
+  "clause_assertions": [
+    {
+      "clause": "retry-after-indeterminate-does-not-duplicate",
+      "representation": "retry.docs",
+      "stance": "supports",
+      "evidence": ["retry.docs.observation"]
+    },
+    {
+      "clause": "retry-after-indeterminate-does-not-duplicate",
+      "representation": "retry.test",
+      "stance": "supports",
+      "evidence": ["retry.test.observation"]
+    }
+  ],
+  "relations": [],
+  "authority_claims": []
+}

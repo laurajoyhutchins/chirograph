@@ -29,32 +29,34 @@ fn write_case(root: &Path, extra_file: bool) {
     fs::write(fixture.join("lib.rs"), fixture_bytes).expect("write fixture");
 
     let specimen = format!(
-        "schema: chirograph-benchmark-specimen-v1\n\
-         id: cargo/schema-enum-drift/case-a\n\
-         repository: cargo\n\
-         scenario: schema-enum-drift\n\
-         upstream:\n\
-           repository: rust-lang/cargo\n\
-           revision: 2ceefa0090080354b80cc2f5415039bdb0d2bf0b\n\
-         files:\n\
-           - fixture_path: fixture/src/lib.rs\n\
-             upstream_path: src/lib.rs\n\
-             sha256: {}\n",
+        r#"schema: chirograph-benchmark-specimen-v1
+id: cargo/schema-enum-drift/case-a
+repository: cargo
+scenario: schema-enum-drift
+upstream:
+  repository: rust-lang/cargo
+  revision: 2ceefa0090080354b80cc2f5415039bdb0d2bf0b
+files:
+  - fixture_path: fixture/src/lib.rs
+    upstream_path: src/lib.rs
+    sha256: {}
+"#,
         sha256(fixture_bytes)
     );
     fs::write(case.join("specimen.yaml"), specimen).expect("write specimen");
 
-    let golden = "schema: chirograph-benchmark-golden-v1\n\
-contracts:\n\
-  - id: example.contract\n\
-    facets: [structural]\n\
-representations: []\n\
-authority_claims: []\n\
-relationships: []\n\
-clauses: []\n\
-lifecycle: []\n\
-expected_findings: []\n\
-non_contracts: []\n";
+    let golden = r#"schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: example.contract
+    facets: [structural]
+representations: []
+authority_claims: []
+relationships: []
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []
+"#;
     fs::write(case.join("golden.yaml"), golden).expect("write golden");
 
     if extra_file {
@@ -64,32 +66,34 @@ non_contracts: []\n";
 
 #[test]
 fn parses_strict_typed_benchmark_files() {
-    let specimen = "schema: chirograph-benchmark-specimen-v1\n\
-id: cargo/schema-enum-drift/case-a\n\
-repository: cargo\n\
-scenario: schema-enum-drift\n\
-upstream:\n\
-  repository: rust-lang/cargo\n\
-  revision: 2ceefa0090080354b80cc2f5415039bdb0d2bf0b\n\
-files:\n\
-  - fixture_path: fixture/src/lib.rs\n\
-    upstream_path: src/lib.rs\n\
-    sha256: fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c\n";
+    let specimen = r#"schema: chirograph-benchmark-specimen-v1
+id: cargo/schema-enum-drift/case-a
+repository: cargo
+scenario: schema-enum-drift
+upstream:
+  repository: rust-lang/cargo
+  revision: 2ceefa0090080354b80cc2f5415039bdb0d2bf0b
+files:
+  - fixture_path: fixture/src/lib.rs
+    upstream_path: src/lib.rs
+    sha256: fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c
+"#;
     let parsed = parse_specimen_yaml(specimen).expect("valid specimen");
     assert_eq!(parsed.id, "cargo/schema-enum-drift/case-a");
     assert_eq!(parsed.files.len(), 1);
 
-    let golden = "schema: chirograph-benchmark-golden-v1\n\
-contracts:\n\
-  - id: example.contract\n\
-    facets: [structural]\n\
-representations: []\n\
-authority_claims: []\n\
-relationships: []\n\
-clauses: []\n\
-lifecycle: []\n\
-expected_findings: []\n\
-non_contracts: []\n";
+    let golden = r#"schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: example.contract
+    facets: [structural]
+representations: []
+authority_claims: []
+relationships: []
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []
+"#;
     let parsed = parse_golden_yaml(golden).expect("valid golden");
     assert_eq!(parsed.contracts[0].id, "example.contract");
 }

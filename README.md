@@ -1,8 +1,8 @@
 # Chirograph
 
-Chirograph is a read-only tool for discovering and explaining logical software contracts across heterogeneous codebases: what representations exist, how they relate, and which source appears to govern them.
+Chirograph is a read-only tool for discovering and explaining logical software contracts across heterogeneous codebases: what representations exist, how they relate, where they disagree, and which source appears to govern each part of the contract.
 
-The core model separates source-backed observations from derived interpretations. Logical contracts can have executable, semantic, failure, concurrency, recovery, and verification facets, with multiple concrete representations connected by evidence-backed relations and authority claims.
+The core model separates source-backed observations from derived interpretations. Logical contracts have executable, semantic, failure, concurrency, recovery, and verification facets. Atomic contract clauses can be supported or contradicted by concrete representations, letting Chirograph expose contract drift without choosing truth by file count or heuristic consensus.
 
 See [`docs/model.md`](docs/model.md) for the model and invariants.
 

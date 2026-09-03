@@ -35,6 +35,7 @@ id_type!(ContractId);
 id_type!(RepresentationId);
 id_type!(SourceId);
 id_type!(ObservationId);
+id_type!(ClauseId);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ContractFacet {
@@ -156,12 +157,58 @@ pub struct AuthorityClaim {
     pub evidence: Vec<ObservationId>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ClauseKind {
+    Requirement,
+    Guarantee,
+    Invariant,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContractClause {
+    pub id: ClauseId,
+    pub contract: ContractId,
+    pub facet: ContractFacet,
+    pub kind: ClauseKind,
+    pub statement: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ClauseStance {
+    Supports,
+    Contradicts,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClauseAssertion {
+    pub clause: ClauseId,
+    pub representation: RepresentationId,
+    pub stance: ClauseStance,
+    pub evidence: Vec<ObservationId>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ClauseStatus {
+    Consistent,
+    Contested,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClauseAssessment {
+    pub clause: ClauseId,
+    pub status: ClauseStatus,
+    pub supporting_representations: Vec<RepresentationId>,
+    pub contradicting_representations: Vec<RepresentationId>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ContractGraph {
     pub sources: Vec<Source>,
     pub contracts: Vec<Contract>,
     pub representations: Vec<Representation>,
     pub observations: Vec<Observation>,
+    pub clauses: Vec<ContractClause>,
+    pub clause_assertions: Vec<ClauseAssertion>,
     pub relations: Vec<Relation>,
     pub authority_claims: Vec<AuthorityClaim>,
 }
@@ -172,11 +219,33 @@ pub enum ModelError {
     DuplicateContract(ContractId),
     DuplicateRepresentation(RepresentationId),
     DuplicateObservation(ObservationId),
+    DuplicateClause(ClauseId),
     UnknownSource(SourceId),
     UnknownContract(ContractId),
     UnknownRepresentation(RepresentationId),
     UnknownObservation(ObservationId),
+    UnknownClause(ClauseId),
     InvalidExactRevision(ObservationId),
+    InvalidClauseStatement(ClauseId),
+    ClauseFacetOutsideContract {
+        clause: ClauseId,
+        contract: ContractId,
+        facet: ContractFacet,
+    },
+    ClauseAssertionContractMismatch {
+        clause: ClauseId,
+        representation: RepresentationId,
+    },
+    ClauseFacetNotRepresented {
+        clause: ClauseId,
+        representation: RepresentationId,
+        facet: ContractFacet,
+    },
+    ClauseAssertionEvidenceRequired {
+        clause: ClauseId,
+        representation: RepresentationId,
+    },
+    ClauseSupportRequired(ClauseId),
     RepresentationFacetOutsideContract {
         representation: RepresentationId,
         contract: ContractId,
@@ -223,6 +292,10 @@ impl ContractGraph {
                 .map(|observation| observation.id.clone()),
             ModelError::DuplicateObservation,
         )?;
+        let clause_ids = unique_ids(
+            self.clauses.iter().map(|clause| clause.id.clone()),
+            ModelError::DuplicateClause,
+        )?;
 
         for representation in &self.representations {
             if !source_ids.contains(&representation.source) {
@@ -255,6 +328,77 @@ impl ContractGraph {
                 && (revision.is_empty() || revision.trim() != revision)
             {
                 return Err(ModelError::InvalidExactRevision(observation.id.clone()));
+            }
+        }
+
+        for clause in &self.clauses {
+            if !contract_ids.contains(&clause.contract) {
+                return Err(ModelError::UnknownContract(clause.contract.clone()));
+            }
+            if clause.statement.is_empty() || clause.statement.trim() != clause.statement {
+                return Err(ModelError::InvalidClauseStatement(clause.id.clone()));
+            }
+            let contract = self
+                .contracts
+                .iter()
+                .find(|contract| contract.id == clause.contract)
+                .expect("known contract id must resolve");
+            if !contract.facets.contains(&clause.facet) {
+                return Err(ModelError::ClauseFacetOutsideContract {
+                    clause: clause.id.clone(),
+                    contract: clause.contract.clone(),
+                    facet: clause.facet,
+                });
+            }
+        }
+
+        for assertion in &self.clause_assertions {
+            if !clause_ids.contains(&assertion.clause) {
+                return Err(ModelError::UnknownClause(assertion.clause.clone()));
+            }
+            if !representation_ids.contains(&assertion.representation) {
+                return Err(ModelError::UnknownRepresentation(
+                    assertion.representation.clone(),
+                ));
+            }
+            let clause = self
+                .clauses
+                .iter()
+                .find(|clause| clause.id == assertion.clause)
+                .expect("known clause id must resolve");
+            let representation = self
+                .representations
+                .iter()
+                .find(|representation| representation.id == assertion.representation)
+                .expect("known representation id must resolve");
+            if representation.contract != clause.contract {
+                return Err(ModelError::ClauseAssertionContractMismatch {
+                    clause: clause.id.clone(),
+                    representation: representation.id.clone(),
+                });
+            }
+            if !representation.facets.contains(&clause.facet) {
+                return Err(ModelError::ClauseFacetNotRepresented {
+                    clause: clause.id.clone(),
+                    representation: representation.id.clone(),
+                    facet: clause.facet,
+                });
+            }
+            if assertion.evidence.is_empty() {
+                return Err(ModelError::ClauseAssertionEvidenceRequired {
+                    clause: clause.id.clone(),
+                    representation: representation.id.clone(),
+                });
+            }
+            validate_observations(&assertion.evidence, &observation_ids)?;
+        }
+
+        for clause in &self.clauses {
+            let supported = self.clause_assertions.iter().any(|assertion| {
+                assertion.clause == clause.id && assertion.stance == ClauseStance::Supports
+            });
+            if !supported {
+                return Err(ModelError::ClauseSupportRequired(clause.id.clone()));
             }
         }
 
@@ -306,6 +450,42 @@ impl ContractGraph {
         }
 
         Ok(())
+    }
+
+    pub fn assess_clause(&self, clause_id: &ClauseId) -> Result<ClauseAssessment, ModelError> {
+        self.validate()?;
+        if !self.clauses.iter().any(|clause| &clause.id == clause_id) {
+            return Err(ModelError::UnknownClause(clause_id.clone()));
+        }
+
+        let mut supporting = BTreeSet::new();
+        let mut contradicting = BTreeSet::new();
+        for assertion in self
+            .clause_assertions
+            .iter()
+            .filter(|assertion| &assertion.clause == clause_id)
+        {
+            match assertion.stance {
+                ClauseStance::Supports => {
+                    supporting.insert(assertion.representation.clone());
+                }
+                ClauseStance::Contradicts => {
+                    contradicting.insert(assertion.representation.clone());
+                }
+            }
+        }
+
+        let status = if contradicting.is_empty() {
+            ClauseStatus::Consistent
+        } else {
+            ClauseStatus::Contested
+        };
+        Ok(ClauseAssessment {
+            clause: clause_id.clone(),
+            status,
+            supporting_representations: supporting.into_iter().collect(),
+            contradicting_representations: contradicting.into_iter().collect(),
+        })
     }
 }
 
@@ -403,6 +583,8 @@ mod tests {
                 locator: "update-ref help".into(),
                 fact: "old object id acts as an expected-current-value precondition".into(),
             }],
+            clauses: vec![],
+            clause_assertions: vec![],
             relations: vec![Relation {
                 from: NodeRef::Representation(representation.clone()),
                 to: NodeRef::Contract(contract.clone()),

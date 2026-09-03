@@ -64,7 +64,10 @@ fn scores_perfect_missing_false_and_zero_contract_emission() {
     expected.contracts = vec![contract("contract.a"), contract("contract.b")];
 
     let mut actual = observed();
-    actual.contracts = vec![observed_contract("contract.a"), observed_contract("contract.b")];
+    actual.contracts = vec![
+        observed_contract("contract.a"),
+        observed_contract("contract.b"),
+    ];
     let perfect = score_case(&expected, &actual);
     assert_eq!(perfect.contract_precision.ratio, Some(1.0));
     assert_eq!(perfect.contract_recall.ratio, Some(1.0));
@@ -72,7 +75,10 @@ fn scores_perfect_missing_false_and_zero_contract_emission() {
     assert_eq!(perfect.false_contract_rate.ratio, Some(0.0));
     assert_eq!(perfect.contract_inflation, 1.0);
 
-    actual.contracts = vec![observed_contract("contract.a"), observed_contract("contract.false")];
+    actual.contracts = vec![
+        observed_contract("contract.a"),
+        observed_contract("contract.false"),
+    ];
     let mixed = score_case(&expected, &actual);
     assert_eq!(mixed.contract_precision.ratio, Some(0.5));
     assert_eq!(mixed.contract_recall.ratio, Some(0.5));
@@ -98,7 +104,11 @@ fn scores_authority_and_relationships_by_exact_typed_identity() {
         contract: "contract.a".to_owned(),
         kind: "schema".to_owned(),
         locator: "schema.json".to_owned(),
-        facets: vec!["structural".to_owned(), "semantic".to_owned(), "verification".to_owned()],
+        facets: vec![
+            "structural".to_owned(),
+            "semantic".to_owned(),
+            "verification".to_owned(),
+        ],
     }];
     for facet in ["structural", "semantic", "verification"] {
         expected.authority_claims.push(GoldenAuthorityClaimV1 {
@@ -181,7 +191,10 @@ fn scores_lifecycle_findings_and_known_negative_diagnostics() {
     }];
 
     let mut actual = observed();
-    actual.contracts = vec![observed_contract("contract.a"), observed_contract("contract.false")];
+    actual.contracts = vec![
+        observed_contract("contract.a"),
+        observed_contract("contract.false"),
+    ];
     actual.representations = vec![GraphRepresentationV1 {
         id: "rep.false".to_owned(),
         contract: "contract.false".to_owned(),
@@ -213,7 +226,11 @@ fn scores_lifecycle_findings_and_known_negative_diagnostics() {
 
     let unavailable = score_case(&expected, &actual);
     assert_eq!(unavailable.lifecycle_correctness, None);
-    assert!(unavailable.diagnostics.contains(&"lifecycle_not_observed".to_owned()));
+    assert!(
+        unavailable
+            .diagnostics
+            .contains(&"lifecycle_not_observed".to_owned())
+    );
     assert_eq!(unavailable.finding_precision.ratio, Some(0.5));
     assert_eq!(unavailable.finding_recall.ratio, Some(1.0));
     assert!(

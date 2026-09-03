@@ -83,6 +83,28 @@
       }
     },
     {
+      "id": "implement-python-tree-sitter-adapter",
+      "priority": 88,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Implement a generic Python acquisition adapter for Chirograph using tree-sitter-python in the Rust workspace. Keep parsing language-aware and framework-agnostic. Provide deterministic provenance-rich Python facts/observations for a narrow useful v0 covering module/class/function declarations, annotated assignments and type expressions, decorators and decorator arguments, calls, returns/raises/conditionals, comments/docstrings where safely associable, and test assertions where useful. Preserve exact byte/source locations and exact repository revision provenance. Emit or support ordinary chirograph-evidence-v1 without adding Python concepts to chirograph-core. Use TDD, add adapter documentation and CI coverage, and do not depend on a CPython runtime merely to parse source."
+      }
+    },
+    {
+      "id": "migrate-pydantic-to-python-specimen",
+      "priority": 87,
+      "requires": [
+        "implement-python-tree-sitter-adapter"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Retire adapters/pydantic as bespoke production extraction machinery and turn Pydantic into a specimen exercising generic Chirograph capabilities. Replace its hard-coded static source observations with the generic tree-sitter Python adapter. Preserve genuinely executable Pydantic evidence such as model_validate, model_json_schema validation/serialization perspectives, model_dump, and exact runtime/package revision evidence through a generic Python/runtime probe boundary rather than Pydantic-specific core concepts. Keep the stale validation-schema contradiction fixture and preserve the same perspective-sensitive CONTESTED behavior. Prefer deleting bespoke Pydantic code over reproducing it elsewhere. Add equivalence/regression tests, update docs/layout, run full CI, and finish with exact commit/PR/CI evidence."
+      }
+    },
+    {
       "id": "prove-cross-representation-drift",
       "priority": 40,
       "requires": [

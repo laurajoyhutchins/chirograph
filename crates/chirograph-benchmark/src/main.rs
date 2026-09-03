@@ -66,14 +66,7 @@ fn run(args: impl IntoIterator<Item = String>) -> Result<(), String> {
             }
             Ok(())
         }
-        Command::Run(options) => {
-            let cases = discover()?;
-            let selected = select_cases(&cases, &options.selector).map_err(|error| error.to_string())?;
-            for case in selected {
-                println!("{}", case.id);
-            }
-            Ok(())
-        }
+        Command::Run(options) => run_selection(options),
         Command::VerifySources { selector } => Err(format!(
             "source verification for selector {selector:?} is added by the source-maintenance task"
         )),
@@ -81,6 +74,46 @@ fn run(args: impl IntoIterator<Item = String>) -> Result<(), String> {
             "source refresh for selector {selector:?} at revision {revision} is added by the source-maintenance task"
         )),
     }
+}
+
+fn run_selection(options: RunOptions) -> Result<(), String> {
+    if let Some(path) = &options.baseline {
+        return Err(format!(
+            "baseline comparison at {} is added by the baseline task",
+            path.display()
+        ));
+    }
+    if let Some(path) = &options.write_baseline {
+        return Err(format!(
+            "baseline writing at {} is added by the baseline task",
+            path.display()
+        ));
+    }
+    if let Some(path) = &options.chirograph_bin {
+        return Err(format!(
+            "product execution with {} is added by the runner task",
+            path.display()
+        ));
+    }
+
+    let cases = discover()?;
+    let selected =
+        select_cases(&cases, &options.selector).map_err(|error| error.to_string())?;
+    match options.format {
+        OutputFormat::Human => {
+            for case in selected {
+                println!("{}", case.id);
+            }
+        }
+        OutputFormat::Json => {
+            let ids = selected.iter().map(|case| case.id.as_str()).collect::<Vec<_>>();
+            println!(
+                "{}",
+                serde_json::to_string(&ids).map_err(|error| error.to_string())?
+            );
+        }
+    }
+    Ok(())
 }
 
 fn discover() -> Result<Vec<chirograph_benchmark::model::BenchmarkCase>, String> {

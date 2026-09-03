@@ -1,0 +1,16 @@
+[package]
+name = "chirograph-tree-sitter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+chirograph-core = { path = "../chirograph-core" }
+tree-sitter = "=0.26.13"
+
+[dev-dependencies]
+tree-sitter-rust = "=0.24.2"
+
+[lints.rust]
+unsafe_code = "forbid"

@@ -1,0 +1,14 @@
+[package]
+name = "chirograph-cli"
+description = "Command-line interface for Chirograph"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "chirograph"
+path = "src/main.rs"
+
+[dependencies]
+chirograph-core = { path = "../chirograph-core" }

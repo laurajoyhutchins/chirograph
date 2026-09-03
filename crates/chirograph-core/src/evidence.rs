@@ -376,11 +376,7 @@ impl EvidenceDocumentV1 {
                     from: node_ref_wire(&relation.from),
                     to: node_ref_wire(&relation.to),
                     kind: relation_kind_name(relation.kind).into(),
-                    basis: relation
-                        .basis
-                        .iter()
-                        .map(|id| id.as_str().into())
-                        .collect(),
+                    basis: relation.basis.iter().map(|id| id.as_str().into()).collect(),
                 })
                 .collect(),
             authority_claims: graph
@@ -391,11 +387,7 @@ impl EvidenceDocumentV1 {
                     representation: claim.representation.as_str().into(),
                     facet: facet_name(claim.facet).into(),
                     basis: authority_basis_name(claim.basis).into(),
-                    evidence: claim
-                        .evidence
-                        .iter()
-                        .map(|id| id.as_str().into())
-                        .collect(),
+                    evidence: claim.evidence.iter().map(|id| id.as_str().into()).collect(),
                 })
                 .collect(),
         }
@@ -602,9 +594,7 @@ const fn authority_basis_name(value: AuthorityBasis) -> &'static str {
 fn parse_node_ref(value: NodeRefWire) -> Result<NodeRef, EvidenceError> {
     match value {
         NodeRefWire::Contract { id } => Ok(NodeRef::Contract(contract_id(id)?)),
-        NodeRefWire::Representation { id } => {
-            Ok(NodeRef::Representation(representation_id(id)?))
-        }
+        NodeRefWire::Representation { id } => Ok(NodeRef::Representation(representation_id(id)?)),
     }
 }
 

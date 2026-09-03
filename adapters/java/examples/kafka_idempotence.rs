@@ -1,5 +1,7 @@
 use chirograph_core::model::{Revision, SourceId};
-use chirograph_java_adapter::{JavaFactKind, observe_java_source};
+use chirograph_java_adapter::{
+    JavaEvidenceCandidate, JavaFactKind, observe_java_source, rank_java_evidence,
+};
 use serde_json::json;
 use std::env;
 use std::fs;
@@ -38,31 +40,30 @@ fn run() -> Result<String, String> {
     )
     .map_err(|error| error.to_string())?;
 
-    let doc_index = acquisition
-        .facts
-        .iter()
-        .position(|fact| {
-            fact.kind == JavaFactKind::FieldDeclaration
-                && fact.name.as_deref() == Some("ENABLE_IDEMPOTENCE_DOC")
-                && fact.text.contains("not explicitly enabled")
-                && fact.text.contains("ConfigException")
-        })
-        .ok_or_else(|| "Kafka idempotence documentation declaration was not observed".to_owned())?;
-    let validator_index = acquisition
-        .facts
-        .iter()
-        .position(|fact| {
-            fact.kind == JavaFactKind::ConditionalThrow
-                && fact.name.as_deref() == Some("ConfigException")
-                && fact.condition.as_deref().is_some_and(|condition| {
-                    condition.contains("MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION_FOR_IDEMPOTENCE")
-                        && condition.contains("inFlightConnection")
-                })
-        })
-        .ok_or_else(|| "Kafka max-in-flight ConfigException guard was not observed".to_owned())?;
+    let documentation_candidates = rank_java_evidence(
+        &acquisition,
+        "idempotence conflicting configurations explicitly enabled disabled exception",
+        &[JavaFactKind::FieldDeclaration],
+    );
+    let validator_candidates = rank_java_evidence(
+        &acquisition,
+        "idempotent producer max flight at most current value exception",
+        &[JavaFactKind::ConditionalThrow],
+    );
 
-    let doc = &acquisition.observations[doc_index];
-    let validator = &acquisition.observations[validator_index];
+    let doc = best_candidate(
+        &documentation_candidates,
+        4,
+        "Kafka idempotence documentation evidence",
+    )?;
+    let validator = best_candidate(
+        &validator_candidates,
+        4,
+        "Kafka max-in-flight validator evidence",
+    )?;
+    let doc = &doc.observation;
+    let validator = &validator.observation;
+
     let evidence = json!({
         "schema": "chirograph-evidence-v1",
         "sources": [
@@ -149,4 +150,22 @@ fn run() -> Result<String, String> {
     });
 
     serde_json::to_string_pretty(&evidence).map_err(|error| error.to_string())
+}
+
+fn best_candidate<'a>(
+    candidates: &'a [JavaEvidenceCandidate],
+    minimum_matches: usize,
+    description: &str,
+) -> Result<&'a JavaEvidenceCandidate, String> {
+    let candidate = candidates
+        .first()
+        .ok_or_else(|| format!("no {description} candidates were observed"))?;
+    if candidate.matched_terms.len() < minimum_matches {
+        return Err(format!(
+            "top {description} candidate matched only {} semantic terms: {:?}",
+            candidate.matched_terms.len(),
+            candidate.matched_terms
+        ));
+    }
+    Ok(candidate)
 }

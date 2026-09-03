@@ -57,12 +57,8 @@ pub fn score_case(golden: &GoldenV1, observed: &GraphJsonV1) -> CaseScore {
         .iter()
         .map(|contract| contract.id.as_str())
         .collect::<BTreeSet<_>>();
-    let matched_contracts = golden_contracts
-        .intersection(&observed_contracts)
-        .count() as u64;
-    let false_contracts = observed_contracts
-        .difference(&golden_contracts)
-        .count() as u64;
+    let matched_contracts = golden_contracts.intersection(&observed_contracts).count() as u64;
+    let false_contracts = observed_contracts.difference(&golden_contracts).count() as u64;
 
     let contract_precision = ratio(matched_contracts, observed_contracts.len() as u64);
     let contract_recall = ratio(matched_contracts, golden_contracts.len() as u64);
@@ -92,9 +88,7 @@ pub fn score_case(golden: &GoldenV1, observed: &GraphJsonV1) -> CaseScore {
             )
         })
         .collect::<BTreeSet<_>>();
-    let authority_matches = golden_authority
-        .intersection(&observed_authority)
-        .count() as u64;
+    let authority_matches = golden_authority.intersection(&observed_authority).count() as u64;
     let authority_correctness = ratio(authority_matches, golden_authority.len() as u64);
 
     let golden_relations = golden
@@ -107,9 +101,7 @@ pub fn score_case(golden: &GoldenV1, observed: &GraphJsonV1) -> CaseScore {
         .iter()
         .map(|relation| relation_key(&relation.from, &relation.kind, &relation.to))
         .collect::<BTreeSet<_>>();
-    let relation_matches = golden_relations
-        .intersection(&observed_relations)
-        .count() as u64;
+    let relation_matches = golden_relations.intersection(&observed_relations).count() as u64;
     let relationship_precision = ratio(relation_matches, observed_relations.len() as u64);
     let relationship_recall = ratio(relation_matches, golden_relations.len() as u64);
 
@@ -126,20 +118,13 @@ pub fn score_case(golden: &GoldenV1, observed: &GraphJsonV1) -> CaseScore {
         .filter(|assessment| assessment.status == "contested")
         .map(|assessment| assessment.clause.as_str())
         .collect::<BTreeSet<_>>();
-    let finding_matches = golden_findings
-        .intersection(&observed_findings)
-        .count() as u64;
+    let finding_matches = golden_findings.intersection(&observed_findings).count() as u64;
     let finding_precision = ratio(finding_matches, observed_findings.len() as u64);
     let finding_recall = ratio(finding_matches, golden_findings.len() as u64);
 
     let mut diagnostics = Vec::new();
     let lifecycle_correctness = lifecycle_score(golden, observed, &mut diagnostics);
-    known_negative_diagnostics(
-        golden,
-        observed,
-        &golden_contracts,
-        &mut diagnostics,
-    );
+    known_negative_diagnostics(golden, observed, &golden_contracts, &mut diagnostics);
     diagnostics.sort();
     diagnostics.dedup();
 
@@ -182,9 +167,7 @@ fn lifecycle_score(
         .iter()
         .map(|fact| lifecycle_key(&fact.subject, &fact.status))
         .collect::<BTreeSet<_>>();
-    let matches = golden_lifecycle
-        .intersection(&observed_lifecycle)
-        .count() as u64;
+    let matches = golden_lifecycle.intersection(&observed_lifecycle).count() as u64;
     Some(ratio(matches, golden_lifecycle.len() as u64))
 }
 
@@ -224,10 +207,7 @@ fn relation_key<'a>(
     )
 }
 
-fn lifecycle_key<'a>(
-    subject: &'a GraphNodeRefV1,
-    status: &'a str,
-) -> (&'a str, &'a str, &'a str) {
+fn lifecycle_key<'a>(subject: &'a GraphNodeRefV1, status: &'a str) -> (&'a str, &'a str, &'a str) {
     (subject.kind.as_str(), subject.id.as_str(), status)
 }
 

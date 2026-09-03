@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/laurajoyhutchins/chirograph/raw/main/benchmarks/provenance.schema.json",
+  "title": "Chirograph benchmark provenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "specimen",
+    "case",
+    "phenomenon",
+    "materialization",
+    "source",
+    "files"
+  ],
+  "properties": {
+    "schema": {
+      "const": "chirograph-benchmark-provenance-v1"
+    },
+    "specimen": {
+      "type": "string",
+      "minLength": 1
+    },
+    "case": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phenomenon": {
+      "type": "string",
+      "minLength": 1
+    },
+    "materialization": {
+      "enum": ["bundled", "reference-only", "generated"]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "revision", "license"],
+      "properties": {
+        "origin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SPDX license expression for the referenced material"
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_path", "sha256"],
+        "properties": {
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fixture_path": {
+            "type": ["string", "null"]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "license": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional SPDX override when this file differs from source.license"
+          }
+        }
+      }
+    }
+  }
+}

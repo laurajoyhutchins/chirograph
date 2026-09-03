@@ -28,13 +28,13 @@ chirograph/
 
 Do not create a second root-level `specimens/` hierarchy for benchmark cases. Curated evaluation cases, their source fixtures, provenance, configuration, and golden truth all belong under `benchmark/`.
 
-The benchmark corpus is data-only. It contains no repository-specific executable code, handwritten extractors, framework adapters, or semantic glue.
+The benchmark corpus is data-only. Verbatim source code under `fixture/` is inert benchmark input, not benchmark implementation. The corpus contains no repository-specific executable glue, handwritten extractors, framework adapters, semantic hooks, or scripts that are executed to make a case pass.
 
 ## Architectural invariant: no benchmark cheat codes
 
 A benchmark case may configure existing public Chirograph capabilities, but it may not teach Chirograph how a repository works.
 
-The corpus must not contain code such as:
+The corpus must not contain benchmark implementation such as:
 
 - a Pydantic-specific observer;
 - a Kafka symbol map;
@@ -85,6 +85,8 @@ benchmark/
         └── <case>/
 ```
 
+The angle-bracket names above are notation for structural slots, not unresolved design placeholders.
+
 The initial corpus must establish all eight repositories and scenarios, with at least one manually reviewed case in each.
 
 A case directory contains only benchmark data:
@@ -97,7 +99,7 @@ A case directory contains only benchmark data:
     └── <verbatim upstream files>
 ```
 
-`repository`, `scenario`, and canonical case `id` are first-class benchmark dimensions. If they are repeated in `specimen.yaml`, the runner must validate that they agree exactly with the directory path so there is only one effective identity.
+`repository`, `scenario`, and canonical case `id` are first-class benchmark dimensions. `specimen.yaml` records all three, and the runner validates that they agree exactly with the directory path so there is only one effective identity.
 
 The canonical case ID is the path relative to `benchmark/`, for example:
 
@@ -114,6 +116,8 @@ Do not hand-reduce files to toy excerpts. Reduction can accidentally remove cont
 Each case should include the smallest useful set of complete upstream files, but every included file must preserve its upstream bytes exactly.
 
 Ordinary benchmark execution is hermetic and offline. The benchmark does not clone or fetch upstream repositories while scoring.
+
+Static benchmark v1 never executes fixture source code. Source files under `fixture/` are analyzed as bytes only.
 
 ## Provenance
 
@@ -136,6 +140,8 @@ files:
     sha256: <digest of verbatim fixture bytes>
 ```
 
+The angle-bracket values in this schema example describe required value classes. Every real specimen contains concrete values.
+
 The exact pinned revision and per-file digest are required facts, not documentation hints.
 
 The three authorities remain separate:
@@ -157,11 +163,13 @@ cargo benchmark --verify-sources
 cargo benchmark --refresh <selector>
 ```
 
-`--verify-sources` checks that vendored fixture bytes match the paths at the pinned upstream revision.
+`--verify-sources` checks that vendored fixture bytes match the declared upstream paths at the pinned upstream revision.
 
-`--refresh` fetches source from an explicitly selected exact upstream revision and updates fixture bytes and provenance metadata. It must never silently rewrite `golden.yaml`.
+`--refresh` refetches the revision already declared in `specimen.yaml` and rewrites fixture bytes plus digests to match it exactly. Changing the pinned upstream revision is a separate explicit edit to `specimen.yaml` before refresh.
 
-Changing golden truth is always a separate human-reviewed change.
+Refresh must never rewrite `golden.yaml` or `benchmark/baseline.yaml` automatically.
+
+Changing golden truth or accepted benchmark baselines is always a separate human-reviewed change.
 
 Runtime retrieval from a real remote repository can later become a Chirograph demo or end-to-end integration feature. That demo answers a different question: whether Chirograph can find and reconstruct the same contract situation starting from a live repository. It must not contaminate the hermetic semantic benchmark.
 
@@ -177,15 +185,15 @@ Until then, inability to establish a runtime-only truth is a legitimate benchmar
 
 ## Public analysis boundary
 
-The benchmark must exercise the same public analysis path a normal user would exercise.
+The benchmark exercises the same public analysis path a normal user exercises.
 
-Target product interface:
+The v1 product interface is:
 
 ```text
 chirograph analyze <source-tree> --format graph-json
 ```
 
-The exact command spelling may evolve during implementation, but the architectural requirement does not: the benchmark runner receives a canonical final Chirograph graph from a public general analysis entry point.
+`graph-json` is the canonical machine-readable final graph consumed by the benchmark scorer. It must be deterministic for identical source bytes, configuration, and Chirograph version.
 
 The benchmark runner must not privately orchestrate language adapters, invoke repository-specific commands, or assemble semantic evidence itself.
 
@@ -193,10 +201,10 @@ The benchmark runner must not privately orchestrate language adapters, invoke re
 verbatim fixture
       |
       v
-public Chirograph analysis
+chirograph analyze
       |
       v
-canonical final graph
+canonical graph-json
       |
       v
 benchmark scorer
@@ -205,7 +213,7 @@ benchmark scorer
 golden.yaml
 ```
 
-If a supported case cannot be processed through the public analysis boundary, that is a product capability gap.
+If a supported case cannot be processed through this public analysis boundary, that is a product capability gap.
 
 ## Adapter boundary
 
@@ -229,7 +237,7 @@ Repository-specific acceptance success must arise from general acquisition plus 
 
 ## Benchmark tooling boundary
 
-Create a small executable benchmark tool as ordinary repository code, conceptually a workspace crate such as:
+Create the workspace crate:
 
 ```text
 crates/chirograph-benchmark/
@@ -239,8 +247,8 @@ It owns only evaluation mechanics:
 
 - corpus discovery and validation;
 - selector resolution;
-- invoking the public Chirograph analysis boundary;
-- parsing canonical graph output;
+- invoking `chirograph analyze`;
+- parsing canonical `graph-json` output;
 - golden comparison;
 - metric calculation;
 - aggregation;
@@ -254,9 +262,16 @@ It does not own product contract semantics or repository-specific interpretation
 
 ## Developer interface
 
-The official developer interface should not require raw benchmark paths.
+The official developer interface does not require raw benchmark paths.
 
-Use a Cargo alias backed by the benchmark executable so common invocations are concise:
+Add a root `.cargo/config.toml` alias equivalent to:
+
+```toml
+[alias]
+benchmark = "run -p chirograph-benchmark --"
+```
+
+Common invocations are:
 
 ```text
 cargo benchmark all
@@ -297,7 +312,7 @@ Adding more Cargo cases does not require a new invocation style, and adding the 
 
 `golden.yaml` describes semantic truth, not syntax inventory.
 
-It should use Chirograph's own logical vocabulary wherever that vocabulary exists rather than inventing a parallel benchmark ontology.
+It uses Chirograph's own logical vocabulary wherever that vocabulary exists rather than inventing a parallel benchmark ontology.
 
 Conceptually:
 
@@ -324,15 +339,17 @@ contracts:
       status: active
 
     clauses:
-      - ...
+      - <concrete clause truth>
 
     expected_findings:
-      - ...
+      - <concrete expected finding>
 
 non_contracts:
-  - source: ...
+  - source: <concrete source locator>
     reason: implementation-detail
 ```
+
+The angle-bracket values here specify required concrete data, not open design decisions.
 
 `non_contracts` is benchmark-only evaluation truth. It exists specifically to test whether Chirograph incorrectly promotes ordinary implementation structure into logical contracts.
 
@@ -352,7 +369,7 @@ observed logical ID
       +-- no golden match       -> false contract
 ```
 
-If Chirograph cannot reconstruct the same logical identity deterministically, the benchmark should expose that defect instead of hiding it behind approximate matching.
+If Chirograph cannot reconstruct the same logical identity deterministically, the benchmark exposes that defect instead of hiding it behind approximate matching.
 
 Every emitted logical contract that cannot be matched to golden truth counts as false by default.
 
@@ -392,11 +409,15 @@ contract inflation:     20x
 
 A 92% recall result in this situation is not success.
 
+For any metric whose denominator is zero, report `null` rather than manufacturing a perfect score or emitting NaN. Macro aggregation excludes null values for that metric. Micro aggregation uses pooled counts and applies the same zero-denominator rule.
+
 ### Authority correctness
 
 Score authority per contract facet.
 
 Different representations may legitimately govern different facets of one logical contract. A contract with three scored authority facets and two correct authorities receives 2/3 authority correctness rather than one all-or-nothing result.
+
+If a golden case contains no authority expectation for a facet, that facet is not included in the authority denominator.
 
 ### Relationship correctness
 
@@ -412,15 +433,19 @@ Report relationship precision and relationship recall.
 
 ### Lifecycle correctness
 
-Compare lifecycle classifications against golden truth using Chirograph's stable lifecycle vocabulary once available.
+Compare lifecycle classifications against explicit lifecycle truth in `golden.yaml`.
 
 Finding both an old and new representation is insufficient when the benchmark truth says one is deprecated, compatibility-only, historical, generated, superseded, or otherwise not equivalent in current authority.
+
+If the current Chirograph canonical output has no lifecycle representation for a case with lifecycle truth, the lifecycle metric is `unsupported`, not silently zero or omitted. The checked-in baseline records that status until a general lifecycle capability exists.
 
 ### Finding correctness
 
 Score findings independently from graph reconstruction.
 
 Report finding precision and finding recall.
+
+If the current Chirograph canonical output has no findings representation for a case with expected findings, findings are `unsupported` and recorded as such in the baseline.
 
 This separation is important because Chirograph may reconstruct the relevant contracts correctly while falsely announcing drift between intentional perspectives, or may identify a real inconsistency while missing other graph structure.
 
@@ -432,7 +457,7 @@ It is not an analyzer-selected exemption from false-contract scoring. Every unma
 
 When human review later determines that an unmatched discovery is genuinely contractual but exposes a gap in Chirograph's current ontology or golden corpus, that adjudication is recorded in benchmark truth. Corpus history can then report the rate at which unmatched discoveries were later promoted as real.
 
-This metric therefore measures taxonomy/corpus incompleteness without allowing current runs to self-certify surprising output.
+This is a review/adjudication metric, not a per-run escape hatch. It measures taxonomy/corpus incompleteness without allowing current runs to self-certify surprising output.
 
 ## No composite score in v1
 
@@ -474,30 +499,46 @@ Repository and scenario aggregation must both be first-class so failures can be 
 
 ## CI policy
 
-Initial CI should gate regressions, not aspirational thresholds.
+Initial CI gates regressions, not aspirational thresholds.
 
 Do not begin with rules such as "contract F1 must be at least 0.90" across a corpus deliberately chosen to expose missing capabilities.
 
-Instead, check in an explicit benchmark baseline containing each case's current execution status and score vector. CI compares current results to that baseline.
+Check in:
+
+```text
+benchmark/baseline.yaml
+```
+
+It contains each case's current execution status and score vector. CI compares current results to that reviewed baseline.
 
 The important first invariant is:
 
 > A change may not silently make Chirograph worse on known benchmark truth.
 
-Examples:
+Regression direction is explicit:
 
-- a scored case becoming an execution failure is a regression;
-- a metric falling below its checked-in baseline is a regression unless the golden corpus intentionally changed;
-- a previously unsupported case becoming executable and scored is an improvement;
-- increasing expected truth through human-reviewed golden changes may legitimately lower raw scores and must update the reviewed baseline explicitly.
+- contract precision, recall, and F1 must not decrease;
+- authority correctness must not decrease;
+- relationship precision and recall must not decrease;
+- lifecycle correctness must not decrease once supported;
+- finding precision and recall must not decrease once supported;
+- false contract rate must not increase;
+- a scored or supported metric becoming `unsupported` is a regression;
+- a scored case becoming an execution or invalid-output failure is a regression.
+
+Contract inflation ratio is a headline diagnostic but is not independently direction-gated because ratios below and above 1.0 represent different failure modes already captured by recall, precision, and false-contract metrics.
+
+A previously unsupported case or metric becoming supported is an improvement. A current execution failure becoming a valid scored result is an improvement.
+
+Increasing expected truth through human-reviewed golden changes may legitimately lower raw scores and must update `benchmark/baseline.yaml` explicitly in the same reviewed change.
 
 As capabilities mature, individual case baselines ratchet upward.
 
-The baseline is evaluation data, never inferred from a failing run and silently accepted.
+The baseline is evaluation data. It is never inferred from a failing run and silently accepted.
 
 ## Failure semantics
 
-Distinguish three failure classes:
+Distinguish three analysis outcome classes:
 
 ```text
 case cannot run
@@ -510,9 +551,9 @@ case runs and graph is valid but differs from golden truth
   -> scored semantic mismatch
 ```
 
-These must remain distinct in human-readable and machine-readable output.
+These remain distinct in human-readable and machine-readable output.
 
-Malformed benchmark data is a fourth class: corpus-validation failure. Scoring must not proceed when benchmark truth or provenance is internally inconsistent.
+Malformed benchmark data is a fourth class: corpus-validation failure. Scoring does not proceed when benchmark truth or provenance is internally inconsistent.
 
 ## Corpus self-validation
 
@@ -524,10 +565,12 @@ Before analysis, validate mechanically:
 - exact upstream revision shape;
 - every declared fixture exists;
 - every fixture has a digest;
+- every file under `fixture/` is declared in `specimen.yaml`;
 - no undeclared fixture bytes influence analysis;
 - golden references are internally consistent;
 - golden IDs are unique within their required scope;
-- no executable files or specimen-specific source code exist under `benchmark/`;
+- no benchmark-executed code, custom hooks, or specimen-specific scripts exist outside `fixture/`;
+- fixture code is treated as inert source input and never executed by static v1;
 - selectors resolve deterministically;
 - baseline entries refer only to existing cases.
 
@@ -545,11 +588,12 @@ Use tiny synthetic canonical graphs and golden truths to cover:
 - missing contracts;
 - extra false contracts;
 - zero-emission cases;
+- zero-denominator metric behavior;
 - authority partial correctness by facet;
 - wrong relationship kind;
 - missing and extra relationships;
-- lifecycle mismatch;
-- finding false positives and false negatives;
+- lifecycle mismatch and unsupported lifecycle;
+- finding false positives, false negatives, and unsupported findings;
 - inflation calculations;
 - macro versus micro aggregation;
 - malformed golden data;
@@ -564,7 +608,8 @@ Require deterministic rejection of:
 - metadata/path disagreement;
 - malformed upstream revisions;
 - missing fixture digests;
-- executable code in the benchmark corpus;
+- undeclared fixture files;
+- case-specific executable hooks or scripts outside `fixture/`;
 - broken golden references;
 - ambiguous selectors.
 
@@ -589,7 +634,7 @@ The first benchmark version establishes these eight repository/scenario pairs:
 
 Each initial scenario gets at least one concrete case with verbatim source, exact revision provenance, explicit non-contract truth where useful, and a manually reviewed golden graph.
 
-The purpose of this set is not repository popularity. Each case should exercise a different way a contract analyzer can be wrong.
+The purpose of this set is not repository popularity. Each case exercises a different way a contract analyzer can be wrong.
 
 ## Demo boundary
 
@@ -624,6 +669,7 @@ Benchmark v1 does not attempt:
 - live upstream retrieval during ordinary scoring;
 - repository-specific executable benchmark code;
 - framework-specific runtime probes;
+- execution of fixture source code;
 - exhaustive repository coverage;
 - exhaustive parser coverage;
 - fuzzy logical-contract identity matching;
@@ -636,17 +682,18 @@ Benchmark v1 does not attempt:
 
 The design is successful when:
 
-1. `benchmark/` is a data-only in-repository corpus with no specimen-specific code.
+1. `benchmark/` is a data-only in-repository corpus with no specimen-specific benchmark implementation.
 2. All eight initial repository/scenario pairs have at least one reviewed case.
 3. Fixture files are verbatim, exact-revision pinned, digest-verified upstream bytes.
 4. Ordinary benchmark scoring is offline and deterministic.
-5. The benchmark invokes a public general Chirograph analysis path rather than wiring adapters privately.
-6. The scorer evaluates the final reconstructed graph, not acquisition volume.
-7. Unmatched emitted contracts count as false until humans change benchmark truth.
-8. False contract rate and contract inflation are visible headline metrics alongside precision and recall.
-9. Authority, typed relationships, lifecycle, and findings are scored independently.
-10. Repository and scenario selectors work independently and aggregate cleanly.
-11. Macro aggregation is the headline corpus view, with micro aggregation available as a diagnostic.
-12. CI fails on benchmark regressions while allowing known unsupported cases to remain visible and ratchet upward over time.
-13. Fixture source verification/refresh can contact upstream explicitly without altering golden truth automatically.
-14. Improving a benchmark case requires improving a general Chirograph capability or correcting human-reviewed truth, never adding bespoke benchmark glue.
+5. Static v1 treats fixture source as inert bytes and never executes it.
+6. The benchmark invokes `chirograph analyze <source-tree> --format graph-json` rather than wiring adapters privately.
+7. The scorer lives in `crates/chirograph-benchmark` and evaluates the final reconstructed graph, not acquisition volume.
+8. Unmatched emitted contracts count as false until humans change benchmark truth.
+9. False contract rate and contract inflation are visible headline metrics alongside precision and recall.
+10. Authority, typed relationships, lifecycle, and findings are scored independently.
+11. Repository and scenario selectors work independently and aggregate cleanly.
+12. Macro aggregation is the headline corpus view, with micro aggregation available as a diagnostic.
+13. CI fails on benchmark regressions while allowing known unsupported cases or metrics to remain visible and ratchet upward over time.
+14. Fixture source verification/refresh can contact upstream explicitly without altering golden truth or baselines automatically.
+15. Improving a benchmark case requires improving a general Chirograph capability or correcting human-reviewed truth, never adding bespoke benchmark glue.

@@ -93,6 +93,28 @@
       }
     },
     {
+      "id": "implement-rust-tree-sitter-adapter",
+      "priority": 94,
+      "requires": [
+        "implement-tree-sitter-substrate"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Implement Task 2 of docs/superpowers/plans/2026-09-03-tree-sitter-rust-cargo-slice.md using TDD. Build the generic chirograph-rust adapter on the shared Tree-sitter substrate, emitting deterministic provenance-rich source-local Rust facts only. Do not add Cargo-specific symbols, clause stances, macro expansion, name resolution, trait solving, or cross-file inference. Run the plan's exact verification commands and finish with exact commit and test evidence."
+      }
+    },
+    {
+      "id": "implement-tree-sitter-substrate",
+      "priority": 96,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Implement Task 1 of docs/superpowers/plans/2026-09-03-tree-sitter-rust-cargo-slice.md using TDD. Add the shared chirograph-tree-sitter Rust crate for caller-supplied source bytes/provenance, exact spans, deterministic traversal, and parse diagnostics. Keep chirograph-core Tree-sitter-free and language-agnostic. Perform no network, Git, or repository discovery inside the substrate. Run the plan's exact verification commands and finish with exact commit and test evidence."
+      }
+    },
+    {
       "id": "migrate-pydantic-to-python-specimen",
       "priority": 87,
       "requires": [
@@ -126,6 +148,18 @@
         "kind": "agent",
         "role": "contract-analysis-engineer",
         "skill": "Extend the generic Tree-sitter Java adapter with a small deterministic evidence-candidate layer. Do not infer clause truth or supports/contradicts stances. Given language-level Java facts plus a semantic query, mechanically tokenize and normalize identifiers/text, rank facts by relevant term overlap and useful fact kind, and return provenance-preserving candidate observations for higher-level Chirograph or agent judgment. Keep project-specific concepts out of chirograph-core and adapters/java. Update the Kafka idempotence acceptance specimen so it discovers the documentation and validator evidence through the generic candidate layer rather than hard-coded Kafka symbol/condition names, while still producing ordinary chirograph-evidence-v1 and the same CONTESTED clause. Use TDD, add generic ranking tests including false-positive resistance, keep exact revision/source locations, run full CI, and finish with exact commit/PR/CI evidence."
+      }
+    },
+    {
+      "id": "validate-cargo-rust-specimen",
+      "priority": 92,
+      "requires": [
+        "implement-rust-tree-sitter-adapter"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Implement Task 3 of docs/superpowers/plans/2026-09-03-tree-sitter-rust-cargo-slice.md. Add benchmarks/cargo/schema-enum-drift using exact Cargo revision 2ceefa0090080354b80cc2f5415039bdb0d2bf0b and the two pinned SHA-256 fixture digests documented in the plan. Acquire the Rust side through the generic adapter, parse the generated schema through serde_json, keep Cargo-specific stance mapping in the benchmark layer, and require ordinary chirograph-evidence-v1 to assess the clause CONTESTED. Runtime source retrieval is not part of benchmark scoring. Run the full repository verification suite and finish with exact revision/hash/test/commit evidence."
       }
     },
     {

@@ -10,10 +10,13 @@ See [`docs/model.md`](docs/model.md) for the model and invariants.
 
 - `crates/chirograph-core` — language-agnostic contract graph and analysis core
 - `crates/chirograph-cli` — `chirograph` command-line executable
+- `adapters/java` — Tree-sitter-backed Java syntax acquisition into provenance-rich Chirograph observations
 - `adapters/overcenter` — adapter for Overcenter's existing contract-evidence catalog
 - `adapters/pydantic` — read-only external specimen proving perspective-sensitive contract analysis
 
 ## External specimens
+
+The Java adapter includes a Kafka producer-idempotence specimen pinned to an exact upstream commit. CI parses Kafka's real `ProducerConfig.java` with Tree-sitter, emits ordinary `chirograph-evidence-v1`, and verifies that Chirograph preserves the documentation-versus-validator fallback disagreement as contested. See [`adapters/java/README.md`](adapters/java/README.md).
 
 The Pydantic specimen observes an exact upstream release revision and feeds public validation, serialization, JSON Schema, annotation, computed-field, and runtime-output observations into ordinary `chirograph-evidence-v1`. It proves that intentionally different validation and serialization perspectives remain consistent while a stale schema contradicting the same validation-input clause becomes contested.
 

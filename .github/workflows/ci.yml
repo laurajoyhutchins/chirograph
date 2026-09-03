@@ -37,5 +37,5 @@ jobs:
           cargo run --quiet -p chirograph-cli -- inspect /tmp/overcenter-evidence.json
       - name: Install pinned Pydantic specimen
         run: python -m pip install 'pydantic @ git+https://github.com/pydantic/pydantic.git@001dea020e0809844e5b17666432c9135a976f46'
-      - name: Test Pydantic perspective adapter
-        run: python -m unittest adapters/pydantic/test_adapter.py -v
+      - name: Test Pydantic specimen
+        run: python -m unittest specimens/pydantic/test_specimen.py -v

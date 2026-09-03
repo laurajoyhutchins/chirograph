@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use chirograph_benchmark::model::{
-    BenchmarkCase, GoldenV1, SpecimenV1, UpstreamV1, GOLDEN_SCHEMA, SPECIMEN_SCHEMA,
+    BenchmarkCase, GOLDEN_SCHEMA, GoldenV1, SPECIMEN_SCHEMA, SpecimenV1, UpstreamV1,
 };
 use chirograph_benchmark::selector::select_cases;
 
@@ -46,9 +46,21 @@ fn ids(cases: Vec<&BenchmarkCase>) -> Vec<&str> {
 
 fn fixture_cases() -> Vec<BenchmarkCase> {
     vec![
-        case("kafka/message-spec-generation/case-b", "kafka", "message-spec-generation"),
-        case("cargo/schema-enum-drift/case-b", "cargo", "schema-enum-drift"),
-        case("cargo/schema-enum-drift/case-a", "cargo", "schema-enum-drift"),
+        case(
+            "kafka/message-spec-generation/case-b",
+            "kafka",
+            "message-spec-generation",
+        ),
+        case(
+            "cargo/schema-enum-drift/case-b",
+            "cargo",
+            "schema-enum-drift",
+        ),
+        case(
+            "cargo/schema-enum-drift/case-a",
+            "cargo",
+            "schema-enum-drift",
+        ),
     ]
 }
 

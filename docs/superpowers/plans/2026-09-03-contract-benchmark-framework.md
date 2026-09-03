@@ -36,7 +36,7 @@
 
 **Interfaces:**
 - Consumes: deployed Overcenter `project.inspect` and `project.amend` semantic commands.
-- Produces: authoritative Chirograph project transitions for benchmark implementation; removes the superseded Cargo benchmark transition before execution can claim it.
+- Produces: authoritative Chirograph project transitions for Tasks 2-16; removes the superseded Cargo benchmark transition before execution can claim it.
 
 - [ ] **Step 1: Re-read the live Overcenter contracts**
 
@@ -61,26 +61,92 @@ Record the returned exact `authority_revision`. Do not reuse the planning-time r
 
 At the exact revision from Step 2, remove the future `validate-cargo-rust-specimen` transition because it encodes the now-rejected plural `benchmarks/` layout and Cargo-specific stance mapping.
 
-Upsert these semantic transitions (each executor uses the Superpowers TDD plan in this file; do not encode branch/run/lease bookkeeping):
+The `upsert_transitions` array must be exactly these semantic transitions (all executor skill strings refer to this committed plan; no branch/run/lease bookkeeping is encoded):
 
 ```json
 [
-  {"id":"implement-benchmark-graph-json","priority":93,"requires":[]},
-  {"id":"implement-contract-benchmark-framework","priority":92,"requires":["implement-benchmark-graph-json"]},
-  {"id":"curate-benchmark-cargo","priority":86,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"curate-benchmark-kafka","priority":85,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"curate-benchmark-kubernetes","priority":84,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"curate-benchmark-pydantic","priority":83,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"curate-benchmark-rails","priority":82,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"curate-benchmark-envoy","priority":81,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"curate-benchmark-arrow","priority":80,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"curate-benchmark-temporal","priority":79,"requires":["implement-contract-benchmark-framework"]},
-  {"id":"establish-contract-benchmark-baseline","priority":75,"requires":["curate-benchmark-cargo","curate-benchmark-kafka","curate-benchmark-kubernetes","curate-benchmark-pydantic","curate-benchmark-rails","curate-benchmark-envoy","curate-benchmark-arrow","curate-benchmark-temporal"]},
-  {"id":"wire-contract-benchmark-ci","priority":74,"requires":["establish-contract-benchmark-baseline"]}
+  {
+    "id":"implement-benchmark-graph-json","priority":93,"requires":[],
+    "executor":{"kind":"agent","role":"implementation","skill":"Use superpowers:test-driven-development. Implement Task 2 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md exactly, including focused tests and the canonical chirograph-graph-v1 projection. Preserve a language-agnostic chirograph-core."}
+  },
+  {
+    "id":"implement-benchmark-corpus-model","priority":92,"requires":["implement-benchmark-graph-json"],
+    "executor":{"kind":"agent","role":"implementation","skill":"Use superpowers:test-driven-development. Implement Task 3 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md exactly. Keep benchmark/ data-only and validation fail-closed."}
+  },
+  {
+    "id":"implement-benchmark-selectors","priority":91,"requires":["implement-benchmark-corpus-model"],
+    "executor":{"kind":"agent","role":"implementation","skill":"Use superpowers:test-driven-development. Implement Task 4 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md exactly, including the cargo benchmark alias and multidimensional selectors."}
+  },
+  {
+    "id":"implement-benchmark-scoring","priority":90,"requires":["implement-benchmark-selectors"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Use superpowers:test-driven-development. Implement Task 5 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md exactly. Use strict identity, fail-closed false contracts, and the approved metric vector; add no composite score."}
+  },
+  {
+    "id":"implement-benchmark-runner","priority":89,"requires":["implement-benchmark-scoring"],
+    "executor":{"kind":"agent","role":"implementation","skill":"Use superpowers:test-driven-development. Implement Task 6 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md exactly. Invoke only the public chirograph analyze boundary and preserve execution-failure versus invalid-output versus scored semantics."}
+  },
+  {
+    "id":"implement-benchmark-source-maintenance","priority":88,"requires":["implement-benchmark-runner"],
+    "executor":{"kind":"agent","role":"implementation","skill":"Use superpowers:test-driven-development. Implement Task 7 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md exactly. Normal scoring must remain offline; only explicit exact-revision maintenance may use Git/network access."}
+  },
+  {
+    "id":"curate-benchmark-cargo","priority":86,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 8 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Curate only data/provenance/golden truth; add no Cargo-specific benchmark code."}
+  },
+  {
+    "id":"curate-benchmark-kafka","priority":85,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 9 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Curate only data/provenance/golden truth; add no Kafka-specific benchmark code."}
+  },
+  {
+    "id":"curate-benchmark-kubernetes","priority":84,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 10 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Preserve complete verbatim generated files and keep golden truth narrow around Pod."}
+  },
+  {
+    "id":"curate-benchmark-pydantic","priority":83,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 11 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Keep v1 static and add no Pydantic-specific runtime probe."}
+  },
+  {
+    "id":"curate-benchmark-rails","priority":82,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 12 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Preserve database/schema/migration authority semantics without repository-specific code."}
+  },
+  {
+    "id":"curate-benchmark-envoy","priority":81,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 13 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Preserve v2 FROZEN versus v3 ACTIVE lifecycle truth."}
+  },
+  {
+    "id":"curate-benchmark-arrow","priority":80,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 14 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Curate the exact pinned Arrow monorepo manifestations only; do not invent a Java fixture absent from that revision."}
+  },
+  {
+    "id":"curate-benchmark-temporal","priority":79,"requires":["implement-benchmark-source-maintenance"],
+    "executor":{"kind":"agent","role":"contract-analysis-engineer","skill":"Implement Task 15 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md. Preserve multi-dialect truth without choosing a fake global dialect authority."}
+  },
+  {
+    "id":"establish-contract-benchmark-baseline","priority":75,
+    "requires":["curate-benchmark-cargo","curate-benchmark-kafka","curate-benchmark-kubernetes","curate-benchmark-pydantic","curate-benchmark-rails","curate-benchmark-envoy","curate-benchmark-arrow","curate-benchmark-temporal"],
+    "executor":{"kind":"agent","role":"verification","skill":"Use superpowers:test-driven-development. Implement Task 16 baseline behavior of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md, generate a reviewed eight-case baseline, and preserve honest execution failures."}
+  },
+  {
+    "id":"wire-contract-benchmark-ci","priority":74,"requires":["establish-contract-benchmark-baseline"],
+    "executor":{"kind":"agent","role":"verification","skill":"Finish Task 16 of docs/superpowers/plans/2026-09-03-contract-benchmark-framework.md: wire hermetic CI, benchmark methodology docs, full repository verification, and exact evidence."}
+  }
 ]
 ```
 
-Supply complete executor objects accepted by the live Overcenter project-definition contract, with role `implementation` or `contract-analysis-engineer` and skill text pointing to the exact task(s) in this plan. Preserve any already-confirmed transition meanings; do not rewrite confirmed transitions in place.
+Invoke `project.amend` with:
+
+```json
+{
+  "project_ref": "github:laurajoyhutchins/chirograph",
+  "expected_revision": "the exact authority_revision returned by Step 2",
+  "amendment": {
+    "remove_transition_ids": ["validate-cargo-rust-specimen"],
+    "upsert_transitions": "the exact array above"
+  }
+}
+```
+
+The quoted descriptions in this request mean literal runtime substitution of the Step 2 revision and the exact array above, not values committed to repository source. If the live contract rejects removal because the transition became confirmed, stop and recompute a non-destructive superseding graph amendment rather than rewriting confirmed meaning.
 
 - [ ] **Step 4: Read back authoritative graph**
 
@@ -168,7 +234,19 @@ pub struct GraphLifecycleV1 {
 
 Core conversion emits `lifecycle: Vec::new()` until Chirograph gains a real lifecycle model. It must never synthesize lifecycle labels from filenames/comments merely to satisfy benchmarks.
 
-Add explicit conversion functions for every current enum string so Rust enum names are not the wire contract. Sort every list deterministically by stable IDs/typed edge tuples.
+Wire strings are exact kebab-case values:
+
+```text
+facets: structural, executable, semantic, failure, concurrency, recovery, verification
+representation kinds: executable-surface, source-code, schema, type-definition, validator, test, documentation, configuration, generated-artifact, other
+relations: defines, implements, documents, validates, generates, projects, equivalent-to, conflicts-with, depends-on
+authority basis: explicit-declaration, mechanical-enforcement, observed-behavior, documentation, inference
+clause kinds: requirement, guarantee, invariant
+clause status: consistent, contested
+node kinds: contract, representation
+```
+
+Sort every list deterministically by stable IDs/typed edge tuples.
 
 - [ ] **Step 4: Compute clause assessments mechanically**
 
@@ -205,7 +283,7 @@ git commit -m "feat: add canonical contract graph json"
 
 **Interfaces:**
 - Consumes: `chirograph_core::graph_json::{GraphJsonV1, GraphNodeRefV1}`.
-- Produces: `SpecimenV1`, `GoldenV1`, `BenchmarkCase`, `discover_corpus(root: &Path) -> Result<Vec<BenchmarkCase>, CorpusError>`.
+- Produces: exact benchmark types below and `discover_corpus(root: &Path) -> Result<Vec<BenchmarkCase>, CorpusError>`.
 
 - [ ] **Step 1: Add the crate and dependencies**
 
@@ -220,9 +298,60 @@ yaml_serde = "0.10.7"
 sha2 = "0.10"
 ```
 
-- [ ] **Step 2: Write failing typed-format tests**
+- [ ] **Step 2: Define the exact typed benchmark model and write red parsing tests**
 
-Parse this exact specimen in a test:
+Implement these field contracts (all file-backed structs derive `Serialize`, `Deserialize`, and `#[serde(deny_unknown_fields)]` where applicable):
+
+```rust
+pub struct SpecimenV1 {
+    pub schema: String,
+    pub id: String,
+    pub repository: String,
+    pub scenario: String,
+    pub upstream: UpstreamV1,
+    pub files: Vec<FixtureFileV1>,
+}
+
+pub struct UpstreamV1 { pub repository: String, pub revision: String }
+pub struct FixtureFileV1 { pub fixture_path: String, pub upstream_path: String, pub sha256: String }
+
+pub struct GoldenV1 {
+    pub schema: String,
+    pub contracts: Vec<GoldenContractV1>,
+    pub representations: Vec<GoldenRepresentationV1>,
+    pub authority_claims: Vec<GoldenAuthorityClaimV1>,
+    pub relationships: Vec<GoldenRelationshipV1>,
+    pub clauses: Vec<GoldenClauseV1>,
+    pub lifecycle: Vec<GoldenLifecycleV1>,
+    pub expected_findings: Vec<GoldenFindingV1>,
+    pub non_contracts: Vec<GoldenNonContractV1>,
+}
+
+pub struct GoldenContractV1 { pub id: String, pub facets: Vec<String> }
+pub struct GoldenRepresentationV1 { pub id: String, pub contract: String, pub kind: String, pub locator: String, pub facets: Vec<String> }
+pub struct GoldenAuthorityClaimV1 { pub contract: String, pub facet: String, pub representation: String, pub basis: String }
+pub struct GoldenRelationshipV1 { pub from: GraphNodeRefV1, pub kind: String, pub to: GraphNodeRefV1 }
+pub struct GoldenClauseV1 { pub id: String, pub contract: String, pub facet: String, pub kind: String, pub statement: String }
+pub struct GoldenLifecycleV1 { pub subject: GraphNodeRefV1, pub status: String }
+pub struct GoldenNonContractV1 { pub locator: String, pub reason: String }
+
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum GoldenFindingV1 { ContestedClause { clause: String } }
+
+pub struct BenchmarkCase {
+    pub id: String,
+    pub repository: String,
+    pub scenario: String,
+    pub root: PathBuf,
+    pub fixture_dir: PathBuf,
+    pub specimen_path: PathBuf,
+    pub golden_path: PathBuf,
+    pub specimen: SpecimenV1,
+    pub golden: GoldenV1,
+}
+```
+
+Parse this specimen in the red test:
 
 ```yaml
 schema: chirograph-benchmark-specimen-v1
@@ -238,24 +367,6 @@ files:
     sha256: fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c
 ```
 
-Golden structs must support:
-
-```rust
-pub struct GoldenV1 {
-    pub schema: String,
-    pub contracts: Vec<GoldenContractV1>,
-    pub representations: Vec<GoldenRepresentationV1>,
-    pub authority_claims: Vec<GoldenAuthorityClaimV1>,
-    pub relationships: Vec<GoldenRelationshipV1>,
-    pub clauses: Vec<GoldenClauseV1>,
-    pub lifecycle: Vec<GoldenLifecycleV1>,
-    pub expected_findings: Vec<GoldenFindingV1>,
-    pub non_contracts: Vec<GoldenNonContractV1>,
-}
-```
-
-Use `#[serde(deny_unknown_fields)]` on benchmark-file structs so typos fail closed.
-
 - [ ] **Step 3: Run and confirm red**
 
 ```sh
@@ -266,45 +377,11 @@ Expected: FAIL because the crate/types do not exist.
 
 - [ ] **Step 4: Implement strict model validation**
 
-Require:
-
-- schema names exactly `chirograph-benchmark-specimen-v1` / `chirograph-benchmark-golden-v1`;
-- non-empty IDs;
-- exact 40-hex revision;
-- exact 64-hex SHA-256;
-- no duplicate contract/representation/clause IDs;
-- all authority/relationship/clause/lifecycle/finding references resolve;
-- at least one golden contract per case.
-
-`GoldenFindingV1` v1 supports only:
-
-```rust
-#[serde(tag = "kind", rename_all = "kebab-case")]
-pub enum GoldenFindingV1 {
-    ContestedClause { clause: String },
-}
-```
-
-`GoldenNonContractV1` is:
-
-```rust
-pub struct GoldenNonContractV1 {
-    pub locator: String,
-    pub reason: String,
-}
-```
+Require schema names exactly `chirograph-benchmark-specimen-v1` / `chirograph-benchmark-golden-v1`; non-empty IDs; exact 40-hex revision; exact 64-hex SHA-256; no duplicate contract/representation/clause IDs; all authority/relationship/clause/lifecycle/finding references resolve; and at least one golden contract.
 
 - [ ] **Step 5: Write failing fixed-layout discovery tests**
 
-Create temporary cases under exactly:
-
-```text
-benchmark/<repository>/<scenario>/<case>/
-```
-
-Assert rejection for metadata/path disagreement, undeclared fixture bytes, missing fixture bytes, local SHA mismatch, path traversal, and executable benchmark glue next to `specimen.yaml`/`golden.yaml`.
-
-Source files of any extension are legal under `fixture/`.
+Create temporary cases under exactly `benchmark/<repository>/<scenario>/<case>/`. Assert rejection for metadata/path disagreement, undeclared fixture bytes, missing fixture bytes, local SHA mismatch, path traversal, and executable benchmark glue next to `specimen.yaml`/`golden.yaml`. Source files of any extension are legal under `fixture/`.
 
 - [ ] **Step 6: Implement fixed-depth discovery/local digest verification**
 
@@ -336,21 +413,11 @@ git commit -m "feat: add benchmark corpus model"
 
 **Interfaces:**
 - Consumes: `Vec<BenchmarkCase>` from Task 3.
-- Produces: `select_cases(cases: &[BenchmarkCase], selector: &str) -> Result<Vec<BenchmarkCase>, SelectorError>` and CLI selectors.
+- Produces: `select_cases(cases: &[BenchmarkCase], selector: &str) -> Result<Vec<&BenchmarkCase>, SelectorError>` and CLI selectors.
 
 - [ ] **Step 1: Write failing selector tests**
 
-For three synthetic cases, assert exact selection for:
-
-```text
-all
-cargo
-scenario:schema-enum-drift
-cargo/schema-enum-drift
-cargo/schema-enum-drift/case-a
-```
-
-Unknown/zero-match selectors must error.
+For three synthetic cases, assert exact selection for `all`, `cargo`, `scenario:schema-enum-drift`, `cargo/schema-enum-drift`, and `cargo/schema-enum-drift/case-a`. Unknown/zero-match selectors must error.
 
 - [ ] **Step 2: Run red test**
 
@@ -372,16 +439,16 @@ Support exactly:
 chirograph-benchmark --help
 chirograph-benchmark --list
 chirograph-benchmark all
-chirograph-benchmark <selector>
-chirograph-benchmark --verify-sources [selector]
-chirograph-benchmark --refresh <selector> --revision <40-hex-sha>
-chirograph-benchmark <selector> --baseline benchmark/baseline.json
-chirograph-benchmark <selector> --write-baseline benchmark/baseline.json
-chirograph-benchmark <selector> --chirograph-bin <path>
-chirograph-benchmark <selector> --format json
+chirograph-benchmark SELECTOR
+chirograph-benchmark --verify-sources [SELECTOR]
+chirograph-benchmark --refresh SELECTOR --revision EXACT_SHA
+chirograph-benchmark SELECTOR --baseline benchmark/baseline.json
+chirograph-benchmark SELECTOR --write-baseline benchmark/baseline.json
+chirograph-benchmark SELECTOR --chirograph-bin PATH
+chirograph-benchmark SELECTOR --format json
 ```
 
-Do not add a general CLI framework dependency.
+These uppercase words document CLI metavariables, not source placeholders. Do not add a general CLI framework dependency.
 
 - [ ] **Step 5: Add Cargo alias**
 
@@ -417,20 +484,59 @@ git commit -m "feat: add benchmark selectors"
 
 **Interfaces:**
 - Consumes: `GoldenV1`, `GraphJsonV1`.
-- Produces: `score_case(golden: &GoldenV1, observed: &GraphJsonV1) -> CaseScore`; `aggregate_report(results: &[CaseResult]) -> BenchmarkReportV1`.
+- Produces: exact result types below, `score_case(golden: &GoldenV1, observed: &GraphJsonV1) -> CaseScore`, `aggregate_report(results: &[CaseResult]) -> BenchmarkReportV1`.
 
-- [ ] **Step 1: Write failing metric tests**
+- [ ] **Step 1: Define exact result types and write red metric tests**
+
+```rust
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CaseStatus { ExecutionFailure, InvalidOutput, Scored }
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct RatioCounts { pub numerator: u64, pub denominator: u64, pub ratio: Option<f64> }
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct CaseScore {
+    pub contract_precision: RatioCounts,
+    pub contract_recall: RatioCounts,
+    pub contract_f1: Option<f64>,
+    pub false_contract_rate: RatioCounts,
+    pub contract_inflation: f64,
+    pub authority_correctness: RatioCounts,
+    pub relationship_precision: RatioCounts,
+    pub relationship_recall: RatioCounts,
+    pub lifecycle_correctness: Option<RatioCounts>,
+    pub finding_precision: RatioCounts,
+    pub finding_recall: RatioCounts,
+    pub diagnostics: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct CaseResult {
+    pub id: String,
+    pub repository: String,
+    pub scenario: String,
+    pub status: CaseStatus,
+    pub score: Option<CaseScore>,
+    pub diagnostics: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct BenchmarkReportV1 {
+    pub schema: String,
+    pub cases: Vec<CaseResult>,
+    pub repository_aggregates: Vec<AggregateResult>,
+    pub scenario_aggregates: Vec<AggregateResult>,
+    pub overall: Option<AggregateResult>,
+}
+```
+
+`AggregateResult` stores a scope string, macro `CaseScore`-shaped optional ratios, and separately pooled micro counts/ratios.
 
 Use synthetic graphs to cover perfect match, missing contract, false contract, zero emissions, authority 2/3 correct, wrong relation kind, missing relation, false relation, contested-finding hit/miss/false positive, lifecycle exact match, and lifecycle unavailable.
 
-The zero-emission test must assert:
-
-```rust
-assert_eq!(score.contract_precision, None);
-assert_eq!(score.contract_recall, Some(0.0));
-assert_eq!(score.false_contract_rate, None);
-assert_eq!(score.contract_inflation, 0.0);
-```
+The zero-emission test asserts precision/false-rate ratios `None`, recall `0.0`, inflation `0.0`.
 
 - [ ] **Step 2: Run red metric tests**
 
@@ -442,19 +548,15 @@ Expected: FAIL.
 
 - [ ] **Step 3: Implement exact contract/authority/relation scoring**
 
-Contract matching is exact ID membership. Authority compares exact `(contract, facet, representation)` triples. Relationship compares exact `(from.kind, from.id, kind, to.kind, to.id)` tuples.
-
-No fuzzy aliases or similarity scoring.
+Contract matching is exact ID membership. Authority compares exact `(contract, facet, representation)` triples. Relationship compares exact `(from.kind, from.id, kind, to.kind, to.id)` tuples. No fuzzy aliases or similarity scoring.
 
 - [ ] **Step 4: Implement lifecycle/finding behavior**
 
-When golden lifecycle expectations exist but observed lifecycle is empty, return lifecycle metric `None` plus diagnostic `lifecycle_not_observed`. When lifecycle facts exist, compare exact `(subject,status)` pairs.
-
-Map `GoldenFindingV1::ContestedClause` to observed clause assessment status `contested`.
+When golden lifecycle expectations exist but observed lifecycle is empty, return lifecycle metric `None` plus diagnostic `lifecycle_not_observed`. When lifecycle facts exist, compare exact `(subject,status)` pairs. Map `GoldenFindingV1::ContestedClause` to observed clause assessment status `contested`.
 
 - [ ] **Step 5: Add known-negative diagnostics**
 
-If an observed representation locator matches `golden.non_contracts[].locator` and its owning observed contract is not a golden contract, add diagnostic `known_non_contract_promoted`. It remains an ordinary false contract; this diagnostic does not change the numerator/denominator.
+If an observed representation locator matches `golden.non_contracts[].locator` and its owning observed contract is not golden, add `known_non_contract_promoted`. It remains an ordinary false contract; the diagnostic changes no metric count.
 
 - [ ] **Step 6: Write failing macro/micro report tests**
 
@@ -494,12 +596,12 @@ git commit -m "feat: score and report contract benchmarks"
 - Test: `crates/chirograph-benchmark/tests/runner.rs`
 
 **Interfaces:**
-- Consumes: selected `BenchmarkCase`, product executable path.
-- Produces: `run_case(case: &BenchmarkCase, chirograph_bin: &Path) -> CaseResult` with status `execution-failure`, `invalid-output`, or `scored`.
+- Consumes: selected `BenchmarkCase`, product executable path, `score_case`.
+- Produces: `run_case(case: &BenchmarkCase, chirograph_bin: &Path) -> CaseResult`.
 
 - [ ] **Step 1: Write failing fake-binary tests**
 
-Use temporary executable helpers for: nonzero exit, zero/non-JSON stdout, zero/wrong graph schema, and zero/valid graph JSON. Assert the three failure/status classes exactly.
+Use temporary executable helpers for: nonzero exit, zero/non-JSON stdout, zero/wrong graph schema, and zero/valid graph JSON. Assert `ExecutionFailure`, `InvalidOutput`, and `Scored` exactly.
 
 - [ ] **Step 2: Run red test**
 
@@ -511,15 +613,7 @@ Expected: FAIL.
 
 - [ ] **Step 3: Implement product binary resolution**
 
-Resolution order:
-
-```text
---chirograph-bin
-CHIROGRAPH_BIN
-target/debug/chirograph (target/debug/chirograph.exe on Windows)
-```
-
-If default binary is absent, run `cargo build --quiet -p chirograph-cli` from workspace root once, then resolve it. This build step is generic product tooling, not adapter dispatch.
+Resolution order: `--chirograph-bin`, `CHIROGRAPH_BIN`, then `target/debug/chirograph` (`.exe` on Windows). If default binary is absent, run `cargo build --quiet -p chirograph-cli` from workspace root once.
 
 - [ ] **Step 4: Invoke exactly the public contract**
 
@@ -528,16 +622,14 @@ Command::new(chirograph_bin)
     .arg("analyze")
     .arg(&case.fixture_dir)
     .arg("--format")
-    .arg("graph-json")
+    .arg("graph-json");
 ```
 
 No language flags, semantic queries, repository names, symbol maps, or adapter commands.
 
 - [ ] **Step 5: Classify output fail-closed**
 
-Nonzero exit => `execution-failure`; zero but malformed/wrong-schema graph => `invalid-output`; only valid canonical graph => score. Preserve bounded stderr as diagnostics but never infer success/failure subtype from message wording.
-
-Today the real CLI is expected to reject `analyze`; that is a truthful execution failure.
+Nonzero exit => `ExecutionFailure`; zero but malformed/wrong-schema graph => `InvalidOutput`; only valid canonical graph => `Scored`. Preserve bounded stderr as diagnostics but never infer subtype from message wording. Today the real CLI is expected to reject `analyze`; that is truthful.
 
 - [ ] **Step 6: Verify and commit**
 
@@ -563,13 +655,14 @@ git commit -m "feat: enforce public benchmark analysis boundary"
 
 **Interfaces:**
 - Consumes: selected `BenchmarkCase` provenance.
-- Produces: `verify_sources(cases, fetcher)`, `refresh_sources(cases, exact_revision, fetcher)`; production `GitSourceFetcher`.
+- Produces: `SourceFetcher`, `GitSourceFetcher`, `verify_sources(cases, fetcher)`, `refresh_sources(cases, exact_revision, fetcher)`.
 
-- [ ] **Step 1: Write failing fake-fetcher tests**
-
-Define:
+- [ ] **Step 1: Define exact fetch interface and write red fake-fetcher tests**
 
 ```rust
+#[derive(Debug)]
+pub enum SourceError { Io(String), Git(String), InvalidRevision(String), RemoteMismatch(String) }
+
 pub trait SourceFetcher {
     fn fetch(&self, repository: &str, revision: &str, path: &str) -> Result<Vec<u8>, SourceError>;
 }
@@ -596,13 +689,11 @@ git fetch --depth=1 origin EXACT_40_HEX_REVISION
 git show FETCH_HEAD:UPSTREAM_PATH
 ```
 
-Fail closed if the exact revision or any path cannot be fetched. Normal benchmark scoring never calls this code.
+The capitalized command tokens describe runtime values supplied from validated specimen metadata, not hard-coded source placeholders. Fail closed if the exact revision or any path cannot be fetched. Normal benchmark scoring never calls this code.
 
 - [ ] **Step 4: Implement maintenance CLI semantics**
 
-`--verify-sources` compares remote exact bytes with committed fixture bytes and committed SHA-256.
-
-`--refresh SELECTOR --revision SHA` requires one exact SHA, rewrites only fixture bytes plus `specimen.yaml` revision/digests, and never modifies `golden.yaml`.
+`--verify-sources` compares remote exact bytes with committed fixture bytes and committed SHA-256. `--refresh SELECTOR --revision SHA` requires one exact SHA, rewrites only fixture bytes plus `specimen.yaml` revision/digests, and never modifies `golden.yaml`.
 
 - [ ] **Step 5: Verify and commit**
 
@@ -632,7 +723,7 @@ git commit -m "feat: verify benchmark source provenance"
 
 - [ ] **Step 1: Copy exact upstream bytes**
 
-Upstream is `rust-lang/cargo@2ceefa0090080354b80cc2f5415039bdb0d2bf0b`:
+Upstream `rust-lang/cargo@2ceefa0090080354b80cc2f5415039bdb0d2bf0b` files:
 
 ```text
 crates/cargo-util-schemas/src/manifest/mod.rs
@@ -646,13 +737,49 @@ fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c  crates/cargo-u
 a8f038d7ef99e69810c5cafd17d340b9aa42f7c9dd01e9ff70fb4205fec2f21e  crates/cargo-util-schemas/manifest.schema.json
 ```
 
-- [ ] **Step 2: Write golden truth**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use one logical contract `cargo.profile.debug-info`, representations `cargo.profile.debug-info.implementation` and `cargo.profile.debug-info.schema`, structural authority on the implementation representation, a `projects` relationship from implementation to schema, and clause `cargo.profile.debug-info.enum-spellings` describing the accepted serialized spellings. Mark that clause as an expected `contested-clause` because the generated schema uses stale enum spellings.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: cargo.profile.debug-info
+    facets: [structural]
+representations:
+  - id: cargo.profile.debug-info.implementation
+    contract: cargo.profile.debug-info
+    kind: source-code
+    locator: crates/cargo-util-schemas/src/manifest/mod.rs
+    facets: [structural]
+  - id: cargo.profile.debug-info.schema
+    contract: cargo.profile.debug-info
+    kind: schema
+    locator: crates/cargo-util-schemas/manifest.schema.json
+    facets: [structural]
+authority_claims:
+  - contract: cargo.profile.debug-info
+    facet: structural
+    representation: cargo.profile.debug-info.implementation
+    basis: mechanical-enforcement
+relationships:
+  - from: {kind: representation, id: cargo.profile.debug-info.implementation}
+    kind: projects
+    to: {kind: representation, id: cargo.profile.debug-info.schema}
+clauses:
+  - id: cargo.profile.debug-info.enum-spellings
+    contract: cargo.profile.debug-info
+    facet: structural
+    kind: invariant
+    statement: Accepted serialized debug-info spellings in the generated schema must match the implementation spellings.
+lifecycle: []
+expected_findings:
+  - kind: contested-clause
+    clause: cargo.profile.debug-info.enum-spellings
+non_contracts: []
+```
 
 No code maps Cargo symbols to stances.
 
-- [ ] **Step 3: Validate provenance and current status**
+- [ ] **Step 3: Validate provenance/current status and commit**
 
 ```sh
 cargo benchmark --verify-sources cargo/schema-enum-drift/toml-debug-info-spellings
@@ -660,8 +787,6 @@ cargo benchmark cargo/schema-enum-drift/toml-debug-info-spellings
 ```
 
 Expected: provenance PASS; current run may be `execution-failure` until public analysis exists.
-
-- [ ] **Step 4: Commit**
 
 ```sh
 git add benchmark/cargo
@@ -693,11 +818,56 @@ generator/src/main/java/org/apache/kafka/message/MessageDataGenerator.java
 clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java
 ```
 
-After copying, compute `sha256sum` (or platform equivalent) over each exact byte file and write those actual 64-hex values into `specimen.yaml` before committing.
+Compute exact SHA-256 values after copying and commit those values in `specimen.yaml`.
 
-- [ ] **Step 2: Write golden truth**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use logical contract `kafka.protocol.produce-request`. `ProduceRequest.json` is the structural authority/spec representation. Represent the generated logical data type `org.apache.kafka.common.message.ProduceRequestData` as a generated manifestation even though the generated build output is not vendored; its locator is the generated type identity. Represent `MessageDataGenerator` as generation machinery and `ProduceRequest.java` as an implementation consumer. Encode `generates`/`depends-on` relationships without promoting generator helper classes into logical contracts.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: kafka.protocol.produce-request
+    facets: [structural, executable]
+representations:
+  - id: kafka.produce-request.message-spec
+    contract: kafka.protocol.produce-request
+    kind: schema
+    locator: clients/src/main/resources/common/message/ProduceRequest.json
+    facets: [structural]
+  - id: kafka.produce-request.generated-data
+    contract: kafka.protocol.produce-request
+    kind: generated-artifact
+    locator: org.apache.kafka.common.message.ProduceRequestData
+    facets: [structural]
+  - id: kafka.produce-request.wrapper
+    contract: kafka.protocol.produce-request
+    kind: source-code
+    locator: clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java
+    facets: [executable]
+  - id: kafka.message-data-generator
+    contract: kafka.protocol.produce-request
+    kind: source-code
+    locator: generator/src/main/java/org/apache/kafka/message/MessageDataGenerator.java
+    facets: [structural]
+authority_claims:
+  - contract: kafka.protocol.produce-request
+    facet: structural
+    representation: kafka.produce-request.message-spec
+    basis: explicit-declaration
+relationships:
+  - from: {kind: representation, id: kafka.produce-request.message-spec}
+    kind: projects
+    to: {kind: representation, id: kafka.produce-request.generated-data}
+  - from: {kind: representation, id: kafka.message-data-generator}
+    kind: generates
+    to: {kind: representation, id: kafka.produce-request.generated-data}
+  - from: {kind: representation, id: kafka.produce-request.wrapper}
+    kind: depends-on
+    to: {kind: representation, id: kafka.produce-request.generated-data}
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []
+```
 
 - [ ] **Step 3: Verify/run/commit**
 
@@ -735,11 +905,56 @@ staging/src/k8s.io/api/core/v1/generated.pb.go
 pkg/generated/openapi/zz_generated.openapi.go
 ```
 
-Record actual SHA-256 values. Keep the complete generated files; do not hand-slice Pod excerpts.
+Record exact SHA-256 values. Keep complete generated files; do not hand-slice Pod excerpts.
 
-- [ ] **Step 2: Write golden truth narrowly around Pod**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use logical contract `kubernetes.core.v1.Pod`. Represent the Go API type as authority, and Protobuf, generated Go Protobuf, and generated OpenAPI as manifestations linked through `projects`/`generates` relationships. Golden truth names only the Pod contract, not every declaration in these large files. This case is intentionally hostile to contract inflation.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: kubernetes.core.v1.Pod
+    facets: [structural]
+representations:
+  - id: kubernetes.core.v1.Pod.go
+    contract: kubernetes.core.v1.Pod
+    kind: type-definition
+    locator: staging/src/k8s.io/api/core/v1/types.go::Pod
+    facets: [structural]
+  - id: kubernetes.core.v1.Pod.proto
+    contract: kubernetes.core.v1.Pod
+    kind: generated-artifact
+    locator: staging/src/k8s.io/api/core/v1/generated.proto::Pod
+    facets: [structural]
+  - id: kubernetes.core.v1.Pod.pb-go
+    contract: kubernetes.core.v1.Pod
+    kind: generated-artifact
+    locator: staging/src/k8s.io/api/core/v1/generated.pb.go::Pod
+    facets: [structural]
+  - id: kubernetes.core.v1.Pod.openapi
+    contract: kubernetes.core.v1.Pod
+    kind: generated-artifact
+    locator: pkg/generated/openapi/zz_generated.openapi.go::schema_k8sio_api_core_v1_Pod
+    facets: [structural]
+authority_claims:
+  - contract: kubernetes.core.v1.Pod
+    facet: structural
+    representation: kubernetes.core.v1.Pod.go
+    basis: explicit-declaration
+relationships:
+  - from: {kind: representation, id: kubernetes.core.v1.Pod.go}
+    kind: projects
+    to: {kind: representation, id: kubernetes.core.v1.Pod.proto}
+  - from: {kind: representation, id: kubernetes.core.v1.Pod.proto}
+    kind: generates
+    to: {kind: representation, id: kubernetes.core.v1.Pod.pb-go}
+  - from: {kind: representation, id: kubernetes.core.v1.Pod.go}
+    kind: projects
+    to: {kind: representation, id: kubernetes.core.v1.Pod.openapi}
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []
+```
 
 - [ ] **Step 3: Verify/run/commit**
 
@@ -776,13 +991,56 @@ pydantic/main.py
 tests/test_json_schema.py
 ```
 
-Record actual SHA-256 values.
+Record exact SHA-256 values.
 
-- [ ] **Step 2: Write golden truth**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use logical contract `pydantic.json-schema.mode`. Represent the mode definition and relevant tests. Encode two clauses: validation mode describes accepted input shape; serialization mode describes emitted output shape. They are intentional perspectives, so `expected_findings` is empty. A Chirograph implementation that flags ordinary validation/serialization differences as drift should lose finding precision.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: pydantic.json-schema.mode
+    facets: [structural, semantic, verification]
+representations:
+  - id: pydantic.json-schema.mode.definition
+    contract: pydantic.json-schema.mode
+    kind: source-code
+    locator: pydantic/json_schema.py::JsonSchemaMode
+    facets: [structural, semantic]
+  - id: pydantic.json-schema.mode.tests
+    contract: pydantic.json-schema.mode
+    kind: test
+    locator: tests/test_json_schema.py
+    facets: [verification]
+authority_claims:
+  - contract: pydantic.json-schema.mode
+    facet: structural
+    representation: pydantic.json-schema.mode.definition
+    basis: explicit-declaration
+  - contract: pydantic.json-schema.mode
+    facet: semantic
+    representation: pydantic.json-schema.mode.definition
+    basis: mechanical-enforcement
+relationships:
+  - from: {kind: representation, id: pydantic.json-schema.mode.tests}
+    kind: validates
+    to: {kind: contract, id: pydantic.json-schema.mode}
+clauses:
+  - id: pydantic.json-schema.mode.validation-inputs
+    contract: pydantic.json-schema.mode
+    facet: semantic
+    kind: guarantee
+    statement: Validation mode describes JSON schema for accepted validation inputs.
+  - id: pydantic.json-schema.mode.serialization-outputs
+    contract: pydantic.json-schema.mode
+    facet: semantic
+    kind: guarantee
+    statement: Serialization mode describes JSON schema matched by serialization outputs.
+lifecycle: []
+expected_findings: []
+non_contracts: []
+```
 
-Do not add runtime Python code under `benchmark/`.
+Intentional validation/serialization differences are not drift. Do not add runtime Python code under `benchmark/`.
 
 - [ ] **Step 3: Verify/run/commit**
 
@@ -818,11 +1076,59 @@ guides/source/active_record_migrations.md
 activerecord/lib/active_record/schema_dumper.rb
 ```
 
-Record actual SHA-256 values.
+Record exact SHA-256 values.
 
-- [ ] **Step 2: Write golden truth**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use logical contract `rails.database.schema-current-state`. Represent `rails.database.live-schema` as the conceptual active authority, `rails.schema-dump` as a generated current-state manifestation, and `rails.migrations` as historical change instructions. The fixture source explicitly documents that the dump is generated from current DB state and that old migrations are not reliable current-state reconstruction authority. Encode `projects` from live schema to schema dump. Lifecycle labels: live schema `active`, dump `generated`, migrations `historical`.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: rails.database.schema-current-state
+    facets: [structural, semantic]
+representations:
+  - id: rails.database.live-schema
+    contract: rails.database.schema-current-state
+    kind: executable-surface
+    locator: runtime:database-schema
+    facets: [structural, semantic]
+  - id: rails.schema-dump
+    contract: rails.database.schema-current-state
+    kind: generated-artifact
+    locator: db/schema.rb-or-structure.sql
+    facets: [structural]
+  - id: rails.migrations
+    contract: rails.database.schema-current-state
+    kind: source-code
+    locator: db/migrate/*
+    facets: [semantic]
+  - id: rails.schema-dumper
+    contract: rails.database.schema-current-state
+    kind: source-code
+    locator: activerecord/lib/active_record/schema_dumper.rb::ActiveRecord::SchemaDumper
+    facets: [structural]
+authority_claims:
+  - contract: rails.database.schema-current-state
+    facet: structural
+    representation: rails.database.live-schema
+    basis: observed-behavior
+relationships:
+  - from: {kind: representation, id: rails.database.live-schema}
+    kind: projects
+    to: {kind: representation, id: rails.schema-dump}
+  - from: {kind: representation, id: rails.schema-dumper}
+    kind: generates
+    to: {kind: representation, id: rails.schema-dump}
+clauses: []
+lifecycle:
+  - subject: {kind: representation, id: rails.database.live-schema}
+    status: active
+  - subject: {kind: representation, id: rails.schema-dump}
+    status: generated
+  - subject: {kind: representation, id: rails.migrations}
+    status: historical
+expected_findings: []
+non_contracts: []
+```
 
 - [ ] **Step 3: Verify/run/commit**
 
@@ -859,13 +1165,51 @@ api/envoy/api/v2/core/config_source.proto
 api/envoy/config/core/v3/config_source.proto
 ```
 
-Record actual SHA-256 values.
+Record exact SHA-256 values.
 
-- [ ] **Step 2: Write golden truth**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use logical contract `envoy.config-source`. Represent v2 and v3 Proto files. Structural authority is v3. Lifecycle: v2 `frozen`, v3 `active`. Preserve v2 `move_to_package = "envoy.config.core.v3"` and v3 `previous_message_type = "envoy.api.v2.core.ConfigSource"` as lineage evidence. Do not promote deprecated enum values into separate logical contracts.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: envoy.config-source
+    facets: [structural, semantic]
+representations:
+  - id: envoy.config-source.v2
+    contract: envoy.config-source
+    kind: schema
+    locator: api/envoy/api/v2/core/config_source.proto
+    facets: [structural, semantic]
+  - id: envoy.config-source.v3
+    contract: envoy.config-source
+    kind: schema
+    locator: api/envoy/config/core/v3/config_source.proto
+    facets: [structural, semantic]
+  - id: envoy.api-versioning
+    contract: envoy.config-source
+    kind: documentation
+    locator: api/API_VERSIONING.md
+    facets: [semantic]
+authority_claims:
+  - contract: envoy.config-source
+    facet: structural
+    representation: envoy.config-source.v3
+    basis: explicit-declaration
+relationships:
+  - from: {kind: representation, id: envoy.api-versioning}
+    kind: documents
+    to: {kind: contract, id: envoy.config-source}
+clauses: []
+lifecycle:
+  - subject: {kind: representation, id: envoy.config-source.v2}
+    status: frozen
+  - subject: {kind: representation, id: envoy.config-source.v3}
+    status: active
+expected_findings: []
+non_contracts: []
+```
 
-Lifecycle correctness is initially `null` if Chirograph emits no lifecycle facts; the golden truth remains unchanged until generic lifecycle support arrives.
+The v2 `move_to_package` and v3 `previous_message_type` are source evidence for the same lineage; do not invent a `supersedes` relation because current Chirograph has no such relation kind. Lifecycle correctness is initially `null` if observed graph emits none.
 
 - [ ] **Step 3: Verify/run/commit**
 
@@ -903,11 +1247,48 @@ python/pyarrow/types.pxi
 python/pyarrow/includes/libarrow.pxd
 ```
 
-Record actual SHA-256 values. Do not assume a Java implementation exists in this exact monorepo revision.
+Record exact SHA-256 values. Do not assume a Java implementation exists in this exact monorepo revision.
 
-- [ ] **Step 2: Write golden truth**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use the smallest defensible shared contract `arrow.schema.field`. Represent FlatBuffers schema as interchange/spec authority, C++ `Field`/schema semantics as an implementation manifestation, and Python/Cython declarations as language binding manifestations. Encode project/implementation relationships without declaring every Arrow datatype a separate benchmark contract.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: arrow.schema.field
+    facets: [structural, semantic]
+representations:
+  - id: arrow.schema.field.flatbuffers
+    contract: arrow.schema.field
+    kind: schema
+    locator: format/Schema.fbs::Field
+    facets: [structural, semantic]
+  - id: arrow.schema.field.cpp
+    contract: arrow.schema.field
+    kind: type-definition
+    locator: cpp/src/arrow/type.h::arrow::Field
+    facets: [structural, semantic]
+  - id: arrow.schema.field.python
+    contract: arrow.schema.field
+    kind: type-definition
+    locator: python/pyarrow/includes/libarrow.pxd::CField
+    facets: [structural]
+authority_claims:
+  - contract: arrow.schema.field
+    facet: structural
+    representation: arrow.schema.field.flatbuffers
+    basis: explicit-declaration
+relationships:
+  - from: {kind: representation, id: arrow.schema.field.cpp}
+    kind: implements
+    to: {kind: contract, id: arrow.schema.field}
+  - from: {kind: representation, id: arrow.schema.field.python}
+    kind: implements
+    to: {kind: contract, id: arrow.schema.field}
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []
+```
 
 - [ ] **Step 3: Verify/run/commit**
 
@@ -948,11 +1329,54 @@ common/persistence/tests/postgresql_test_util.go
 common/persistence/tests/cassandra_test_util.go
 ```
 
-Record actual SHA-256 values.
+Record exact SHA-256 values.
 
-- [ ] **Step 2: Write golden truth**
+- [ ] **Step 2: Write this golden semantic shape**
 
-Use logical contract `temporal.persistence.executions`. Represent MySQL, PostgreSQL, and Cassandra schema forms as dialect-specific manifestations. Do not invent one global dialect authority. Encode `equivalent-to` only for the shared logical executions persistence role, and use the test utility references as verification manifestations. Do not promote dialect-only indexes/helper tables into the selected logical contract.
+```yaml
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: temporal.persistence.executions
+    facets: [structural, verification]
+representations:
+  - id: temporal.persistence.executions.mysql
+    contract: temporal.persistence.executions
+    kind: schema
+    locator: schema/mysql/v8/temporal/schema.sql::executions
+    facets: [structural]
+  - id: temporal.persistence.executions.postgresql
+    contract: temporal.persistence.executions
+    kind: schema
+    locator: schema/postgresql/v12/temporal/schema.sql::executions
+    facets: [structural]
+  - id: temporal.persistence.executions.cassandra
+    contract: temporal.persistence.executions
+    kind: schema
+    locator: schema/cassandra/temporal/schema.cql::executions
+    facets: [structural]
+  - id: temporal.persistence.executions.tests
+    contract: temporal.persistence.executions
+    kind: test
+    locator: common/persistence/tests/*_test_util.go
+    facets: [verification]
+authority_claims: []
+relationships:
+  - from: {kind: representation, id: temporal.persistence.executions.mysql}
+    kind: equivalent-to
+    to: {kind: representation, id: temporal.persistence.executions.postgresql}
+  - from: {kind: representation, id: temporal.persistence.executions.postgresql}
+    kind: equivalent-to
+    to: {kind: representation, id: temporal.persistence.executions.cassandra}
+  - from: {kind: representation, id: temporal.persistence.executions.tests}
+    kind: validates
+    to: {kind: contract, id: temporal.persistence.executions}
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []
+```
+
+No single dialect gets fake global authority.
 
 - [ ] **Step 3: Verify/run/commit**
 
@@ -981,11 +1405,32 @@ git commit -m "test: add Temporal contract benchmark case"
 
 **Interfaces:**
 - Consumes: all eight cases and `BenchmarkReportV1`.
-- Produces: `compare_baseline(current, baseline) -> RegressionResult`; CI command `cargo benchmark all --baseline benchmark/baseline.json`.
+- Produces: `BenchmarkBaselineV1`, `compare_baseline(current: &BenchmarkReportV1, baseline: &BenchmarkBaselineV1) -> RegressionResult`, CI command `cargo benchmark all --baseline benchmark/baseline.json`.
 
-- [ ] **Step 1: Write failing baseline tests**
+- [ ] **Step 1: Define exact baseline/result types and write red tests**
 
-Test these exact transitions:
+```rust
+pub struct BenchmarkBaselineV1 {
+    pub schema: String,
+    pub cases: Vec<BaselineCaseV1>,
+}
+
+pub struct BaselineCaseV1 {
+    pub id: String,
+    pub specimen_sha256: String,
+    pub golden_sha256: String,
+    pub status: CaseStatus,
+    pub score: Option<CaseScore>,
+}
+
+pub struct RegressionResult {
+    pub ok: bool,
+    pub regressions: Vec<String>,
+    pub improvements: Vec<String>,
+}
+```
+
+Test exact transitions:
 
 ```text
 execution-failure -> scored        allowed improvement
@@ -1007,11 +1452,9 @@ cargo test -p chirograph-benchmark --test baseline -- --nocapture
 
 Expected: FAIL.
 
-- [ ] **Step 3: Implement baseline format/directionality**
+- [ ] **Step 3: Implement baseline directionality**
 
-Each baseline entry stores case status, metric vector when scored, SHA-256 of `specimen.yaml`, and SHA-256 of `golden.yaml`.
-
-`--write-baseline PATH` is an explicit operator action that writes current truth to the exact path. Ordinary failing runs never mutate baseline.
+Each entry stores status, score, SHA-256 of `specimen.yaml`, and SHA-256 of `golden.yaml`. `--write-baseline PATH` is explicit and ordinary failing runs never mutate baseline.
 
 - [ ] **Step 4: Generate the initial eight-case baseline**
 
@@ -1037,7 +1480,7 @@ Do not run `--verify-sources` in normal CI.
 
 - [ ] **Step 6: Write benchmark methodology docs**
 
-`benchmark/README.md` documents data-only fixtures, exact provenance, selectors, metric vector, false-contract rate, macro/micro, baseline ratchet, failure classes, and case-addition rules. Root README adds one concise link; do not duplicate the methodology.
+`benchmark/README.md` documents data-only fixtures, exact provenance, selectors, metric vector, false-contract rate, macro/micro, baseline ratchet, failure classes, and case-addition rules. Root README adds one concise link; do not duplicate methodology.
 
 - [ ] **Step 7: Run full verification**
 
@@ -1053,13 +1496,13 @@ cargo benchmark all --baseline benchmark/baseline.json
 
 Expected: PASS.
 
-Then run the explicit networked provenance check separately:
+Then run explicit networked provenance separately:
 
 ```sh
 cargo benchmark --verify-sources
 ```
 
-Expected: all committed fixture bytes match their exact upstream revisions.
+Expected: all fixture bytes match exact upstream revisions.
 
 - [ ] **Step 8: Commit**
 

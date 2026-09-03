@@ -254,6 +254,7 @@ fn normalized_relative(root: &Path, path: &Path) -> Result<String, CorpusError> 
                 value
                     .to_str()
                     .ok_or_else(|| CorpusError::invalid("fixture path must be valid UTF-8"))?,
+            ),
             _ => {
                 return Err(CorpusError::invalid(format!(
                     "unsafe fixture path: {}",

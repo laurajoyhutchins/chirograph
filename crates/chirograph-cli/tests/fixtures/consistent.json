@@ -1,0 +1,63 @@
+{
+  "schema": "chirograph-evidence-v1",
+  "sources": [
+    {
+      "id": "repo",
+      "kind": "repository",
+      "locator": "https://example.invalid/repo"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "example.contract",
+      "name": "Example contract",
+      "facets": ["semantic"]
+    }
+  ],
+  "representations": [
+    {
+      "id": "example.source",
+      "contract": "example.contract",
+      "source": "repo",
+      "kind": "source_code",
+      "locator": "src/example.rs#Example",
+      "facets": ["semantic"]
+    }
+  ],
+  "observations": [
+    {
+      "id": "example.observation",
+      "source": "repo",
+      "revision": { "kind": "exact", "value": "abc123" },
+      "locator": "src/example.rs#Example",
+      "fact": "the source enforces the example requirement"
+    }
+  ],
+  "clauses": [
+    {
+      "id": "example.requirement",
+      "contract": "example.contract",
+      "facet": "semantic",
+      "kind": "requirement",
+      "statement": "the example value must be present"
+    }
+  ],
+  "clause_assertions": [
+    {
+      "clause": "example.requirement",
+      "representation": "example.source",
+      "stance": "supports",
+      "evidence": ["example.observation"]
+    }
+  ],
+  "relations": [],
+  "authority_claims": [
+    {
+      "contract": "example.contract",
+      "representation": "example.source",
+      "facet": "semantic",
+      "basis": "mechanical_enforcement",
+      "evidence": ["example.observation"]
+    }
+  ]
+}

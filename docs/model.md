@@ -4,7 +4,7 @@ Chirograph models logical software contracts without turning interpretations int
 
 The core question is not merely whether two files contain similar text. It is:
 
-> What logical contract is represented here, how are its representations related, what evidence supports that relationship, and which representation appears to govern the contract?
+> What logical contract is represented here, how are its representations related, what evidence supports that relationship, and which representation appears to govern each facet of the contract?
 
 ## Core graph
 
@@ -57,7 +57,7 @@ Every relation carries observation IDs as its evidence basis. A relation without
 
 ## Authority
 
-Authority is not inferred from filenames or prose alone and is never stored as an unqualified fact. Chirograph records an **authority claim** connecting one representation to the logical contract it appears to govern.
+Authority is not inferred from filenames or prose alone and is never stored as an unqualified fact. Chirograph records a **facet-scoped authority claim** connecting one representation to one facet of the logical contract it appears to govern. This allows different representations to govern different parts of the same contract without forcing a single global authority.
 
 The basis is explicit:
 
@@ -72,7 +72,8 @@ The basis describes why the claim exists. It is not a universal ranking. Differe
 An authority claim must:
 
 - point to an existing contract;
-- point to a representation of that same contract; and
+- point to a representation of that same contract;
+- name a facet that representation actually covers; and
 - cite existing source-backed observations.
 
 ## Revision truth
@@ -91,12 +92,14 @@ The v0.1 model enforces these mechanical invariants:
 
 1. Source, contract, representation, and observation IDs are unique.
 2. Representations reference existing sources and contracts.
-3. Observations reference existing sources.
-4. Relation endpoints exist.
-5. Every relation evidence reference resolves to an observation.
-6. Every authority claim cites existing observations.
-7. An authority claim cannot nominate a representation belonging to another logical contract.
-8. Identifiers are never silently normalized.
+3. A representation cannot claim a facet its contract does not declare.
+4. Observations reference existing sources.
+5. Relation endpoints exist.
+6. Every relation evidence reference resolves to an observation.
+7. Every authority claim cites existing observations.
+8. An authority claim cannot nominate a representation belonging to another logical contract.
+9. An authority claim is scoped to a facet the nominated representation actually covers.
+10. Identifiers are never silently normalized.
 
 The model intentionally does **not** yet decide extraction APIs, serialization format, authority-ranking policy, similarity heuristics, or repository-specific adapters. Those belong above this kernel.
 

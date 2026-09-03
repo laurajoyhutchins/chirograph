@@ -151,6 +151,7 @@ pub enum AuthorityBasis {
 pub struct AuthorityClaim {
     pub contract: ContractId,
     pub representation: RepresentationId,
+    pub facet: ContractFacet,
     pub basis: AuthorityBasis,
     pub evidence: Vec<ObservationId>,
 }
@@ -176,6 +177,15 @@ pub enum ModelError {
     UnknownRepresentation(RepresentationId),
     UnknownObservation(ObservationId),
     InvalidExactRevision(ObservationId),
+    RepresentationFacetOutsideContract {
+        representation: RepresentationId,
+        contract: ContractId,
+        facet: ContractFacet,
+    },
+    AuthorityFacetNotRepresented {
+        representation: RepresentationId,
+        facet: ContractFacet,
+    },
     RelationEvidenceRequired {
         from: NodeRef,
         to: NodeRef,
@@ -221,6 +231,20 @@ impl ContractGraph {
             if !contract_ids.contains(&representation.contract) {
                 return Err(ModelError::UnknownContract(representation.contract.clone()));
             }
+            let contract = self
+                .contracts
+                .iter()
+                .find(|contract| contract.id == representation.contract)
+                .expect("known contract id must resolve");
+            for facet in &representation.facets {
+                if !contract.facets.contains(facet) {
+                    return Err(ModelError::RepresentationFacetOutsideContract {
+                        representation: representation.id.clone(),
+                        contract: representation.contract.clone(),
+                        facet: *facet,
+                    });
+                }
+            }
         }
 
         for observation in &self.observations {
@@ -264,6 +288,12 @@ impl ContractGraph {
                 return Err(ModelError::AuthorityContractMismatch {
                     contract: claim.contract.clone(),
                     representation: claim.representation.clone(),
+                });
+            }
+            if !representation.facets.contains(&claim.facet) {
+                return Err(ModelError::AuthorityFacetNotRepresented {
+                    representation: claim.representation.clone(),
+                    facet: claim.facet,
                 });
             }
             if claim.evidence.is_empty() {
@@ -382,6 +412,7 @@ mod tests {
             authority_claims: vec![AuthorityClaim {
                 contract,
                 representation,
+                facet: ContractFacet::Concurrency,
                 basis: AuthorityBasis::Documentation,
                 evidence: vec![observation],
             }],
@@ -409,6 +440,22 @@ mod tests {
         assert_eq!(
             graph.validate(),
             Err(ModelError::UnknownSource(source_id("missing")))
+        );
+    }
+
+    #[test]
+    fn rejects_representation_facet_outside_contract() {
+        let mut graph = graph();
+        let representation = graph.representations[0].id.clone();
+        let contract = graph.representations[0].contract.clone();
+        graph.representations[0].facets = vec![ContractFacet::Verification];
+        assert_eq!(
+            graph.validate(),
+            Err(ModelError::RepresentationFacetOutsideContract {
+                representation,
+                contract,
+                facet: ContractFacet::Verification,
+            })
         );
     }
 
@@ -449,6 +496,20 @@ mod tests {
             Err(ModelError::AuthorityEvidenceRequired {
                 contract,
                 representation,
+            })
+        );
+    }
+
+    #[test]
+    fn rejects_authority_claim_for_unrepresented_facet() {
+        let mut graph = graph();
+        let representation = graph.authority_claims[0].representation.clone();
+        graph.authority_claims[0].facet = ContractFacet::Failure;
+        assert_eq!(
+            graph.validate(),
+            Err(ModelError::AuthorityFacetNotRepresented {
+                representation,
+                facet: ContractFacet::Failure,
             })
         );
     }

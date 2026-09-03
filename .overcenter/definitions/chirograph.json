@@ -3,9 +3,33 @@
   "project_ref": "github:laurajoyhutchins/chirograph",
   "transitions": [
     {
+      "id": "adapt-overcenter-evidence",
+      "priority": 50,
+      "requires": [
+        "implement-inspect-cli"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "test-driven-development"
+      }
+    },
+    {
       "id": "bootstrap-rust-workspace",
       "priority": 100,
       "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "test-driven-development"
+      }
+    },
+    {
+      "id": "define-evidence-interchange",
+      "priority": 70,
+      "requires": [
+        "formalize-contract-clauses"
+      ],
       "executor": {
         "kind": "agent",
         "role": "implementation",
@@ -29,6 +53,30 @@
       "priority": 90,
       "requires": [
         "bootstrap-rust-workspace"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "test-driven-development"
+      }
+    },
+    {
+      "id": "implement-inspect-cli",
+      "priority": 60,
+      "requires": [
+        "define-evidence-interchange"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "test-driven-development"
+      }
+    },
+    {
+      "id": "prove-cross-representation-drift",
+      "priority": 40,
+      "requires": [
+        "adapt-overcenter-evidence"
       ],
       "executor": {
         "kind": "agent",

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "adapters/python",
     "crates/chirograph-cli",
     "crates/chirograph-core",
 ]

@@ -268,8 +268,7 @@ fn is_docstring_statement(node: Node<'_>) -> bool {
     let mut cursor = parent.walk();
     parent
         .named_children(&mut cursor)
-        .filter(|child| child.kind() != "comment")
-        .next()
+        .find(|child| child.kind() != "comment")
         .is_some_and(|first| {
             first.kind() == node.kind()
                 && first.start_byte() == node.start_byte()

@@ -11,6 +11,18 @@
         "role": "implementation",
         "skill": "test-driven-development"
       }
+    },
+    {
+      "id": "formalize-execution-model",
+      "priority": 90,
+      "requires": [
+        "bootstrap-rust-workspace"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "test-driven-development"
+      }
     }
   ]
 }

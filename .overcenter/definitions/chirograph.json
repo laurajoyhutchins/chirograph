@@ -85,6 +85,16 @@
       }
     },
     {
+      "id": "validate-kafka-perspectives",
+      "priority": 80,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Stress-test Chirograph against Apache Kafka at exact upstream revision 5e3bc31a7dbc354155932e38ab35d11dd71b97bf. Select a compact but genuinely cross-represented Kafka contract with documentation, implementation, tests, and/or protocol/schema representations. Collect source-backed observations at exact revisions, encode them as chirograph-evidence-v1, run the current Chirograph inspector, and evaluate what it exposes or fails to represent across structural, executable, semantic, failure, concurrency, recovery, and verification facets. Preserve contradictions rather than smoothing them over. Add a durable Kafka case study/fixture and tests to the Chirograph repository when justified; make only generalizable Chirograph fixes revealed by the exercise. Finish with evidence of the exact Kafka revision, Chirograph revision, commands/tests run, output, model gaps, and any code changes."
+      }
+    },
+    {
       "id": "validate-pydantic-perspectives",
       "priority": 90,
       "requires": [

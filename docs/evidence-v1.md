@@ -46,7 +46,7 @@ All identifier fields use the same non-empty, non-whitespace-normalizing identif
 
 Enum-like values use lower snake case. Examples include:
 
-- facets: `executable`, `semantic`, `failure`, `concurrency`, `recovery`, `verification`
+- facets: `structural`, `executable`, `semantic`, `failure`, `concurrency`, `recovery`, `verification`
 - representation kinds: `source_code`, `schema`, `type_definition`, `validator`, `test`, `documentation`, `configuration`, `generated_artifact`
 - clause kinds: `requirement`, `guarantee`, `invariant`
 - clause stances: `supports`, `contradicts`

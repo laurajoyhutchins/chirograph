@@ -124,6 +124,7 @@ fn join_representation_ids(ids: &[chirograph_core::model::RepresentationId]) -> 
 
 const fn facet_name(value: ContractFacet) -> &'static str {
     match value {
+        ContractFacet::Structural => "structural",
         ContractFacet::Executable => "executable",
         ContractFacet::Semantic => "semantic",
         ContractFacet::Failure => "failure",

@@ -1,8 +1,6 @@
 use chirograph_benchmark::aggregate::aggregate_report;
 use chirograph_benchmark::report::{render_human_report, render_json_report};
-use chirograph_benchmark::score::{
-    CaseResult, CaseScore, CaseStatus, RatioCounts,
-};
+use chirograph_benchmark::score::{CaseResult, CaseScore, CaseStatus, RatioCounts};
 
 fn ratio(numerator: u64, denominator: u64) -> RatioCounts {
     RatioCounts {
@@ -56,7 +54,12 @@ fn case(id: &str, repository: &str, scenario: &str, score: CaseScore) -> CaseRes
 #[test]
 fn aggregates_macro_and_micro_without_collapsing_them() {
     let report = aggregate_report(&[
-        case("repo/scenario/large", "repo", "scenario", score(100, 100, 100)),
+        case(
+            "repo/scenario/large",
+            "repo",
+            "scenario",
+            score(100, 100, 100),
+        ),
         case("repo/scenario/small", "repo", "scenario", score(0, 1, 1)),
     ]);
 

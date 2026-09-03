@@ -122,7 +122,11 @@ pub fn rank_java_evidence(
                 .intersection(&fact_terms)
                 .cloned()
                 .collect::<Vec<_>>();
-            let score = matched_terms.len() * 100 + fact_kind_weight(fact.kind);
+            let score = if matched_terms.is_empty() {
+                0
+            } else {
+                matched_terms.len() * 100 + fact_kind_weight(fact.kind)
+            };
             JavaEvidenceCandidate {
                 fact_index,
                 fact: fact.clone(),

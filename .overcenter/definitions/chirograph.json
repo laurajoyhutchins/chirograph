@@ -95,6 +95,18 @@
       }
     },
     {
+      "id": "rank-java-evidence-candidates",
+      "priority": 85,
+      "requires": [
+        "implement-java-tree-sitter-adapter"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Extend the generic Tree-sitter Java adapter with a small deterministic evidence-candidate layer. Do not infer clause truth or supports/contradicts stances. Given language-level Java facts plus a semantic query, mechanically tokenize and normalize identifiers/text, rank facts by relevant term overlap and useful fact kind, and return provenance-preserving candidate observations for higher-level Chirograph or agent judgment. Keep project-specific concepts out of chirograph-core and adapters/java. Update the Kafka idempotence acceptance specimen so it discovers the documentation and validator evidence through the generic candidate layer rather than hard-coded Kafka symbol/condition names, while still producing ordinary chirograph-evidence-v1 and the same CONTESTED clause. Use TDD, add generic ranking tests including false-positive resistance, keep exact revision/source locations, run full CI, and finish with exact commit/PR/CI evidence."
+      }
+    },
+    {
       "id": "validate-kafka-perspectives",
       "priority": 80,
       "requires": [],

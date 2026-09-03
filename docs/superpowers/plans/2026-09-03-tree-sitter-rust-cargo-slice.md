@@ -4,56 +4,56 @@
 
 **Goal:** Add one reusable Tree-sitter acquisition substrate, build a generic Rust source adapter on it, and prove the path against Cargo's real historical `manifest.schema.json` enum-drift defect at exact upstream revision `2ceefa0090080354b80cc2f5415039bdb0d2bf0b`.
 
-**Architecture:** `chirograph-core` stays language-agnostic. A new `chirograph-tree-sitter` crate owns parser lifecycle, exact source provenance, spans, deterministic traversal, and parse diagnostics; a new `chirograph-rust` crate owns Rust grammar and Rust-specific fact extraction. The Cargo benchmark vendors exact upstream source bytes and maps generic acquired facts plus structured JSON observations into ordinary `chirograph-evidence-v1`; live retrieval is explicitly outside benchmark scoring.
+**Architecture:** `chirograph-core` stays language-agnostic. A new `chirograph-tree-sitter` crate owns parser lifecycle, caller-supplied provenance, exact spans, deterministic traversal, and parse diagnostics; a new `chirograph-rust` crate owns the Rust grammar and Rust-specific source facts. The Cargo benchmark vendors exact upstream bytes and maps generic Rust facts plus structured JSON observations into ordinary `chirograph-evidence-v1`; live source retrieval is explicitly outside benchmark scoring.
 
-**Tech Stack:** Rust 2024 / MSRV 1.85, `tree-sitter = =0.26.13`, `tree-sitter-rust = =0.24.2`, existing `serde`/`serde_json`, existing Chirograph core and CLI. `tree-sitter` 0.26.13 declares Rust 1.77, so it remains below the workspace MSRV.
+**Tech Stack:** Rust 2024 / workspace MSRV 1.85, `tree-sitter = =0.26.13`, `tree-sitter-rust = =0.24.2`, `sha2 = =0.11.0` for fixture verification, existing `serde`/`serde_json`, Chirograph core and CLI. Tree-sitter 0.26.13 declares Rust 1.77; sha2 0.11.0 declares Rust 1.85.
 
 **Spec:** `docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md`
 
 ## Global Constraints
 
 - Chirograph remains read-only with respect to analyzed repositories.
-- `chirograph-core` must not depend on Tree-sitter and must not gain Rust- or Cargo-specific concepts.
-- Acquisition says what source contains; it does not assign contract truth, authority, `supports`, or `contradicts` stance.
-- The shared crate accepts source bytes plus provenance from its caller; it performs no Git operations, repository retrieval, filesystem discovery, or network access.
-- Exact repository revision and exact byte/row/column source locations must survive acquisition.
-- An adapter must never convert parser uncertainty into a stronger semantic observation.
+- `chirograph-core` must not depend on Tree-sitter or gain Rust/Cargo-specific concepts.
+- Acquisition reports source-local facts only. It never assigns contract truth, authority, `supports`, or `contradicts` stance.
+- The shared crate accepts bytes plus provenance from the caller. It performs no Git operations, repository discovery, filesystem discovery, or network access.
+- Exact revision and exact byte/row/column locations survive acquisition unchanged.
+- Parser uncertainty becomes diagnostics, never stronger semantic claims.
 - Unsupported semantics are omitted rather than guessed. No macro expansion, name resolution, trait solving, build evaluation, or compiler-equivalent type inference is in scope.
-- JSON/YAML/TOML remain on semantic structured-data parsers by default; the Cargo generated schema side uses `serde_json`, not Tree-sitter.
-- Benchmark inputs are pinned and vendored. Fetching upstream source at runtime is a separate demo concern and is not part of benchmark scoring.
+- JSON/YAML/TOML use semantic structured-data parsers by default. The Cargo schema side uses `serde_json`, not Tree-sitter.
+- Benchmark bytes are pinned and vendored. Runtime fetching is a demo concern, not a scored benchmark behavior.
 - Use TDD and commit after each independently reviewable task.
 
 ## File Map
 
-### New shared acquisition crate
+### Shared acquisition crate
 
-- `crates/chirograph-tree-sitter/Cargo.toml` — exact Tree-sitter dependency and dependency on generic Chirograph model types.
+- `crates/chirograph-tree-sitter/Cargo.toml` — Tree-sitter dependency and generic core model dependency.
 - `crates/chirograph-tree-sitter/src/lib.rs` — public exports only.
-- `crates/chirograph-tree-sitter/src/provenance.rs` — `SourceProvenance`, `SourcePoint`, `SourceSpan`.
-- `crates/chirograph-tree-sitter/src/parse.rs` — parser lifecycle, owned parsed source, diagnostics, node text/span helpers, deterministic node walk.
-- `crates/chirograph-tree-sitter/tests/parse.rs` — exact spans, malformed-source diagnostics, explicit revision behavior, traversal order.
-- `crates/chirograph-tree-sitter/README.md` — boundary and failure semantics.
+- `crates/chirograph-tree-sitter/src/provenance.rs` — provenance and span value types.
+- `crates/chirograph-tree-sitter/src/parse.rs` — parser lifecycle, diagnostics, node text/span helpers, deterministic traversal.
+- `crates/chirograph-tree-sitter/tests/parse.rs` — parser/provenance contract tests.
+- `crates/chirograph-tree-sitter/README.md` — shared boundary and failure semantics.
 
-### New Rust adapter crate
+### Rust adapter crate
 
 - `crates/chirograph-rust/Cargo.toml` — shared substrate plus exact Rust grammar.
-- `crates/chirograph-rust/src/lib.rs` — `extract_rust_facts` public entrypoint.
-- `crates/chirograph-rust/src/fact.rs` — typed `RustFact` and `RustFactKind` only.
-- `crates/chirograph-rust/src/extract.rs` — Rust syntax-tree traversal and safe source-local associations.
-- `crates/chirograph-rust/tests/extract.rs` — tiny syntax fixtures and exact-span assertions.
-- `crates/chirograph-rust/README.md` — supported v0 facts and explicit non-goals.
+- `crates/chirograph-rust/src/lib.rs` — `extract_rust_facts` entrypoint.
+- `crates/chirograph-rust/src/fact.rs` — typed Rust facts.
+- `crates/chirograph-rust/src/extract.rs` — source-local Rust extraction.
+- `crates/chirograph-rust/tests/extract.rs` — tiny syntax fixtures and exact-span tests.
+- `crates/chirograph-rust/README.md` — v0 capability and explicit non-goals.
 
-### First benchmark specimen
+### First formal benchmark specimen
 
-- `benchmarks/cargo/schema-enum-drift/README.md` — defect provenance, logical clause, why it is useful.
-- `benchmarks/cargo/schema-enum-drift/case.json` — exact Cargo revision, source paths, byte hashes, expected source/schema values, and benchmark-only stance mapping.
-- `benchmarks/cargo/schema-enum-drift/sources/crates/cargo-util-schemas/src/manifest/mod.rs` — vendored exact Rust source from Cargo revision `2ceefa0090080354b80cc2f5415039bdb0d2bf0b`.
-- `benchmarks/cargo/schema-enum-drift/sources/crates/cargo-util-schemas/manifest.schema.json` — vendored exact generated schema from the same revision.
-- `crates/chirograph-rust/tests/cargo_schema_enum_drift.rs` — dynamically acquire Rust facts, parse structured JSON, build ordinary evidence, and require `CONTESTED`.
+- `benchmarks/cargo/schema-enum-drift/README.md`
+- `benchmarks/cargo/schema-enum-drift/case.json`
+- `benchmarks/cargo/schema-enum-drift/sources/crates/cargo-util-schemas/src/manifest/mod.rs`
+- `benchmarks/cargo/schema-enum-drift/sources/crates/cargo-util-schemas/manifest.schema.json`
+- `crates/chirograph-rust/tests/cargo_schema_enum_drift.rs`
 
 ### Workspace
 
-- `Cargo.toml` — add the two crates as workspace members; do not add Tree-sitter to `chirograph-core`.
+- `Cargo.toml` — add the two crates as members only.
 
 ---
 
@@ -69,10 +69,11 @@
 - Create: `crates/chirograph-tree-sitter/README.md`
 
 **Interfaces:**
-- Consumes: `chirograph_core::{Revision, SourceId}` and a caller-supplied `tree_sitter::Language` plus UTF-8 source bytes.
+- Consumes: `chirograph_core::{Revision, SourceId}`, caller-supplied UTF-8 bytes, and a caller-supplied `tree_sitter::Language`.
 - Produces:
 
 ```rust
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceProvenance {
     pub source: SourceId,
     pub revision: Revision,
@@ -94,7 +95,7 @@ pub struct SourceSpan {
     pub end: SourcePoint,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ParseDiagnosticKind {
     ErrorNode,
     MissingNode,
@@ -106,9 +107,7 @@ pub struct ParseDiagnostic {
     pub span: SourceSpan,
 }
 
-pub struct ParsedSource {
-    /* owned UTF-8 source + Tree + provenance + sorted diagnostics */
-}
+pub struct ParsedSource { /* owned String + Tree + provenance + diagnostics */ }
 
 pub fn parse_utf8(
     language: &tree_sitter::Language,
@@ -127,11 +126,11 @@ impl ParsedSource {
 }
 ```
 
-`preorder()` must be deterministic Tree-sitter child-index preorder. Diagnostics must be sorted by `(start_byte, end_byte, kind)` and deduplicated.
+`preorder()` is child-index preorder. Diagnostics sort/deduplicate by `(start_byte, end_byte, kind)`.
 
-- [ ] **Step 1: Add a failing exact-provenance/span test**
+- [ ] **Step 1: Write the failing exact-provenance/span test**
 
-Create `crates/chirograph-tree-sitter/tests/parse.rs` with a dev-only Rust grammar so the shared crate can be tested without making Rust grammar part of its production API:
+Create `crates/chirograph-tree-sitter/tests/parse.rs`:
 
 ```rust
 use chirograph_core::{Revision, SourceId};
@@ -153,18 +152,12 @@ fn preserves_exact_revision_and_source_coordinates() {
         &language,
         b"fn alpha() {}\n",
         provenance(Revision::Exact("0123456789abcdef0123456789abcdef01234567".into())),
-    )
-    .unwrap();
+    ).unwrap();
 
-    assert_eq!(
-        parsed.provenance().revision,
-        Revision::Exact("0123456789abcdef0123456789abcdef01234567".into())
-    );
-    let function = parsed
-        .preorder()
-        .into_iter()
-        .find(|node| node.kind() == "function_item")
-        .unwrap();
+    assert_eq!(parsed.provenance().revision,
+        Revision::Exact("0123456789abcdef0123456789abcdef01234567".into()));
+    let function = parsed.preorder().into_iter()
+        .find(|node| node.kind() == "function_item").unwrap();
     let span = parsed.span(function);
     assert_eq!((span.start_byte, span.end_byte), (0, 13));
     assert_eq!((span.start.row, span.start.column), (0, 0));
@@ -173,7 +166,7 @@ fn preserves_exact_revision_and_source_coordinates() {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify RED**
+- [ ] **Step 2: Verify RED**
 
 Run:
 
@@ -181,14 +174,13 @@ Run:
 cargo test -p chirograph-tree-sitter --test parse preserves_exact_revision_and_source_coordinates
 ```
 
-Expected: Cargo reports that workspace package `chirograph-tree-sitter` does not exist.
+Expected: Cargo reports that package `chirograph-tree-sitter` does not exist.
 
-- [ ] **Step 3: Add the workspace member and minimal crate manifests**
+- [ ] **Step 3: Add the workspace member and manifest**
 
-Update root `Cargo.toml` members to include `crates/chirograph-tree-sitter`. Create:
+Add `crates/chirograph-tree-sitter` to root workspace members. Create:
 
 ```toml
-# crates/chirograph-tree-sitter/Cargo.toml
 [package]
 name = "chirograph-tree-sitter"
 version.workspace = true
@@ -209,9 +201,9 @@ unsafe_code = "forbid"
 
 Do not modify `crates/chirograph-core/Cargo.toml`.
 
-- [ ] **Step 4: Implement provenance value types**
+- [ ] **Step 4: Implement provenance/span types**
 
-Create `src/provenance.rs` with the exact public types above and a single conversion helper:
+Create `provenance.rs` with the interface types and:
 
 ```rust
 impl From<tree_sitter::Point> for SourcePoint {
@@ -232,16 +224,7 @@ pub(crate) fn span_of(node: tree_sitter::Node<'_>) -> SourceSpan {
 
 - [ ] **Step 5: Implement minimal owned parsing**
 
-Create `src/parse.rs`. `parse_utf8` must:
-
-1. reject invalid UTF-8 before parser invocation;
-2. call `Parser::set_language(language)` and surface ABI mismatch as a typed `ParseError`;
-3. parse once with no prior tree;
-4. fail if Tree-sitter returns `None`;
-5. own the UTF-8 `String`, `Tree`, provenance, and diagnostics;
-6. collect `ERROR` and missing nodes by deterministic preorder.
-
-The core implementation shape is:
+`parse_utf8` must reject invalid UTF-8, surface grammar ABI mismatch, fail if no tree is returned, own its source string/tree/provenance, and collect `ERROR` and missing nodes.
 
 ```rust
 pub fn parse_utf8(
@@ -253,8 +236,7 @@ pub fn parse_utf8(
         .map_err(|error| ParseError::InvalidUtf8(error.valid_up_to()))?
         .to_owned();
     let mut parser = Parser::new();
-    parser
-        .set_language(language)
+    parser.set_language(language)
         .map_err(|error| ParseError::Language(error.to_string()))?;
     let tree = parser.parse(&source, None).ok_or(ParseError::NoTree)?;
     let diagnostics = collect_diagnostics(tree.root_node());
@@ -262,45 +244,32 @@ pub fn parse_utf8(
 }
 ```
 
-`ParseError` must implement `Display` and `std::error::Error` without adding another error dependency.
+Implement `Display` and `std::error::Error` for `ParseError` without another dependency.
 
-- [ ] **Step 6: Verify the exact-provenance/span test turns GREEN**
+- [ ] **Step 6: Verify GREEN for exact provenance/span**
 
-Run the Step 2 command.
+Run the Step 2 command. Expected: PASS.
 
-Expected: PASS.
+- [ ] **Step 7: Add failure/determinism tests**
 
-- [ ] **Step 7: Add malformed-source, unknown-revision, and deterministic-order tests**
-
-Add three tests:
+Add tests that require:
 
 ```rust
-#[test]
-fn malformed_regions_are_reported_without_inventing_clean_parse_state() {
-    let language = tree_sitter_rust::LANGUAGE.into();
-    let parsed = parse_utf8(&language, b"fn broken( {", provenance(Revision::Unknown)).unwrap();
-    assert!(!parsed.diagnostics().is_empty());
-}
+assert!(!parse_utf8(&language, b"fn broken( {", provenance(Revision::Unknown))
+    .unwrap().diagnostics().is_empty());
 
-#[test]
-fn unknown_revision_stays_unknown() {
-    let language = tree_sitter_rust::LANGUAGE.into();
-    let parsed = parse_utf8(&language, b"const X: u8 = 1;", provenance(Revision::Unknown)).unwrap();
-    assert_eq!(parsed.provenance().revision, Revision::Unknown);
-}
+assert_eq!(parse_utf8(&language, b"const X: u8 = 1;", provenance(Revision::Unknown))
+    .unwrap().provenance().revision, Revision::Unknown);
 
-#[test]
-fn preorder_is_stable_and_source_order_preserving() {
-    let language = tree_sitter_rust::LANGUAGE.into();
-    let parsed = parse_utf8(&language, b"fn b() {}\nfn a() {}\n", provenance(Revision::Unknown)).unwrap();
-    let starts: Vec<_> = parsed.preorder().into_iter().map(|node| node.start_byte()).collect();
-    assert!(starts.windows(2).all(|pair| pair[0] <= pair[1]));
-}
+let parsed = parse_utf8(&language, b"fn b() {}\nfn a() {}\n", provenance(Revision::Unknown)).unwrap();
+let left: Vec<_> = parsed.preorder().into_iter().map(|n| (n.kind().to_owned(), n.start_byte(), n.end_byte())).collect();
+let right: Vec<_> = parsed.preorder().into_iter().map(|n| (n.kind().to_owned(), n.start_byte(), n.end_byte())).collect();
+assert_eq!(left, right);
 ```
 
-- [ ] **Step 8: Run substrate tests and workspace checks**
+Also test invalid UTF-8 returns `ParseError::InvalidUtf8` and no parsed facts can be consumed.
 
-Run:
+- [ ] **Step 8: Run shared-crate verification**
 
 ```sh
 cargo test -p chirograph-tree-sitter
@@ -311,11 +280,9 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 Expected: all pass.
 
-- [ ] **Step 9: Document the substrate boundary**
+- [ ] **Step 9: Document and commit Task 1**
 
-`crates/chirograph-tree-sitter/README.md` must state that callers supply bytes and provenance, parsing is read-only, exactness is never inferred, malformed regions produce diagnostics, and no contract stance/authority is assigned here.
-
-- [ ] **Step 10: Commit Task 1**
+README must say: caller supplies bytes/provenance; exactness is never inferred; malformed regions are diagnostics; no filesystem/network/project semantics; no stance/authority.
 
 ```sh
 git add Cargo.toml crates/chirograph-tree-sitter
@@ -336,33 +303,15 @@ git commit -m "feat: add shared Tree-sitter acquisition substrate"
 - Create: `crates/chirograph-rust/README.md`
 
 **Interfaces:**
-- Consumes: `parse_utf8`, `SourceProvenance`, and `SourceSpan` from Task 1; `tree_sitter_rust::LANGUAGE`.
+- Consumes: Task 1's `parse_utf8`, `SourceProvenance`, `SourceSpan`, `ParseDiagnostic`; `tree_sitter_rust::LANGUAGE`.
 - Produces:
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RustFactKind {
-    Module,
-    Struct,
-    Enum,
-    Variant,
-    Trait,
-    Impl,
-    Function,
-    Method,
-    Field,
-    Const,
-    Static,
-    TypeExpression,
-    Attribute,
-    Call,
-    MacroCall,
-    If,
-    Match,
-    MatchArm,
-    Return,
-    Comment,
-    Assertion,
+    Module, Struct, Enum, Variant, Trait, Impl, Function, Method,
+    Field, Const, Static, TypeExpression, Attribute, Call, MacroCall,
+    If, Match, MatchArm, Return, Comment, Assertion,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -375,6 +324,7 @@ pub struct RustFact {
     pub provenance: SourceProvenance,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RustExtraction {
     pub facts: Vec<RustFact>,
     pub diagnostics: Vec<ParseDiagnostic>,
@@ -386,19 +336,16 @@ pub fn extract_rust_facts(
 ) -> Result<RustExtraction, RustAdapterError>;
 ```
 
-Facts are sorted by `(start_byte, end_byte, kind, name)` and deduplicated by the same identity plus `text`. `RustAdapterError` wraps only acquisition failures; malformed subregions remain diagnostics, not guessed facts.
+Facts sort by `(start_byte, end_byte, kind, name)` and deduplicate by that identity plus text.
 
-- [ ] **Step 1: Write a failing Rust fact extraction test**
+- [ ] **Step 1: Write the failing acceptance-critical extraction test**
 
-Create a fixture inline in `tests/extract.rs` that exercises the acceptance-critical constructs plus representative declarations:
+Create `tests/extract.rs` with:
 
 ```rust
 const SOURCE: &str = r#"
 #[derive(Debug)]
-pub enum Mode {
-    None,
-    Full,
-}
+pub enum Mode { None, Full }
 
 impl Mode {
     pub fn label(&self) -> &'static str {
@@ -410,25 +357,22 @@ impl Mode {
 }
 
 #[test]
-fn labels() {
-    assert_eq!(Mode::Full.label(), "full");
-}
+fn labels() { assert_eq!(Mode::Full.label(), "full"); }
 "#;
 
 #[test]
 fn extracts_declarations_variants_match_arms_and_assertions() {
-    let extraction = extract_rust_facts(SOURCE.as_bytes(), exact_fixture_provenance()).unwrap();
-    assert!(extraction.facts.iter().any(|fact| fact.kind == RustFactKind::Enum && fact.name.as_deref() == Some("Mode")));
-    assert!(extraction.facts.iter().any(|fact| fact.kind == RustFactKind::Variant && fact.name.as_deref() == Some("None")));
-    assert!(extraction.facts.iter().any(|fact| fact.kind == RustFactKind::MatchArm && fact.text.contains("Self::None => \"none\"")));
-    assert!(extraction.facts.iter().any(|fact| fact.kind == RustFactKind::Assertion && fact.text.starts_with("assert_eq!")));
-    assert!(extraction.facts.iter().all(|fact| fact.provenance == exact_fixture_provenance()));
+    let p = exact_fixture_provenance();
+    let extraction = extract_rust_facts(SOURCE.as_bytes(), p.clone()).unwrap();
+    assert!(extraction.facts.iter().any(|f| f.kind == RustFactKind::Enum && f.name.as_deref() == Some("Mode")));
+    assert!(extraction.facts.iter().any(|f| f.kind == RustFactKind::Variant && f.name.as_deref() == Some("None")));
+    assert!(extraction.facts.iter().any(|f| f.kind == RustFactKind::MatchArm && f.text.contains("Self::None => \"none\"")));
+    assert!(extraction.facts.iter().any(|f| f.kind == RustFactKind::Assertion && f.text.starts_with("assert_eq!")));
+    assert!(extraction.facts.iter().all(|f| f.provenance == p));
 }
 ```
 
-- [ ] **Step 2: Run the test to verify RED**
-
-Run:
+- [ ] **Step 2: Verify RED**
 
 ```sh
 cargo test -p chirograph-rust --test extract extracts_declarations_variants_match_arms_and_assertions
@@ -436,12 +380,11 @@ cargo test -p chirograph-rust --test extract extracts_declarations_variants_matc
 
 Expected: package `chirograph-rust` does not exist.
 
-- [ ] **Step 3: Add the Rust crate and exact grammar dependency**
+- [ ] **Step 3: Add Rust adapter member and manifest**
 
 Add `crates/chirograph-rust` to root workspace members. Create:
 
 ```toml
-# crates/chirograph-rust/Cargo.toml
 [package]
 name = "chirograph-rust"
 version.workspace = true
@@ -454,24 +397,25 @@ chirograph-core = { path = "../chirograph-core" }
 chirograph-tree-sitter = { path = "../chirograph-tree-sitter" }
 tree-sitter = "=0.26.13"
 tree-sitter-rust = "=0.24.2"
+
+[dev-dependencies]
 serde_json = "1"
+sha2 = "=0.11.0"
 
 [lints.rust]
 unsafe_code = "forbid"
 ```
 
-`serde_json` is used only by the Cargo acceptance test unless production code later proves it necessary; if Cargo permits it as a dev dependency after tests are written, keep it in `[dev-dependencies]` instead.
+- [ ] **Step 4: Implement `RustFact` value types**
 
-- [ ] **Step 4: Implement the typed fact model**
+Create `fact.rs` with the exact interface above. Re-export the fact types from `lib.rs`.
 
-Create `src/fact.rs` with the exact public types above. `SourceProvenance` must derive/implement `Clone + PartialEq + Eq` in Task 1 so facts can preserve it verbatim.
+- [ ] **Step 5: Implement one deterministic source-local traversal**
 
-- [ ] **Step 5: Implement source-local extraction with an explicit node-kind table**
-
-`src/extract.rs` must traverse the parsed tree once. Use these Tree-sitter Rust node kinds as the v0 structural vocabulary:
+`extract.rs` parses once, traverses once, tracks named declaration containers, and maps these syntax node kinds:
 
 ```rust
-fn direct_kind(node: tree_sitter::Node<'_>, has_impl_ancestor: bool) -> Option<RustFactKind> {
+fn direct_kind(node: tree_sitter::Node<'_>, in_impl: bool) -> Option<RustFactKind> {
     match node.kind() {
         "mod_item" => Some(RustFactKind::Module),
         "struct_item" => Some(RustFactKind::Struct),
@@ -479,7 +423,7 @@ fn direct_kind(node: tree_sitter::Node<'_>, has_impl_ancestor: bool) -> Option<R
         "enum_variant" => Some(RustFactKind::Variant),
         "trait_item" => Some(RustFactKind::Trait),
         "impl_item" => Some(RustFactKind::Impl),
-        "function_item" if has_impl_ancestor => Some(RustFactKind::Method),
+        "function_item" if in_impl => Some(RustFactKind::Method),
         "function_item" => Some(RustFactKind::Function),
         "field_declaration" => Some(RustFactKind::Field),
         "const_item" => Some(RustFactKind::Const),
@@ -497,46 +441,32 @@ fn direct_kind(node: tree_sitter::Node<'_>, has_impl_ancestor: bool) -> Option<R
 }
 ```
 
-Also emit `TypeExpression` facts for named `type` fields on declarations where Tree-sitter exposes the field directly. Do not resolve aliases or inferred types.
+Rules:
 
-For names, read only explicit syntax-tree fields such as `child_by_field_name("name")`. For container paths, maintain a stack only for named declarations (`mod`, `struct`, `enum`, `trait`, `impl`, `function`/method) whose names are syntactically available. An anonymous `impl` may contribute the literal source text of its `type` field as a container segment, but no name resolution is allowed.
+- Names come only from explicit syntax fields such as `child_by_field_name("name")`.
+- `TypeExpression` comes only from explicit `type` fields; do not infer types.
+- Container stack includes syntactically named module/struct/enum/trait/function/method declarations. Anonymous impls may use their literal `type` field text as a container segment.
+- `assert!`, `assert_eq!`, `assert_ne!`, `debug_assert!`, `debug_assert_eq!`, `debug_assert_ne!` macro invocations emit both `MacroCall` and `Assertion` facts. This is lexical macro-path classification only.
+- Do not emit a fact for an error/missing node or when the candidate node itself depends on a malformed subtree.
+- Every fact clones caller-supplied provenance unchanged and receives exact node span/text.
 
-Treat an `assert!`, `assert_eq!`, `assert_ne!`, `debug_assert!`, `debug_assert_eq!`, or `debug_assert_ne!` `macro_invocation` as both `MacroCall` and `Assertion`; the assertion classification is purely lexical on the macro path.
+- [ ] **Step 6: Verify GREEN for the acceptance-critical test**
 
-Do not emit facts whose node itself is missing/error or has an error ancestor between the node and the nearest clean declaration boundary.
+Run the Step 2 command. Expected: PASS.
 
-- [ ] **Step 6: Verify the acceptance-critical extraction test turns GREEN**
+- [ ] **Step 7: Add v0 boundary tests**
 
-Run the Step 2 command.
+Add focused tests for module/struct/trait/impl/function/method, fields/const/static/type fields, attributes, calls/macros, `if`/`match`/`match_arm`/`return`, comments/doc comments, malformed-source diagnostics, deterministic repeated output, and one multibyte UTF-8 fixture proving byte offsets differ correctly from character counts while row/column values remain Tree-sitter coordinates.
 
-Expected: PASS.
-
-- [ ] **Step 7: Add coverage for the rest of the v0 fact boundary**
-
-Add focused tests for:
-
-- module/struct/trait/impl/function/method;
-- field/const/static and explicit type expressions;
-- attributes;
-- calls and macro calls;
-- `if`, `match`, `match_arm`, `return`;
-- comments/doc comments as source facts;
-- malformed source diagnostics with no fact emitted from the malformed node;
-- deterministic ordering across two runs;
-- exact byte and row/column spans for at least one multibyte UTF-8 source fixture.
-
-For deterministic ordering, require full structural equality:
+Require deterministic equality:
 
 ```rust
-let left = extract_rust_facts(SOURCE.as_bytes(), provenance.clone()).unwrap();
-let right = extract_rust_facts(SOURCE.as_bytes(), provenance).unwrap();
-assert_eq!(left.facts, right.facts);
-assert_eq!(left.diagnostics, right.diagnostics);
+let left = extract_rust_facts(SOURCE.as_bytes(), p.clone()).unwrap();
+let right = extract_rust_facts(SOURCE.as_bytes(), p).unwrap();
+assert_eq!(left, right);
 ```
 
-- [ ] **Step 8: Run Rust adapter tests and full workspace checks**
-
-Run:
+- [ ] **Step 8: Run adapter/workspace verification**
 
 ```sh
 cargo test -p chirograph-rust
@@ -547,11 +477,9 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 Expected: all pass.
 
-- [ ] **Step 9: Document supported facts and non-goals**
+- [ ] **Step 9: Document and commit Task 2**
 
-`crates/chirograph-rust/README.md` must list the exact `RustFactKind` variants and explicitly state: no macro expansion, name resolution, trait solving, cross-file type inference, Cargo-specific symbol knowledge, or clause stance inference.
-
-- [ ] **Step 10: Commit Task 2**
+README must enumerate `RustFactKind` and explicitly reject macro expansion, name resolution, trait solving, cross-file type inference, Cargo-specific symbol knowledge, and clause stance inference.
 
 ```sh
 git add Cargo.toml crates/chirograph-rust
@@ -570,33 +498,31 @@ git commit -m "feat: add generic Rust Tree-sitter adapter"
 - Create: `crates/chirograph-rust/tests/cargo_schema_enum_drift.rs`
 
 **Interfaces:**
-- Consumes: `extract_rust_facts`, `serde_json`, and `chirograph_core::evidence::parse_evidence_json` / ordinary core clause assessment.
-- Produces: one deterministic benchmark case proving that the exact historical Cargo source and generated schema disagree over the string spellings accepted for `profile.*.debug` / `TomlDebugInfo`.
+- Consumes: `extract_rust_facts`, `serde_json`, `sha2::Sha256`, and existing Chirograph evidence parsing/clause assessment.
+- Produces: one deterministic benchmark case requiring `CONTESTED` for a real source/generated-schema disagreement.
 
-The case is pinned to:
+Pinned upstream authority:
 
 ```text
 repository: rust-lang/cargo
 revision:   2ceefa0090080354b80cc2f5415039bdb0d2bf0b
 Rust path:  crates/cargo-util-schemas/src/manifest/mod.rs
+Rust SHA-256: fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c
 JSON path:  crates/cargo-util-schemas/manifest.schema.json
+JSON SHA-256: a8f038d7ef99e69810c5cafd17d340b9aa42f7c9dd01e9ff70fb4205fec2f21e
 upstream issue: rust-lang/cargo#17201
 ```
 
-The benchmark logical clause is:
+Benchmark clause:
 
 ```text
 profile debug string values use the manifest spellings:
 none, line-directives-only, line-tables-only, limited, full
 ```
 
-The source-side serializer/deserializer logic supports those spellings. At this exact bad revision the generated JSON schema exposes Rust-style enum spellings such as `None`, `LineDirectivesOnly`, `LineTablesOnly`, `Limited`, and `Full`, so the benchmark must remain `CONTESTED` until evaluated against a fixed upstream revision.
+- [ ] **Step 1: Vendor and verify exact upstream bytes**
 
-- [ ] **Step 1: Vendor the exact two upstream files before writing the test**
-
-Retrieve both files specifically at `2ceefa0090080354b80cc2f5415039bdb0d2bf0b`; do not copy from Cargo HEAD. Preserve bytes exactly under the `sources/` paths above.
-
-Immediately record their SHA-256 values with:
+Fetch both files only at `2ceefa0090080354b80cc2f5415039bdb0d2bf0b`. Preserve bytes exactly under the benchmark source paths. Run:
 
 ```sh
 sha256sum \
@@ -604,11 +530,18 @@ sha256sum \
   benchmarks/cargo/schema-enum-drift/sources/crates/cargo-util-schemas/manifest.schema.json
 ```
 
-Put the resulting 64-hex digests into `case.json`. The test will verify those hashes before analysis, so accidental fixture edits fail before semantic assertions.
+Expected exactly:
 
-- [ ] **Step 2: Create the benchmark metadata contract**
+```text
+fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c  benchmarks/cargo/schema-enum-drift/sources/crates/cargo-util-schemas/src/manifest/mod.rs
+a8f038d7ef99e69810c5cafd17d340b9aa42f7c9dd01e9ff70fb4205fec2f21e  benchmarks/cargo/schema-enum-drift/sources/crates/cargo-util-schemas/manifest.schema.json
+```
 
-Create `case.json` with this shape, replacing the two `sha256` values only with the exact command output from Step 1:
+If either digest differs, stop. Do not normalize line endings or fetch HEAD.
+
+- [ ] **Step 2: Create exact benchmark metadata**
+
+Create `case.json` exactly with:
 
 ```json
 {
@@ -625,12 +558,12 @@ Create `case.json` with this shape, replacing the two `sha256` values only with 
     {
       "kind": "rust",
       "path": "crates/cargo-util-schemas/src/manifest/mod.rs",
-      "sha256": "<exact 64-hex digest produced in Step 1>"
+      "sha256": "fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c"
     },
     {
       "kind": "json-schema",
       "path": "crates/cargo-util-schemas/manifest.schema.json",
-      "sha256": "<exact 64-hex digest produced in Step 1>"
+      "sha256": "a8f038d7ef99e69810c5cafd17d340b9aa42f7c9dd01e9ff70fb4205fec2f21e"
     }
   ],
   "expected": {
@@ -641,100 +574,70 @@ Create `case.json` with this shape, replacing the two `sha256` values only with 
 }
 ```
 
-The angle-bracket text is not committed literally; the implementation step substitutes the two deterministic digests before the file is added to git.
+- [ ] **Step 3: Write the failing acceptance test**
 
-- [ ] **Step 3: Write the failing Cargo acceptance test**
+`cargo_schema_enum_drift.rs` must:
 
-`cargo_schema_enum_drift.rs` must first verify fixture hash/revision metadata, then parse the Rust source dynamically through `extract_rust_facts` and the schema through `serde_json`.
-
-The source observation must be derived from generic `MatchArm`/string-literal-containing facts, not hard-coded as a hand-authored Rust observation. The schema observation must come from the schema JSON definition for `TomlDebugInfo`.
-
-Core assertions before evidence construction:
+1. parse `case.json`;
+2. SHA-256 both vendored files and require exact metadata hashes before analysis;
+3. call `extract_rust_facts` with `Revision::Exact("2ceefa0090080354b80cc2f5415039bdb0d2bf0b".into())` and the exact Rust path;
+4. derive manifest spellings from generic `MatchArm`/literal-containing facts in the `TomlDebugInfo` implementation;
+5. parse `manifest.schema.json` with `serde_json` and read generated `TomlDebugInfo` enum values;
+6. assert the two lists below;
+7. map the source observation to support and generated-schema observation to contradiction only in benchmark code;
+8. create ordinary `chirograph-evidence-v1`, parse it through existing core evidence parsing, assess the clause, and require `Contested` with exact supporter/contradictor representation IDs.
 
 ```rust
 assert_eq!(source_strings, vec![
-    "none",
-    "line-directives-only",
-    "line-tables-only",
-    "limited",
-    "full",
+    "none", "line-directives-only", "line-tables-only", "limited", "full",
 ]);
 assert_eq!(schema_strings, vec![
-    "None",
-    "LineDirectivesOnly",
-    "LineTablesOnly",
-    "Limited",
-    "Full",
+    "None", "LineDirectivesOnly", "LineTablesOnly", "Limited", "Full",
 ]);
 assert_ne!(source_strings, schema_strings);
 ```
 
-Then build an ordinary `chirograph-evidence-v1` document with:
-
-- one repository source at exact revision `2ceefa...`;
-- one Rust source representation;
-- one generated-schema representation;
-- one structural clause `cargo.profile-debug.string-values`;
-- a source-backed observation supporting the clause;
-- a schema-backed observation contradicting the clause;
-- no authority claim selecting a winner.
-
-Parse it with `parse_evidence_json`, assess the clause through the existing core API, and require `Contested` plus the exact supporting and contradicting representation IDs.
-
-- [ ] **Step 4: Run the Cargo acceptance test to verify RED**
-
-Run:
-
-```sh
-cargo test -p chirograph-rust --test cargo_schema_enum_drift -- --nocapture
-```
-
-Expected before the benchmark mapping/evidence helper is complete: FAIL because the expected source/schema observations are not yet converted into a valid evidence graph and assessed.
-
-A failure because the generic Rust adapter cannot acquire the required match-arm/string facts is also a valid RED signal; fix the generic adapter, not with Cargo-specific branches.
-
-- [ ] **Step 5: Add the smallest benchmark-local evidence mapping**
-
-Keep Cargo knowledge in this test/case layer. The mapping may select generic Rust facts by `TomlDebugInfo` containment and exact manifest string literals and may select the JSON schema definition by JSON Pointer/key traversal. It must not add `TomlDebugInfo`, `profile.debug`, Cargo symbol names, or stance logic to `chirograph-rust` or `chirograph-core`.
-
-Use stable representation IDs such as:
+Use stable representation IDs:
 
 ```text
 cargo.rust.toml-debug-info
 cargo.generated.manifest-schema
 ```
 
-and observation IDs derived from the case ID plus side, for example:
+and observation IDs:
 
 ```text
 cargo.schema-enum-drift.source
 cargo.schema-enum-drift.generated-schema
 ```
 
-The benchmark case explicitly supplies which side supports and contradicts the logical clause; the language adapter does not.
+No authority claim selects a winner.
 
-- [ ] **Step 6: Verify GREEN and inspect the contested result**
-
-Run:
+- [ ] **Step 4: Verify RED**
 
 ```sh
 cargo test -p chirograph-rust --test cargo_schema_enum_drift -- --nocapture
-cargo run -p chirograph-cli -- inspect <generated-test-evidence-path-if-the-test-persists-one>
 ```
 
-If the test constructs evidence entirely in memory, the CLI command is optional; in that case print/render the ordinary evidence document in a temporary test artifact only when `CHIROGRAPH_KEEP_BENCHMARK_OUTPUT=1` is set. Default tests must not dirty the repository.
+Expected: FAIL until dynamic Rust acquisition plus benchmark-local evidence mapping produces a valid contested graph. If the generic adapter lacks a required source-local fact, improve the generic adapter rather than adding Cargo branches.
 
-Expected: the test reports/assesses `CONTESTED`, with the Rust representation on the supporting side and the generated schema on the contradicting side.
+- [ ] **Step 5: Implement only benchmark-local selection/mapping**
 
-- [ ] **Step 7: Document why the specimen is real and bounded**
+Cargo-specific selection may use `TomlDebugInfo` containment, exact string literals, and JSON key traversal inside this test/case layer. Do not add `TomlDebugInfo`, `profile.debug`, Cargo symbol names, or stance logic to `chirograph-rust`, `chirograph-tree-sitter`, or `chirograph-core`.
 
-`benchmarks/cargo/schema-enum-drift/README.md` must record the exact revision, upstream issue `rust-lang/cargo#17201`, the two source paths, the logical clause, expected disagreement, and this boundary:
+- [ ] **Step 6: Verify GREEN**
+
+Run the Step 4 command. Expected: PASS with `CONTESTED`, Rust as supporter, generated schema as contradictor.
+
+If useful for manual inspection, render evidence only to a temporary file when `CHIROGRAPH_KEEP_BENCHMARK_OUTPUT=1`; default tests must not dirty the repository.
+
+- [ ] **Step 7: Document the case**
+
+README must record revision, hashes/paths, upstream issue `rust-lang/cargo#17201`, clause, observed disagreement, and this exact boundary:
 
 > The benchmark measures Chirograph's acquisition and cross-representation analysis against pinned bytes. Fetching Cargo at runtime is a separate demo capability and is not scored here.
 
-- [ ] **Step 8: Run the full repository verification suite**
-
-Run:
+- [ ] **Step 8: Run full repository verification**
 
 ```sh
 cargo fmt --all -- --check
@@ -757,26 +660,16 @@ git commit -m "test: add Cargo schema enum drift benchmark"
 
 ## Completion Evidence
 
-The slice is complete only when the final worker reports all of the following exact evidence:
+The slice is complete only when the final worker reports:
 
-1. Chirograph commit SHA containing the completed slice.
-2. Exact dependency versions resolved for `tree-sitter` and `tree-sitter-rust`.
-3. Exact Cargo upstream revision `2ceefa0090080354b80cc2f5415039bdb0d2bf0b`.
-4. SHA-256 digests of both vendored Cargo source files and a passing test that verifies them.
-5. Passing output for every command in Task 3 Step 8.
-6. `cargo_schema_enum_drift` result showing `CONTESTED` with exact supporter and contradictor representation IDs.
-7. Confirmation that `crates/chirograph-core/Cargo.toml` contains no Tree-sitter dependency and core source contains no Cargo/Rust-specific branch added for this slice.
+1. exact Chirograph commit SHA containing the slice;
+2. resolved exact `tree-sitter` and `tree-sitter-rust` versions;
+3. Cargo revision `2ceefa0090080354b80cc2f5415039bdb0d2bf0b`;
+4. both expected fixture SHA-256 digests and passing in-test verification;
+5. passing output for every Task 3 Step 8 command;
+6. `cargo_schema_enum_drift` assessed `CONTESTED` with exact supporter and contradictor representation IDs;
+7. confirmation that `crates/chirograph-core/Cargo.toml` has no Tree-sitter dependency and no Rust/Cargo-specific branch was added to core.
 
-## Follow-on Work Explicitly Deferred
+## Explicitly Deferred Follow-on Work
 
-After this slice is verified, amend/advance independent transitions for:
-
-1. migrating the already-planned Java adapter onto `chirograph-tree-sitter`;
-2. migrating the already-planned Python adapter onto `chirograph-tree-sitter`;
-3. Go + Kubernetes/Temporal;
-4. Ruby + Rails;
-5. C++ + Envoy/Arrow;
-6. TypeScript/TSX + Overcenter;
-7. Protocol Buffers + Kubernetes/Envoy.
-
-Do not fold those languages into this implementation plan. The acceptance criterion for the shared substrate is that adding Go later does not require copying parser lifecycle, provenance, span, or diagnostic machinery from Rust.
+After this slice is verified, use independent transitions for Java migration, Python migration, Go + Kubernetes/Temporal, Ruby + Rails, C++ + Envoy/Arrow, TypeScript/TSX + Overcenter, and Protocol Buffers + Kubernetes/Envoy. Do not fold those languages into this plan. The shared-substrate acceptance test is that adding Go later does not require copying parser lifecycle, provenance, span, or diagnostic machinery from Rust.

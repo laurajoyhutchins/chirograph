@@ -1,69 +1,131 @@
 # Chirograph Contract Benchmark Implementation Plan
 
-**Goal:** Add a hermetic, data-only contract benchmark framework plus eight curated real-repository cases that score Chirograph's final logical contract graph against human-reviewed golden truth, without adding repository-specific analysis code.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Architecture:** Add a small `chirograph-benchmark` workspace crate that discovers `benchmark/<repository>/<scenario>/<case>/`, validates specimen provenance and golden truth, invokes the public `chirograph analyze ... --format graph-json` boundary as an external process, scores valid graph output, aggregates results, verifies exact upstream fixture bytes on explicit maintenance commands, and compares against a checked-in regression baseline. Add a canonical graph-JSON projection in `chirograph-core` so the product has one stable machine-readable final-graph representation without making every internal Rust struct layout public. The benchmark must not implement source-to-contract reconstruction itself. Until the public analyzer exists for a case, the case is recorded as an explicit execution-failure baseline; later generic analyzer improvements make cases score without changing benchmark logic.
+**Goal:** Add a hermetic, data-only contract benchmark framework plus eight curated real-repository cases that score Chirograph's final logical contract graph against human-reviewed golden truth without adding repository-specific analysis code.
 
-**Tech Stack:** Rust 2024 workspace, `serde`/`serde_json`, maintained `yaml_serde` 0.10 for typed YAML parsing, `sha2` for local fixture digests, standard-library filesystem/process APIs, Git CLI only for explicit source verification/refresh maintenance operations.
+**Architecture:** Add a small `chirograph-benchmark` workspace crate that discovers `benchmark/<repository>/<scenario>/<case>/`, validates provenance/golden truth, invokes the public `chirograph analyze ... --format graph-json` boundary as an external process, scores canonical graphs, aggregates results, verifies exact upstream fixture bytes only on explicit maintenance commands, and gates regressions against a checked-in baseline. Add an explicit canonical graph-JSON projection in `chirograph-core`; do not derive public serialization directly from every internal model struct. The benchmark does not implement source-to-contract reconstruction: unsupported real cases remain explicit execution failures until generic Chirograph analysis makes them scoreable.
 
-**Design Spec:** `docs/superpowers/specs/2026-09-03-contract-benchmark-design.md`
+**Tech Stack:** Rust 2024 workspace; Rust 1.85 minimum; `serde`/`serde_json`; `yaml_serde = "0.10.7"` for typed YAML; `sha2 = "0.10"`; standard-library filesystem/process APIs; Git CLI only for explicit remote fixture verification/refresh.
+
+**Spec:** `docs/superpowers/specs/2026-09-03-contract-benchmark-design.md`
+
+## Global Constraints
+
+- The benchmark corpus root is exactly `benchmark/`; do not create a root `specimens/` or `benchmarks/` directory.
+- `benchmark/` is data-only. Source code under `fixture/` is inert input; no repository-specific executable glue, observers, symbol maps, extractors, or stance mapping may live there.
+- Fixture files are complete verbatim upstream files pinned to exact 40-character Git revisions and SHA-256 digests.
+- Normal scoring is hermetic/offline. Only explicit `--verify-sources` and `--refresh` operations may use Git/network access.
+- Matching is strict by canonical logical identity; no fuzzy matching.
+- Every unmatched emitted logical contract is false for the current run until human-reviewed golden truth changes.
+- The headline metrics are contract precision/recall/F1, false-contract rate, contract inflation, authority correctness, relationship precision/recall, lifecycle correctness when observable, and finding precision/recall. No composite score in v1.
+- Report case, repository, scenario, and overall views. Macro is headline; micro is secondary.
+- CI gates regression against a reviewed baseline, not an aspirational absolute threshold.
+- The runner invokes only the public general Chirograph analysis boundary. It never privately dispatches adapters.
+- The current repository has no general source-tree → contract-graph analyzer. This plan does not invent one inside the benchmark. Real cases may initially baseline as `execution-failure`.
+- Project execution/orchestration must use Overcenter. GitHub remains source authority; Overcenter remains run/lease/transition authority.
 
 ---
 
-## Scope boundary discovered during planning
+### Task 1: Align Overcenter project truth before implementation
 
-The repository currently has `chirograph inspect <evidence.json>` but no general source-tree-to-contract-graph analyzer. The benchmark must not fill that gap with private adapter orchestration or specimen-specific semantics. This plan therefore builds the benchmark and its corpus against the approved public-analysis boundary, but does **not** implement the semantic `analyze` subsystem.
+**Files:**
+- Read only before mutation: `laurajoyhutchins/overcenter:mcp/project.inspect.js`
+- Read only before mutation: `laurajoyhutchins/overcenter:mcp/project.amend.js`
+- Read only before mutation: `laurajoyhutchins/chirograph:.overcenter/definitions/chirograph.json`
 
-That produces a deliberate first checkpoint:
+**Interfaces:**
+- Consumes: deployed Overcenter `project.inspect` and `project.amend` semantic commands.
+- Produces: authoritative Chirograph project transitions for benchmark implementation; removes the superseded Cargo benchmark transition before execution can claim it.
 
-```text
-real fixture -> public chirograph analyze boundary -> execution failure (today)
-                                              or -> valid chirograph-graph-v1 -> score
+- [ ] **Step 1: Re-read the live Overcenter contracts**
+
+Read `mcp/project.inspect.js`, `mcp/project.amend.js`, and the current semantic command descriptor/schema from the live Overcenter source before invoking either command.
+
+- [ ] **Step 2: Inspect exact current project authority**
+
+Invoke:
+
+```json
+{
+  "command": "project.inspect",
+  "input": {
+    "project_ref": "github:laurajoyhutchins/chirograph"
+  }
+}
 ```
 
-The scorer is fully testable with synthetic canonical graphs. All eight real cases land immediately with explicit current execution status. A later, separate public-analysis implementation plan can make them executable using only generic Chirograph capabilities.
+Record the returned exact `authority_revision`. Do not reuse the planning-time revision if main moved.
 
-Do not weaken this boundary merely to make the initial scoreboard green.
+- [ ] **Step 3: Amend the graph semantically**
+
+At the exact revision from Step 2, remove the future `validate-cargo-rust-specimen` transition because it encodes the now-rejected plural `benchmarks/` layout and Cargo-specific stance mapping.
+
+Upsert these semantic transitions (each executor uses the Superpowers TDD plan in this file; do not encode branch/run/lease bookkeeping):
+
+```json
+[
+  {"id":"implement-benchmark-graph-json","priority":93,"requires":[]},
+  {"id":"implement-contract-benchmark-framework","priority":92,"requires":["implement-benchmark-graph-json"]},
+  {"id":"curate-benchmark-cargo","priority":86,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"curate-benchmark-kafka","priority":85,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"curate-benchmark-kubernetes","priority":84,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"curate-benchmark-pydantic","priority":83,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"curate-benchmark-rails","priority":82,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"curate-benchmark-envoy","priority":81,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"curate-benchmark-arrow","priority":80,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"curate-benchmark-temporal","priority":79,"requires":["implement-contract-benchmark-framework"]},
+  {"id":"establish-contract-benchmark-baseline","priority":75,"requires":["curate-benchmark-cargo","curate-benchmark-kafka","curate-benchmark-kubernetes","curate-benchmark-pydantic","curate-benchmark-rails","curate-benchmark-envoy","curate-benchmark-arrow","curate-benchmark-temporal"]},
+  {"id":"wire-contract-benchmark-ci","priority":74,"requires":["establish-contract-benchmark-baseline"]}
+]
+```
+
+Supply complete executor objects accepted by the live Overcenter project-definition contract, with role `implementation` or `contract-analysis-engineer` and skill text pointing to the exact task(s) in this plan. Preserve any already-confirmed transition meanings; do not rewrite confirmed transitions in place.
+
+- [ ] **Step 4: Read back authoritative graph**
+
+Invoke `project.inspect` again and verify the semantic dependency shape is present. If mutation outcome/readback is uncertain, stop and use Overcenter recovery semantics; do not blindly retry the mutation.
+
+- [ ] **Step 5: Execute subsequent tasks through Overcenter**
+
+For implementation, use `project.advance` to obtain each READY transition and its bounded execution packet. Settle work only through the same semantic boundary with exact evidence. Do not manually recreate leases, claims, settlement, or continuation.
 
 ---
 
-## Task 1: Add a canonical final-graph JSON projection
+### Task 2: Add canonical final-graph JSON
 
 **Files:**
 - Create: `crates/chirograph-core/src/graph_json.rs`
 - Modify: `crates/chirograph-core/src/lib.rs`
-- Test: `crates/chirograph-core/src/graph_json.rs` (`#[cfg(test)]` module)
+- Test: `crates/chirograph-core/src/graph_json.rs`
 
-### Step 1: Write the failing tests
+**Interfaces:**
+- Consumes: `chirograph_core::model::ContractGraph` and `ContractGraph::validate` / `assess_clause`.
+- Produces: `graph_json::GraphJsonV1`, `graph_json::encode_graph_json(&ContractGraph) -> Result<String, GraphJsonError>`, schema constant `chirograph-graph-v1`.
 
-Add tests that build a tiny valid `ContractGraph` containing:
+- [ ] **Step 1: Write failing projection tests**
 
-- one source;
-- one logical contract;
-- two representations;
-- one clause with one supporting and one contradicting assertion;
-- one relation;
-- one facet-scoped authority claim.
+Add a test that constructs a valid graph with one contract, two representations, one relation, one authority claim, and one contested clause; insert vectors out of lexical order and assert canonical output ordering.
 
-Require `graph_json::encode_graph_json(&graph)` to return JSON with:
+```rust
+#[test]
+fn encodes_valid_graph_in_canonical_order() {
+    let graph = fixture_graph_with_reversed_vectors();
+    let json = encode_graph_json(&graph).expect("valid graph");
+    let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert_eq!(value["schema"], "chirograph-graph-v1");
+    assert_eq!(value["contracts"][0]["id"], "example.contract");
+    assert_eq!(value["clause_assessments"][0]["status"], "contested");
+}
 
-```json
-{
-  "schema": "chirograph-graph-v1",
-  "contracts": [],
-  "representations": [],
-  "relations": [],
-  "authority_claims": [],
-  "clauses": [],
-  "clause_assessments": []
+#[test]
+fn refuses_invalid_graph() {
+    let graph = fixture_graph_with_dangling_representation();
+    assert!(encode_graph_json(&graph).is_err());
 }
 ```
 
-The test must assert deterministic lexical ordering by canonical IDs even when the source `ContractGraph` vectors are deliberately inserted out of order.
-
-Add a second test requiring invalid `ContractGraph` input to fail rather than serialize a graph that violates core invariants.
-
-Run:
+- [ ] **Step 2: Run focused tests and confirm red**
 
 ```sh
 cargo test -p chirograph-core graph_json -- --nocapture
@@ -71,11 +133,9 @@ cargo test -p chirograph-core graph_json -- --nocapture
 
 Expected: FAIL because `graph_json` does not exist.
 
-### Step 2: Implement explicit DTOs, not blanket `Serialize` derives
+- [ ] **Step 3: Implement explicit wire DTOs**
 
-Create public projection types in `graph_json.rs` rather than adding `Serialize` to every internal model type.
-
-The stable v1 projection must contain only benchmark/product-facing semantics:
+Implement DTOs rather than adding `Serialize` derives to core domain structs:
 
 ```rust
 pub const GRAPH_JSON_SCHEMA: &str = "chirograph-graph-v1";
@@ -92,52 +152,39 @@ pub struct GraphJsonV1 {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub lifecycle: Vec<GraphLifecycleV1>,
 }
-```
 
-`GraphLifecycleV1` is included as a forward-compatible transport slot but core conversion emits an empty vector until Chirograph has a real lifecycle model. It contains only strings and is never inferred by the encoder:
-
-```rust
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct GraphLifecycleV1 {
-    pub subject: String,
-    pub status: String,
-}
-```
-
-Use explicit string mappings for every current enum (`ContractFacet`, `RepresentationKind`, `RelationKind`, `AuthorityBasis`, `ClauseKind`, `ClauseStatus`) so future Rust enum refactors cannot silently change the wire format.
-
-Represent relation endpoints with typed node refs:
-
-```rust
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct GraphNodeRefV1 {
     pub kind: String,
     pub id: String,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct GraphLifecycleV1 {
+    pub subject: GraphNodeRefV1,
+    pub status: String,
+}
 ```
 
-Generate `clause_assessments` mechanically by calling `ContractGraph::assess_clause` for every clause after `graph.validate()` succeeds.
+Core conversion emits `lifecycle: Vec::new()` until Chirograph gains a real lifecycle model. It must never synthesize lifecycle labels from filenames/comments merely to satisfy benchmarks.
 
-Do not include parser facts, candidate ranks, AST nodes, or adapter diagnostics in this schema.
+Add explicit conversion functions for every current enum string so Rust enum names are not the wire contract. Sort every list deterministically by stable IDs/typed edge tuples.
 
-### Step 3: Re-run focused tests
+- [ ] **Step 4: Compute clause assessments mechanically**
+
+After `graph.validate()?`, call `graph.assess_clause(&clause.id)` for every clause and encode the resulting status/supporting/contradicting representation IDs.
+
+- [ ] **Step 5: Re-run focused and core quality checks**
 
 ```sh
 cargo test -p chirograph-core graph_json -- --nocapture
-```
-
-Expected: PASS.
-
-### Step 4: Verify the core remains language-agnostic
-
-```sh
 cargo check -p chirograph-core
 cargo clippy -p chirograph-core --all-targets --all-features -- -D warnings
 ```
 
-Expected: PASS, with no Tree-sitter or repository-specific dependency added to `chirograph-core`.
+Expected: PASS.
 
-### Step 5: Commit
+- [ ] **Step 6: Commit**
 
 ```sh
 git add crates/chirograph-core/src/graph_json.rs crates/chirograph-core/src/lib.rs
@@ -146,19 +193,36 @@ git commit -m "feat: add canonical contract graph json"
 
 ---
 
-## Task 2: Create the benchmark crate and typed file formats
+### Task 3: Build corpus model, discovery, and validation
 
 **Files:**
 - Modify: `Cargo.toml`
 - Create: `crates/chirograph-benchmark/Cargo.toml`
 - Create: `crates/chirograph-benchmark/src/lib.rs`
-- Create: `crates/chirograph-benchmark/src/main.rs`
 - Create: `crates/chirograph-benchmark/src/model.rs`
-- Test: `crates/chirograph-benchmark/src/model.rs`
+- Create: `crates/chirograph-benchmark/src/corpus.rs`
+- Test: `crates/chirograph-benchmark/tests/corpus.rs`
 
-### Step 1: Write failing typed-format tests
+**Interfaces:**
+- Consumes: `chirograph_core::graph_json::{GraphJsonV1, GraphNodeRefV1}`.
+- Produces: `SpecimenV1`, `GoldenV1`, `BenchmarkCase`, `discover_corpus(root: &Path) -> Result<Vec<BenchmarkCase>, CorpusError>`.
 
-Define tests that parse the following minimal specimen shape:
+- [ ] **Step 1: Add the crate and dependencies**
+
+Root workspace gains `crates/chirograph-benchmark`. Its dependency block is:
+
+```toml
+[dependencies]
+chirograph-core = { path = "../chirograph-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+yaml_serde = "0.10.7"
+sha2 = "0.10"
+```
+
+- [ ] **Step 2: Write failing typed-format tests**
+
+Parse this exact specimen in a test:
 
 ```yaml
 schema: chirograph-benchmark-specimen-v1
@@ -174,254 +238,166 @@ files:
     sha256: fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c
 ```
 
-Define a golden format with product vocabulary plus benchmark-only evaluation truth:
+Golden structs must support:
 
-```yaml
-schema: chirograph-benchmark-golden-v1
-contracts:
-  - id: cargo.profile.debug-info
-    facets: [structural]
-representations:
-  - id: cargo.profile.debug-info.implementation
-    contract: cargo.profile.debug-info
-    kind: source-code
-    locator: crates/cargo-util-schemas/src/manifest/mod.rs
-    facets: [structural]
-authority_claims:
-  - contract: cargo.profile.debug-info
-    facet: structural
-    representation: cargo.profile.debug-info.implementation
-relationships: []
-lifecycle: []
-expected_findings: []
-non_contracts: []
+```rust
+pub struct GoldenV1 {
+    pub schema: String,
+    pub contracts: Vec<GoldenContractV1>,
+    pub representations: Vec<GoldenRepresentationV1>,
+    pub authority_claims: Vec<GoldenAuthorityClaimV1>,
+    pub relationships: Vec<GoldenRelationshipV1>,
+    pub clauses: Vec<GoldenClauseV1>,
+    pub lifecycle: Vec<GoldenLifecycleV1>,
+    pub expected_findings: Vec<GoldenFindingV1>,
+    pub non_contracts: Vec<GoldenNonContractV1>,
+}
 ```
 
-Tests must reject:
+Use `#[serde(deny_unknown_fields)]` on benchmark-file structs so typos fail closed.
 
-- unknown schema versions;
-- empty IDs;
-- malformed exact revisions;
-- malformed SHA-256 strings;
-- duplicate contract IDs;
-- authority claims referencing unknown contracts or representations;
-- relationships referencing unknown nodes;
-- lifecycle subjects that refer to no golden contract/representation;
-- expected contested-clause findings that reference no known clause.
-
-Run:
-
-```sh
-cargo test -p chirograph-benchmark model -- --nocapture
-```
-
-Expected: FAIL because the crate does not exist.
-
-### Step 2: Add workspace member and dependencies
-
-Add `crates/chirograph-benchmark` to the root workspace.
-
-Use:
-
-```toml
-[dependencies]
-chirograph-core = { path = "../chirograph-core" }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-yaml_serde = "0.10"
-sha2 = "0.10"
-```
-
-`yaml_serde` is used only for strongly typed benchmark files. Do not use a dynamic YAML `Value` tree.
-
-### Step 3: Implement strict v1 data types
-
-In `model.rs`, define:
-
-- `SpecimenV1`;
-- `UpstreamV1`;
-- `FixtureFileV1`;
-- `GoldenV1`;
-- golden contract/representation/authority/relationship/clause/lifecycle/finding/non-contract structs;
-- `CaseStatus`;
-- `CaseMetrics`;
-- `CaseResult`;
-- `BenchmarkReportV1`;
-- `BenchmarkBaselineV1`.
-
-Golden relationship endpoints must use the same typed `contract`/`representation` node-ref concept as `chirograph-graph-v1`.
-
-Lifecycle truth is intentionally stored as an exact non-empty status string because core has no lifecycle vocabulary yet. A current run reports lifecycle correctness as `null` when observed graph output contains no lifecycle facts. Do not invent lifecycle in product code to satisfy the benchmark.
-
-Expected findings v1 supports one mechanically scoreable kind:
-
-```yaml
-kind: contested-clause
-clause: cargo.profile.debug-info.spelling
-```
-
-Additional finding kinds require an explicit future schema change.
-
-### Step 4: Re-run tests
-
-```sh
-cargo test -p chirograph-benchmark model -- --nocapture
-```
-
-Expected: PASS.
-
-### Step 5: Commit
-
-```sh
-git add Cargo.toml crates/chirograph-benchmark
-git commit -m "feat: add benchmark data model"
-```
-
----
-
-## Task 3: Implement corpus discovery and fail-closed self-validation
-
-**Files:**
-- Create: `crates/chirograph-benchmark/src/corpus.rs`
-- Modify: `crates/chirograph-benchmark/src/lib.rs`
-- Test: `crates/chirograph-benchmark/tests/corpus.rs`
-
-### Step 1: Write failing filesystem tests
-
-In temporary directories, create cases at exactly three identity dimensions:
-
-```text
-benchmark/cargo/schema-enum-drift/case-a/
-benchmark/cargo/schema-enum-drift/case-b/
-benchmark/kafka/message-spec-generation/case-c/
-```
-
-Require discovery to return canonical IDs in lexical order.
-
-Add rejection tests for:
-
-- metadata ID does not equal relative path;
-- `repository` or `scenario` metadata disagrees with path;
-- missing `specimen.yaml` or `golden.yaml`;
-- undeclared file under `fixture/`;
-- declared fixture missing from disk;
-- local fixture SHA-256 mismatch;
-- benchmark implementation files outside `fixture/` (for example `observe.py`, `extract.rs`, `run.sh` next to `golden.yaml`);
-- nested fourth identity directory that is not under `fixture/`;
-- duplicate canonical IDs;
-- golden internal-reference failure.
-
-Important: source-code extensions such as `.rs`, `.java`, `.go`, `.rb`, `.cc`, `.proto`, `.sql`, `.cql`, `.py`, `.json`, `.fbs`, and generated source are legal **inside `fixture/`**. They are inert input, not executable benchmark glue.
-
-Run:
+- [ ] **Step 3: Run and confirm red**
 
 ```sh
 cargo test -p chirograph-benchmark --test corpus -- --nocapture
 ```
 
-Expected: FAIL.
+Expected: FAIL because the crate/types do not exist.
 
-### Step 2: Implement fixed-depth discovery
+- [ ] **Step 4: Implement strict model validation**
 
-Do not add a generic recursive crawler dependency. The layout is fixed:
+Require:
+
+- schema names exactly `chirograph-benchmark-specimen-v1` / `chirograph-benchmark-golden-v1`;
+- non-empty IDs;
+- exact 40-hex revision;
+- exact 64-hex SHA-256;
+- no duplicate contract/representation/clause IDs;
+- all authority/relationship/clause/lifecycle/finding references resolve;
+- at least one golden contract per case.
+
+`GoldenFindingV1` v1 supports only:
+
+```rust
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum GoldenFindingV1 {
+    ContestedClause { clause: String },
+}
+```
+
+`GoldenNonContractV1` is:
+
+```rust
+pub struct GoldenNonContractV1 {
+    pub locator: String,
+    pub reason: String,
+}
+```
+
+- [ ] **Step 5: Write failing fixed-layout discovery tests**
+
+Create temporary cases under exactly:
 
 ```text
 benchmark/<repository>/<scenario>/<case>/
 ```
 
-Use `std::fs::read_dir` for exactly those three dimensions, then validate the case directory.
+Assert rejection for metadata/path disagreement, undeclared fixture bytes, missing fixture bytes, local SHA mismatch, path traversal, and executable benchmark glue next to `specimen.yaml`/`golden.yaml`.
 
-### Step 3: Implement local byte validation
+Source files of any extension are legal under `fixture/`.
 
-Compute SHA-256 over fixture bytes, not decoded text. Require every file under `fixture/` to be declared exactly once in `specimen.yaml`, and every declaration to resolve beneath that case's `fixture/` directory after path normalization.
+- [ ] **Step 6: Implement fixed-depth discovery/local digest verification**
 
-Reject absolute paths and `..` escapes.
+Use `std::fs::read_dir` for repository/scenario/case. Recursively enumerate only `fixture/` to ensure every byte file is declared exactly once. Hash raw bytes with SHA-256.
 
-### Step 4: Re-run tests
+- [ ] **Step 7: Run tests and commit**
 
 ```sh
 cargo test -p chirograph-benchmark --test corpus -- --nocapture
+cargo check -p chirograph-benchmark
 ```
 
 Expected: PASS.
 
-### Step 5: Commit
-
 ```sh
-git add crates/chirograph-benchmark/src/corpus.rs crates/chirograph-benchmark/src/lib.rs crates/chirograph-benchmark/tests/corpus.rs
-git commit -m "feat: validate benchmark corpus"
+git add Cargo.toml crates/chirograph-benchmark
+git commit -m "feat: add benchmark corpus model"
 ```
 
 ---
 
-## Task 4: Add multidimensional selectors and the ergonomic Cargo command
+### Task 4: Add selectors and ergonomic `cargo benchmark`
 
 **Files:**
 - Create: `crates/chirograph-benchmark/src/selector.rs`
-- Modify: `crates/chirograph-benchmark/src/main.rs`
+- Create: `crates/chirograph-benchmark/src/main.rs`
 - Create: `.cargo/config.toml`
 - Test: `crates/chirograph-benchmark/tests/selectors.rs`
 
-### Step 1: Write failing selector tests
+**Interfaces:**
+- Consumes: `Vec<BenchmarkCase>` from Task 3.
+- Produces: `select_cases(cases: &[BenchmarkCase], selector: &str) -> Result<Vec<BenchmarkCase>, SelectorError>` and CLI selectors.
 
-Given cases across multiple repositories/scenarios, require:
+- [ ] **Step 1: Write failing selector tests**
+
+For three synthetic cases, assert exact selection for:
 
 ```text
 all
 cargo
 scenario:schema-enum-drift
 cargo/schema-enum-drift
-cargo/schema-enum-drift/toml-debug-info-spellings
+cargo/schema-enum-drift/case-a
 ```
 
-Selectors return case IDs in lexical order.
+Unknown/zero-match selectors must error.
 
-Reject ambiguous/unknown selectors rather than silently returning zero cases.
+- [ ] **Step 2: Run red test**
 
-### Step 2: Implement selectors
+```sh
+cargo test -p chirograph-benchmark --test selectors -- --nocapture
+```
 
-Rules:
+Expected: FAIL.
 
-- `all`: every case;
-- one path-free token: repository;
-- `scenario:<name>`: every matching scenario;
-- two path components: repository/scenario intersection;
-- three path components: exact case.
+- [ ] **Step 3: Implement selection rules**
 
-Do not introduce freeform tag selection in v1.
+One token means repository, `scenario:` means scenario dimension, two path components mean repository/scenario, three mean exact case. Return lexical case order.
 
-### Step 3: Add CLI parser and Cargo alias
+- [ ] **Step 4: Implement a small hand-written CLI**
 
-Use a simple hand-written CLI parser; do not add a large argument-parser dependency for this small surface.
-
-Support:
+Support exactly:
 
 ```text
-cargo benchmark --list
-cargo benchmark all
-cargo benchmark cargo
-cargo benchmark scenario:schema-enum-drift
-cargo benchmark cargo/schema-enum-drift
-cargo benchmark cargo/schema-enum-drift/toml-debug-info-spellings
+chirograph-benchmark --help
+chirograph-benchmark --list
+chirograph-benchmark all
+chirograph-benchmark <selector>
+chirograph-benchmark --verify-sources [selector]
+chirograph-benchmark --refresh <selector> --revision <40-hex-sha>
+chirograph-benchmark <selector> --baseline benchmark/baseline.json
+chirograph-benchmark <selector> --write-baseline benchmark/baseline.json
+chirograph-benchmark <selector> --chirograph-bin <path>
+chirograph-benchmark <selector> --format json
 ```
 
-Create:
+Do not add a general CLI framework dependency.
+
+- [ ] **Step 5: Add Cargo alias**
 
 ```toml
 [alias]
 benchmark = "run --quiet -p chirograph-benchmark --"
 ```
 
-### Step 4: Verify
+- [ ] **Step 6: Verify and commit**
 
 ```sh
 cargo test -p chirograph-benchmark --test selectors -- --nocapture
 cargo benchmark --help
 ```
 
-Expected: PASS and useful help text.
-
-### Step 5: Commit
+Expected: PASS.
 
 ```sh
 git add .cargo/config.toml crates/chirograph-benchmark/src/main.rs crates/chirograph-benchmark/src/selector.rs crates/chirograph-benchmark/tests/selectors.rs
@@ -430,250 +406,140 @@ git commit -m "feat: add benchmark selectors"
 
 ---
 
-## Task 5: Implement strict graph scoring
+### Task 5: Implement scoring, aggregation, and reports
 
 **Files:**
 - Create: `crates/chirograph-benchmark/src/score.rs`
-- Modify: `crates/chirograph-benchmark/src/lib.rs`
+- Create: `crates/chirograph-benchmark/src/aggregate.rs`
+- Create: `crates/chirograph-benchmark/src/report.rs`
 - Test: `crates/chirograph-benchmark/tests/score.rs`
+- Test: `crates/chirograph-benchmark/tests/report.rs`
 
-### Step 1: Write failing metric tests first
+**Interfaces:**
+- Consumes: `GoldenV1`, `GraphJsonV1`.
+- Produces: `score_case(golden: &GoldenV1, observed: &GraphJsonV1) -> CaseScore`; `aggregate_report(results: &[CaseResult]) -> BenchmarkReportV1`.
 
-Use synthetic `chirograph-graph-v1` values, not real repositories.
+- [ ] **Step 1: Write failing metric tests**
 
-Cover at least:
+Use synthetic graphs to cover perfect match, missing contract, false contract, zero emissions, authority 2/3 correct, wrong relation kind, missing relation, false relation, contested-finding hit/miss/false positive, lifecycle exact match, and lifecycle unavailable.
 
-1. perfect contract match;
-2. one missing golden contract;
-3. one unmatched emitted contract;
-4. zero emitted contracts;
-5. facet authority 2/3 correct;
-6. correct relation endpoints with wrong relation kind;
-7. missing relationship;
-8. one correct and one false relationship;
-9. lifecycle exact match when lifecycle exists;
-10. lifecycle `None`/not-scorable when observed graph has no lifecycle facts;
-11. expected contested clause found;
-12. expected contested clause missed;
-13. unexpected contested clause emitted;
-14. contract inflation below, equal to, and above `1.0`.
+The zero-emission test must assert:
 
-### Step 2: Implement exact identity matching
-
-Logical contract matching is exact ID set membership only. No token similarity, edit distance, aliases, or fuzzy rescue.
-
-Compute:
-
-```text
-contract precision = TP / emitted
-contract recall    = TP / golden
-contract F1        = harmonic mean
-false contract rate = FP / emitted
-contract inflation = emitted / golden
+```rust
+assert_eq!(score.contract_precision, None);
+assert_eq!(score.contract_recall, Some(0.0));
+assert_eq!(score.false_contract_rate, None);
+assert_eq!(score.contract_inflation, 0.0);
 ```
 
-Use explicit zero-denominator rules:
-
-- emitted=0 and golden>0: precision `1.0` only in the mathematical vacuous sense is misleading; report precision `null`, recall `0.0`, false rate `null`, inflation `0.0`;
-- golden=0 is invalid for an initial benchmark case and rejected by corpus validation.
-
-This avoids manufacturing a perfect precision score from silence.
-
-### Step 3: Implement authority scoring per facet
-
-Compare exact triples:
-
-```text
-(contract_id, facet, representation_id)
-```
-
-Authority basis is reported in mismatch diagnostics but not part of the v1 correctness numerator, because the approved metric is authority selection correctness.
-
-### Step 4: Implement relationship scoring
-
-Compare exact typed edges:
-
-```text
-(from_kind, from_id, relation_kind, to_kind, to_id)
-```
-
-Report precision and recall.
-
-### Step 5: Implement lifecycle and finding scoring
-
-Lifecycle:
-
-- if golden has no lifecycle expectations, metric is `null`;
-- if golden has lifecycle expectations and observed graph has no lifecycle facts, metric is `null` plus diagnostic `lifecycle_not_observed` rather than pretending zero-confidence inference is an incorrect classification;
-- when observed lifecycle exists, compare exact `(subject,status)` pairs.
-
-Findings:
-
-- golden `contested-clause` maps to observed `clause_assessments.status == "contested"`;
-- report finding precision and recall independently of contract reconstruction.
-
-### Step 6: Keep `unclassified-but-real` out of current-run exemptions
-
-The scorer never accepts a flag from observed output that exempts an unmatched contract. Any unmatched emitted contract is false in the current run.
-
-Corpus history can later record human adjudications separately; no code in `score.rs` may let the analyzer self-certify surprises.
-
-### Step 7: Verify
+- [ ] **Step 2: Run red metric tests**
 
 ```sh
 cargo test -p chirograph-benchmark --test score -- --nocapture
 ```
 
-Expected: PASS.
+Expected: FAIL.
 
-### Step 8: Commit
+- [ ] **Step 3: Implement exact contract/authority/relation scoring**
 
-```sh
-git add crates/chirograph-benchmark/src/score.rs crates/chirograph-benchmark/src/lib.rs crates/chirograph-benchmark/tests/score.rs
-git commit -m "feat: score contract benchmark graphs"
-```
+Contract matching is exact ID membership. Authority compares exact `(contract, facet, representation)` triples. Relationship compares exact `(from.kind, from.id, kind, to.kind, to.id)` tuples.
 
----
+No fuzzy aliases or similarity scoring.
 
-## Task 6: Implement macro/micro aggregation and deterministic reports
+- [ ] **Step 4: Implement lifecycle/finding behavior**
 
-**Files:**
-- Create: `crates/chirograph-benchmark/src/aggregate.rs`
-- Create: `crates/chirograph-benchmark/src/report.rs`
-- Modify: `crates/chirograph-benchmark/src/lib.rs`
-- Test: `crates/chirograph-benchmark/tests/report.rs`
+When golden lifecycle expectations exist but observed lifecycle is empty, return lifecycle metric `None` plus diagnostic `lifecycle_not_observed`. When lifecycle facts exist, compare exact `(subject,status)` pairs.
 
-### Step 1: Write failing aggregation tests
+Map `GoldenFindingV1::ContestedClause` to observed clause assessment status `contested`.
 
-Create synthetic results where one case has 100 contracts and another has 1 contract so macro and micro differ materially.
+- [ ] **Step 5: Add known-negative diagnostics**
 
-Require reports at:
+If an observed representation locator matches `golden.non_contracts[].locator` and its owning observed contract is not a golden contract, add diagnostic `known_non_contract_promoted`. It remains an ordinary false contract; this diagnostic does not change the numerator/denominator.
 
-- case;
-- repository;
-- scenario;
-- overall corpus.
+- [ ] **Step 6: Write failing macro/micro report tests**
 
-Macro must average per-case metric values and skip `null` metrics rather than coercing them to zero.
+Use one 100-contract case and one 1-contract case so macro and micro differ. Require repository, scenario, and overall aggregate rows.
 
-Micro must recompute from pooled counts, not average percentages.
+- [ ] **Step 7: Implement deterministic human/JSON reporting**
 
-### Step 2: Implement metric counts alongside ratios
-
-Keep internal count data for contracts/relationships/findings so micro aggregation is exact.
-
-Do not attempt to micro-average authority or lifecycle when their denominator semantics are unavailable; aggregate their scored numerators/denominators directly when present.
-
-### Step 3: Implement human and JSON reports
-
-Human output headline order:
+Human columns, in order:
 
 ```text
-case/repository/scenario
-contract P/R/F1
-false-rate
-inflation
-ower authority
-relations P/R
-lifecycle
-findings P/R
-status/diagnostics
+scope | contract P/R/F1 | false-rate | inflation | authority | relations P/R | lifecycle | findings P/R | status
 ```
 
-Correct the label to `authority` in implementation; the deliberately misspelled line above is a test-planning reminder that report snapshot tests should catch presentation drift.
+JSON schema is `chirograph-benchmark-report-v1`. Sort cases/scopes lexically and format ratios deterministically.
 
-Machine output schema:
-
-```text
-chirograph-benchmark-report-v1
-```
-
-Use deterministic lexical ordering and stable decimal formatting.
-
-### Step 4: Verify
+- [ ] **Step 8: Verify and commit**
 
 ```sh
+cargo test -p chirograph-benchmark --test score -- --nocapture
 cargo test -p chirograph-benchmark --test report -- --nocapture
 ```
 
 Expected: PASS.
 
-### Step 5: Commit
-
 ```sh
-git add crates/chirograph-benchmark/src/aggregate.rs crates/chirograph-benchmark/src/report.rs crates/chirograph-benchmark/src/lib.rs crates/chirograph-benchmark/tests/report.rs
-git commit -m "feat: report benchmark aggregates"
+git add crates/chirograph-benchmark/src/score.rs crates/chirograph-benchmark/src/aggregate.rs crates/chirograph-benchmark/src/report.rs crates/chirograph-benchmark/tests/score.rs crates/chirograph-benchmark/tests/report.rs
+git commit -m "feat: score and report contract benchmarks"
 ```
 
 ---
 
-## Task 7: Invoke the public Chirograph analysis boundary and classify failures
+### Task 6: Enforce the public analyzer process boundary
 
 **Files:**
 - Create: `crates/chirograph-benchmark/src/runner.rs`
 - Modify: `crates/chirograph-benchmark/src/main.rs`
-- Modify: `crates/chirograph-benchmark/src/lib.rs`
 - Test: `crates/chirograph-benchmark/tests/runner.rs`
 
-### Step 1: Write failing fake-binary tests
+**Interfaces:**
+- Consumes: selected `BenchmarkCase`, product executable path.
+- Produces: `run_case(case: &BenchmarkCase, chirograph_bin: &Path) -> CaseResult` with status `execution-failure`, `invalid-output`, or `scored`.
 
-Create temporary executable scripts/programs for four behaviors:
+- [ ] **Step 1: Write failing fake-binary tests**
 
-1. exit nonzero;
-2. exit zero with non-JSON stdout;
-3. exit zero with wrong graph schema;
-4. exit zero with valid `chirograph-graph-v1`.
+Use temporary executable helpers for: nonzero exit, zero/non-JSON stdout, zero/wrong graph schema, and zero/valid graph JSON. Assert the three failure/status classes exactly.
 
-Require classifications:
+- [ ] **Step 2: Run red test**
 
-```text
-nonzero child        -> execution-failure
-invalid graph output -> invalid-output
-valid graph          -> scored
+```sh
+cargo test -p chirograph-benchmark --test runner -- --nocapture
 ```
 
-Do not parse stderr text to decide semantics. Preserve bounded stderr as diagnostics only.
+Expected: FAIL.
 
-### Step 2: Implement binary resolution
+- [ ] **Step 3: Implement product binary resolution**
 
 Resolution order:
 
-1. explicit `--chirograph-bin PATH`;
-2. `CHIROGRAPH_BIN` environment variable;
-3. repository-local `target/debug/chirograph` (or platform `.exe`).
-
-If the default binary does not exist, run exactly:
-
-```sh
-cargo build --quiet -p chirograph-cli
-```
-
-from the workspace root, then resolve the built binary.
-
-This is build orchestration only. The benchmark must never invoke adapter-specific commands.
-
-### Step 3: Invoke the public contract
-
-For each case, invoke exactly:
-
 ```text
-chirograph analyze <absolute-case-fixture-directory> --format graph-json
+--chirograph-bin
+CHIROGRAPH_BIN
+target/debug/chirograph (target/debug/chirograph.exe on Windows)
 ```
 
-No language flag, repository-specific symbol map, fixture hint, or custom evidence input is allowed.
+If default binary is absent, run `cargo build --quiet -p chirograph-cli` from workspace root once, then resolve it. This build step is generic product tooling, not adapter dispatch.
 
-Today this command is expected to exit nonzero because the semantic analyzer does not yet exist. That is an honest benchmark execution failure.
+- [ ] **Step 4: Invoke exactly the public contract**
 
-### Step 4: Validate successful output
+```rust
+Command::new(chirograph_bin)
+    .arg("analyze")
+    .arg(&case.fixture_dir)
+    .arg("--format")
+    .arg("graph-json")
+```
 
-On exit zero:
+No language flags, semantic queries, repository names, symbol maps, or adapter commands.
 
-- parse `GraphJsonV1`;
-- require `schema == chirograph-graph-v1`;
-- reject duplicate IDs or dangling graph references before scoring;
-- then call the scorer.
+- [ ] **Step 5: Classify output fail-closed**
 
-### Step 5: Verify
+Nonzero exit => `execution-failure`; zero but malformed/wrong-schema graph => `invalid-output`; only valid canonical graph => score. Preserve bounded stderr as diagnostics but never infer success/failure subtype from message wording.
+
+Today the real CLI is expected to reject `analyze`; that is a truthful execution failure.
+
+- [ ] **Step 6: Verify and commit**
 
 ```sh
 cargo test -p chirograph-benchmark --test runner -- --nocapture
@@ -681,147 +547,121 @@ cargo test -p chirograph-benchmark --test runner -- --nocapture
 
 Expected: PASS.
 
-### Step 6: Commit
-
 ```sh
-git add crates/chirograph-benchmark/src/runner.rs crates/chirograph-benchmark/src/main.rs crates/chirograph-benchmark/src/lib.rs crates/chirograph-benchmark/tests/runner.rs
-git commit -m "feat: run public analysis for benchmarks"
+git add crates/chirograph-benchmark/src/runner.rs crates/chirograph-benchmark/src/main.rs crates/chirograph-benchmark/tests/runner.rs
+git commit -m "feat: enforce public benchmark analysis boundary"
 ```
 
 ---
 
-## Task 8: Add exact upstream source verification and refresh maintenance
+### Task 7: Add exact source verification and refresh
 
 **Files:**
 - Create: `crates/chirograph-benchmark/src/source.rs`
 - Modify: `crates/chirograph-benchmark/src/main.rs`
-- Modify: `crates/chirograph-benchmark/src/lib.rs`
 - Test: `crates/chirograph-benchmark/tests/source.rs`
 
-### Step 1: Write failing transport-independent tests
+**Interfaces:**
+- Consumes: selected `BenchmarkCase` provenance.
+- Produces: `verify_sources(cases, fetcher)`, `refresh_sources(cases, exact_revision, fetcher)`; production `GitSourceFetcher`.
 
-Define an internal `SourceFetcher` trait used only by maintenance code. Test with an in-memory fake fetcher that returns exact bytes for `(repository, revision, path)`.
+- [ ] **Step 1: Write failing fake-fetcher tests**
 
-Require:
+Define:
 
-- `verify_sources` detects one mismatched remote byte sequence;
-- `verify_sources` does not modify files;
-- refresh replaces fixture bytes and updates the corresponding SHA-256;
-- refresh updates the specimen revision only when an explicit 40-character `--revision` is supplied;
-- refresh never reads or writes `golden.yaml`;
-- refresh rejects selectors resolving to cases from multiple upstream repositories when one `--revision` would be ambiguous.
-
-### Step 2: Implement generic Git fetcher
-
-Production maintenance fetching may use the installed Git CLI, not a repository-specific API.
-
-For one `(owner/repo, revision)` group:
-
-1. create a temporary directory;
-2. `git init`;
-3. `git remote add origin https://github.com/<owner>/<repo>.git`;
-4. `git fetch --depth=1 origin <exact-revision>`;
-5. for each upstream path, read exact bytes with `git show FETCH_HEAD:<path>`;
-6. delete the temporary directory.
-
-Fail closed if Git cannot fetch the exact revision or any path.
-
-No benchmark scoring path invokes Git or the network.
-
-### Step 3: Add maintenance commands
-
-Support:
-
-```text
-cargo benchmark --verify-sources
-cargo benchmark --verify-sources cargo
-cargo benchmark --refresh cargo/schema-enum-drift/toml-debug-info-spellings --revision 2ceefa0090080354b80cc2f5415039bdb0d2bf0b
+```rust
+pub trait SourceFetcher {
+    fn fetch(&self, repository: &str, revision: &str, path: &str) -> Result<Vec<u8>, SourceError>;
+}
 ```
 
-For `--refresh`, require the revision argument even when it equals the currently pinned revision. Never infer HEAD or a branch tip.
+With an in-memory fake, test remote mismatch, read-only verify, refresh byte replacement, SHA update, exact-revision requirement, and that `golden.yaml` bytes are unchanged.
 
-### Step 4: Verify
+- [ ] **Step 2: Run red test**
 
 ```sh
 cargo test -p chirograph-benchmark --test source -- --nocapture
 ```
 
-Expected: PASS without network access because tests use the fake fetcher.
+Expected: FAIL.
 
-### Step 5: Commit
+- [ ] **Step 3: Implement generic Git-backed fetcher**
+
+For each upstream repository/revision group, use a temporary directory and exact commands:
 
 ```sh
-git add crates/chirograph-benchmark/src/source.rs crates/chirograph-benchmark/src/main.rs crates/chirograph-benchmark/src/lib.rs crates/chirograph-benchmark/tests/source.rs
+git init
+git remote add origin https://github.com/OWNER/REPO.git
+git fetch --depth=1 origin EXACT_40_HEX_REVISION
+git show FETCH_HEAD:UPSTREAM_PATH
+```
+
+Fail closed if the exact revision or any path cannot be fetched. Normal benchmark scoring never calls this code.
+
+- [ ] **Step 4: Implement maintenance CLI semantics**
+
+`--verify-sources` compares remote exact bytes with committed fixture bytes and committed SHA-256.
+
+`--refresh SELECTOR --revision SHA` requires one exact SHA, rewrites only fixture bytes plus `specimen.yaml` revision/digests, and never modifies `golden.yaml`.
+
+- [ ] **Step 5: Verify and commit**
+
+```sh
+cargo test -p chirograph-benchmark --test source -- --nocapture
+```
+
+Expected: PASS offline via fake fetcher.
+
+```sh
+git add crates/chirograph-benchmark/src/source.rs crates/chirograph-benchmark/src/main.rs crates/chirograph-benchmark/tests/source.rs
 git commit -m "feat: verify benchmark source provenance"
 ```
 
 ---
 
-## Task 9: Curate Cargo `schema-enum-drift`
+### Task 8: Curate Cargo schema-enum drift
 
 **Files:**
 - Create: `benchmark/cargo/schema-enum-drift/toml-debug-info-spellings/specimen.yaml`
 - Create: `benchmark/cargo/schema-enum-drift/toml-debug-info-spellings/golden.yaml`
-- Create verbatim fixtures under: `benchmark/cargo/schema-enum-drift/toml-debug-info-spellings/fixture/`
+- Create verbatim files under: `benchmark/cargo/schema-enum-drift/toml-debug-info-spellings/fixture/`
 
-### Step 1: Copy exact upstream files
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `cargo/schema-enum-drift/toml-debug-info-spellings`.
 
-Use upstream `rust-lang/cargo` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-2ceefa0090080354b80cc2f5415039bdb0d2bf0b
-```
-
-Copy verbatim:
+Upstream is `rust-lang/cargo@2ceefa0090080354b80cc2f5415039bdb0d2bf0b`:
 
 ```text
 crates/cargo-util-schemas/src/manifest/mod.rs
 crates/cargo-util-schemas/manifest.schema.json
 ```
 
-Require the already-established SHA-256 values:
+Required SHA-256:
 
 ```text
-crates/cargo-util-schemas/src/manifest/mod.rs
-fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c
-
-crates/cargo-util-schemas/manifest.schema.json
-a8f038d7ef99e69810c5cafd17d340b9aa42f7c9dd01e9ff70fb4205fec2f21e
+fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c  crates/cargo-util-schemas/src/manifest/mod.rs
+a8f038d7ef99e69810c5cafd17d340b9aa42f7c9dd01e9ff70fb4205fec2f21e  crates/cargo-util-schemas/manifest.schema.json
 ```
 
-### Step 2: Establish golden truth manually
+- [ ] **Step 2: Write golden truth**
 
-At minimum encode:
+Use one logical contract `cargo.profile.debug-info`, representations `cargo.profile.debug-info.implementation` and `cargo.profile.debug-info.schema`, structural authority on the implementation representation, a `projects` relationship from implementation to schema, and clause `cargo.profile.debug-info.enum-spellings` describing the accepted serialized spellings. Mark that clause as an expected `contested-clause` because the generated schema uses stale enum spellings.
 
-- logical contract `cargo.profile.debug-info`;
-- Rust implementation/type representation;
-- generated JSON Schema representation;
-- structural authority on the implementation/source definition rather than the stale generated manifestation;
-- relationship from authoritative source representation to generated schema manifestation;
-- one clause for the accepted TOML/string spellings;
-- expected contested-clause finding for the known enum/spelling drift;
-- explicit non-contract examples for nearby implementation-only declarations that a naive syntax enumerator might promote.
+No code maps Cargo symbols to stances.
 
-Do **not** add Cargo-specific code to compute the stance.
-
-### Step 3: Validate corpus/provenance
+- [ ] **Step 3: Validate provenance and current status**
 
 ```sh
-cargo benchmark --list
 cargo benchmark --verify-sources cargo/schema-enum-drift/toml-debug-info-spellings
-```
-
-Expected: case discovered; source verification PASS.
-
-### Step 4: Record current execution status
-
-```sh
 cargo benchmark cargo/schema-enum-drift/toml-debug-info-spellings
 ```
 
-Expected today: execution failure until the public analyzer exists. Do not work around it.
+Expected: provenance PASS; current run may be `execution-failure` until public analysis exists.
 
-### Step 5: Commit
+- [ ] **Step 4: Commit**
 
 ```sh
 git add benchmark/cargo
@@ -830,24 +670,20 @@ git commit -m "test: add Cargo contract benchmark case"
 
 ---
 
-## Task 10: Curate Kafka `message-spec-generation`
+### Task 9: Curate Kafka message-spec generation
 
 **Files:**
 - Create: `benchmark/kafka/message-spec-generation/produce-request-data/specimen.yaml`
 - Create: `benchmark/kafka/message-spec-generation/produce-request-data/golden.yaml`
-- Create verbatim fixtures under: `benchmark/kafka/message-spec-generation/produce-request-data/fixture/`
+- Create verbatim files under: `benchmark/kafka/message-spec-generation/produce-request-data/fixture/`
 
-### Step 1: Pin exact upstream revision
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `kafka/message-spec-generation/produce-request-data`.
 
-Use `apache/kafka` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-b57cf6e56eb59a952db7236b4da67cc2fdbb8cdf
-```
-
-### Step 2: Copy the minimum complete files
-
-Copy verbatim:
+Use `apache/kafka@b57cf6e56eb59a952db7236b4da67cc2fdbb8cdf`:
 
 ```text
 clients/src/main/resources/common/message/ProduceRequest.json
@@ -857,31 +693,18 @@ generator/src/main/java/org/apache/kafka/message/MessageDataGenerator.java
 clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java
 ```
 
-Compute SHA-256 for each copied file and write the actual 64-hex digest into `specimen.yaml` in the same commit.
+After copying, compute `sha256sum` (or platform equivalent) over each exact byte file and write those actual 64-hex values into `specimen.yaml` before committing.
 
-### Step 3: Establish golden truth
+- [ ] **Step 2: Write golden truth**
 
-At minimum encode:
+Use logical contract `kafka.protocol.produce-request`. `ProduceRequest.json` is the structural authority/spec representation. Represent the generated logical data type `org.apache.kafka.common.message.ProduceRequestData` as a generated manifestation even though the generated build output is not vendored; its locator is the generated type identity. Represent `MessageDataGenerator` as generation machinery and `ProduceRequest.java` as an implementation consumer. Encode `generates`/`depends-on` relationships without promoting generator helper classes into logical contracts.
 
-- logical contract `kafka.protocol.produce-request`;
-- `ProduceRequest.json` as the schema/spec representation and structural authority;
-- message-generator classes as generation machinery, not independent logical contracts;
-- `ProduceRequest.java` as an implementation/wrapper manifestation that consumes the generated data type;
-- typed generation/projection relationships;
-- non-contract truth for helper methods/classes that are mechanically present but not logical contracts.
-
-The benchmark should penalize an analyzer that reports every generator class or JSON field as a top-level logical contract.
-
-### Step 4: Verify and run
+- [ ] **Step 3: Verify/run/commit**
 
 ```sh
 cargo benchmark --verify-sources kafka/message-spec-generation/produce-request-data
 cargo benchmark kafka/message-spec-generation/produce-request-data
 ```
-
-Expected today: provenance PASS; benchmark execution may remain an execution failure until general Java/structured-data analysis is available.
-
-### Step 5: Commit
 
 ```sh
 git add benchmark/kafka
@@ -890,24 +713,20 @@ git commit -m "test: add Kafka contract benchmark case"
 
 ---
 
-## Task 11: Curate Kubernetes `go-protobuf-openapi`
+### Task 10: Curate Kubernetes Go/Protobuf/OpenAPI projection
 
 **Files:**
 - Create: `benchmark/kubernetes/go-protobuf-openapi/core-v1-pod/specimen.yaml`
 - Create: `benchmark/kubernetes/go-protobuf-openapi/core-v1-pod/golden.yaml`
-- Create verbatim fixtures under: `benchmark/kubernetes/go-protobuf-openapi/core-v1-pod/fixture/`
+- Create verbatim files under: `benchmark/kubernetes/go-protobuf-openapi/core-v1-pod/fixture/`
 
-### Step 1: Pin exact upstream revision
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `kubernetes/go-protobuf-openapi/core-v1-pod`.
 
-Use `kubernetes/kubernetes` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-82ca8014fabed9e61cf6c14560cdb9f1e4e1d067
-```
-
-### Step 2: Copy complete source/generation manifestations
-
-Copy verbatim:
+Use `kubernetes/kubernetes@82ca8014fabed9e61cf6c14560cdb9f1e4e1d067`:
 
 ```text
 staging/src/k8s.io/api/core/v1/types.go
@@ -916,37 +735,18 @@ staging/src/k8s.io/api/core/v1/generated.pb.go
 pkg/generated/openapi/zz_generated.openapi.go
 ```
 
-These files are large by benchmark standards, but they are complete upstream manifestations and must not be hand-sliced.
+Record actual SHA-256 values. Keep the complete generated files; do not hand-slice Pod excerpts.
 
-Compute and record exact SHA-256 values.
+- [ ] **Step 2: Write golden truth narrowly around Pod**
 
-### Step 3: Establish golden truth narrowly around Pod
+Use logical contract `kubernetes.core.v1.Pod`. Represent the Go API type as authority, and Protobuf, generated Go Protobuf, and generated OpenAPI as manifestations linked through `projects`/`generates` relationships. Golden truth names only the Pod contract, not every declaration in these large files. This case is intentionally hostile to contract inflation.
 
-Do not golden-label every type in these files.
-
-At minimum encode:
-
-- logical contract `kubernetes.core.v1.Pod`;
-- Go source representation;
-- generated protobuf representation;
-- generated Go protobuf manifestation;
-- generated OpenAPI manifestation;
-- authority on the source/API type rather than generated artifacts;
-- generation/projection relationships among those representations;
-- explicit non-contract examples among adjacent generated helper machinery.
-
-This case is deliberately designed to test false-contract restraint in a huge generated file.
-
-### Step 4: Verify and run
+- [ ] **Step 3: Verify/run/commit**
 
 ```sh
 cargo benchmark --verify-sources kubernetes/go-protobuf-openapi/core-v1-pod
 cargo benchmark kubernetes/go-protobuf-openapi/core-v1-pod
 ```
-
-Expected today: provenance PASS; execution may fail until generic Go/Proto/OpenAPI analysis exists.
-
-### Step 5: Commit
 
 ```sh
 git add benchmark/kubernetes
@@ -955,24 +755,20 @@ git commit -m "test: add Kubernetes contract benchmark case"
 
 ---
 
-## Task 12: Curate Pydantic `validation-vs-serialization`
+### Task 11: Curate Pydantic validation-vs-serialization
 
 **Files:**
 - Create: `benchmark/pydantic/validation-vs-serialization/json-schema-mode/specimen.yaml`
 - Create: `benchmark/pydantic/validation-vs-serialization/json-schema-mode/golden.yaml`
-- Create verbatim fixtures under: `benchmark/pydantic/validation-vs-serialization/json-schema-mode/fixture/`
+- Create verbatim files under: `benchmark/pydantic/validation-vs-serialization/json-schema-mode/fixture/`
 
-### Step 1: Use the already-pinned Pydantic revision
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `pydantic/validation-vs-serialization/json-schema-mode`.
 
-Use `pydantic/pydantic` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-001dea020e0809844e5b17666432c9135a976f46
-```
-
-### Step 2: Copy complete relevant files
-
-Copy verbatim:
+Use `pydantic/pydantic@001dea020e0809844e5b17666432c9135a976f46`:
 
 ```text
 pydantic/json_schema.py
@@ -980,29 +776,20 @@ pydantic/main.py
 tests/test_json_schema.py
 ```
 
-Compute and record exact SHA-256 values.
+Record actual SHA-256 values.
 
-### Step 3: Establish golden truth without runtime probes
+- [ ] **Step 2: Write golden truth**
 
-At minimum encode:
+Use logical contract `pydantic.json-schema.mode`. Represent the mode definition and relevant tests. Encode two clauses: validation mode describes accepted input shape; serialization mode describes emitted output shape. They are intentional perspectives, so `expected_findings` is empty. A Chirograph implementation that flags ordinary validation/serialization differences as drift should lose finding precision.
 
-- the logical JSON-schema mode contract;
-- validation and serialization as intentionally distinct perspectives/manifestations rather than accidental drift;
-- `JsonSchemaMode = Literal['validation', 'serialization']` as structural evidence;
-- source logic/documentation explaining that validation describes inputs while serialization describes outputs;
-- tests as verification manifestations where directly relevant;
-- **no** expected contested finding merely because validation and serialization schemas differ intentionally.
+Do not add runtime Python code under `benchmark/`.
 
-If the current Chirograph ontology cannot represent the distinction cleanly, preserve the golden truth and let the benchmark expose that gap. Do not add a Pydantic-specific runtime observer under `benchmark/`.
-
-### Step 4: Verify and run
+- [ ] **Step 3: Verify/run/commit**
 
 ```sh
 cargo benchmark --verify-sources pydantic/validation-vs-serialization/json-schema-mode
 cargo benchmark pydantic/validation-vs-serialization/json-schema-mode
 ```
-
-### Step 5: Commit
 
 ```sh
 git add benchmark/pydantic
@@ -1011,56 +798,38 @@ git commit -m "test: add Pydantic contract benchmark case"
 
 ---
 
-## Task 13: Curate Rails `migration-db-schema-authority`
+### Task 12: Curate Rails migration/database/schema authority
 
 **Files:**
 - Create: `benchmark/rails/migration-db-schema-authority/schema-dump-current-state/specimen.yaml`
 - Create: `benchmark/rails/migration-db-schema-authority/schema-dump-current-state/golden.yaml`
-- Create verbatim fixtures under: `benchmark/rails/migration-db-schema-authority/schema-dump-current-state/fixture/`
+- Create verbatim files under: `benchmark/rails/migration-db-schema-authority/schema-dump-current-state/fixture/`
 
-### Step 1: Pin exact Rails revision
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `rails/migration-db-schema-authority/schema-dump-current-state`.
 
-Use `rails/rails` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-2164c6c6f7fb91cc1caff5ee4b05931445de42ea
-```
-
-### Step 2: Copy complete relevant files
-
-Copy verbatim:
+Use `rails/rails@2164c6c6f7fb91cc1caff5ee4b05931445de42ea`:
 
 ```text
 guides/source/active_record_migrations.md
 activerecord/lib/active_record/schema_dumper.rb
 ```
 
-If manual golden review determines one database-task implementation file is necessary to establish load/dump direction, add that complete file before finalizing the case; do not add excerpts.
+Record actual SHA-256 values.
 
-Compute and record exact SHA-256 values.
+- [ ] **Step 2: Write golden truth**
 
-### Step 3: Establish golden truth
+Use logical contract `rails.database.schema-current-state`. Represent `rails.database.live-schema` as the conceptual active authority, `rails.schema-dump` as a generated current-state manifestation, and `rails.migrations` as historical change instructions. The fixture source explicitly documents that the dump is generated from current DB state and that old migrations are not reliable current-state reconstruction authority. Encode `projects` from live schema to schema dump. Lifecycle labels: live schema `active`, dump `generated`, migrations `historical`.
 
-At minimum encode:
-
-- logical contract `rails.database.schema-current-state`;
-- live database state as the conceptual authority for current schema truth;
-- schema dump as a generated/current-state manifestation;
-- migrations as historical change instructions, not complete current-state authority;
-- `SchemaDumper` as machinery projecting live database metadata into the schema dump;
-- lifecycle/authority notes supported by the guide and generated header text;
-- non-contract examples for individual migration helper methods.
-
-A representation in golden truth may describe an external authority such as the live database even when no fixture file contains that runtime state; its locator must be explicit and auditably justified by the fixture source.
-
-### Step 4: Verify and run
+- [ ] **Step 3: Verify/run/commit**
 
 ```sh
 cargo benchmark --verify-sources rails/migration-db-schema-authority/schema-dump-current-state
 cargo benchmark rails/migration-db-schema-authority/schema-dump-current-state
 ```
-
-### Step 5: Commit
 
 ```sh
 git add benchmark/rails
@@ -1069,24 +838,20 @@ git commit -m "test: add Rails contract benchmark case"
 
 ---
 
-## Task 14: Curate Envoy `v2-v3-lifecycle`
+### Task 13: Curate Envoy v2/v3 lifecycle
 
 **Files:**
 - Create: `benchmark/envoy/v2-v3-lifecycle/config-source/specimen.yaml`
 - Create: `benchmark/envoy/v2-v3-lifecycle/config-source/golden.yaml`
-- Create verbatim fixtures under: `benchmark/envoy/v2-v3-lifecycle/config-source/fixture/`
+- Create verbatim files under: `benchmark/envoy/v2-v3-lifecycle/config-source/fixture/`
 
-### Step 1: Pin exact Envoy revision
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `envoy/v2-v3-lifecycle/config-source`.
 
-Use `envoyproxy/envoy` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-6609c01e330fb84049d54a9dbffae8609b1ec9f7
-```
-
-### Step 2: Copy complete files
-
-Copy verbatim:
+Use `envoyproxy/envoy@6609c01e330fb84049d54a9dbffae8609b1ec9f7`:
 
 ```text
 api/API_VERSIONING.md
@@ -1094,31 +859,20 @@ api/envoy/api/v2/core/config_source.proto
 api/envoy/config/core/v3/config_source.proto
 ```
 
-Compute and record exact SHA-256 values.
+Record actual SHA-256 values.
 
-### Step 3: Establish lifecycle golden truth
+- [ ] **Step 2: Write golden truth**
 
-At minimum encode:
+Use logical contract `envoy.config-source`. Represent v2 and v3 Proto files. Structural authority is v3. Lifecycle: v2 `frozen`, v3 `active`. Preserve v2 `move_to_package = "envoy.config.core.v3"` and v3 `previous_message_type = "envoy.api.v2.core.ConfigSource"` as lineage evidence. Do not promote deprecated enum values into separate logical contracts.
 
-- logical contract `envoy.config-source`;
-- v2 representation with lifecycle status `frozen`;
-- v3 representation with lifecycle status `active`;
-- current structural authority on v3;
-- v2 migration annotation pointing to `envoy.config.core.v3`;
-- v3 `previous_message_type` links back to v2;
-- relationship connecting the lifecycle representations;
-- explicit non-contract truth for deprecated enum constants that should not become separate logical contracts.
+Lifecycle correctness is initially `null` if Chirograph emits no lifecycle facts; the golden truth remains unchanged until generic lifecycle support arrives.
 
-This case should remain present even while lifecycle correctness is initially `null` because current `ContractGraph` has no lifecycle model. When general Chirograph lifecycle support arrives, the same golden file becomes scoreable without benchmark changes.
-
-### Step 4: Verify and run
+- [ ] **Step 3: Verify/run/commit**
 
 ```sh
 cargo benchmark --verify-sources envoy/v2-v3-lifecycle/config-source
 cargo benchmark envoy/v2-v3-lifecycle/config-source
 ```
-
-### Step 5: Commit
 
 ```sh
 git add benchmark/envoy
@@ -1127,24 +881,20 @@ git commit -m "test: add Envoy contract benchmark case"
 
 ---
 
-## Task 15: Curate Arrow `cross-language-schema`
+### Task 14: Curate Arrow cross-language schema
 
 **Files:**
 - Create: `benchmark/arrow/cross-language-schema/field-and-schema/specimen.yaml`
 - Create: `benchmark/arrow/cross-language-schema/field-and-schema/golden.yaml`
-- Create verbatim fixtures under: `benchmark/arrow/cross-language-schema/field-and-schema/fixture/`
+- Create verbatim files under: `benchmark/arrow/cross-language-schema/field-and-schema/fixture/`
 
-### Step 1: Pin exact Arrow revision
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `arrow/cross-language-schema/field-and-schema`.
 
-Use `apache/arrow` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-1b0b16a8f68c0082534aa185c0bb4052614df924
-```
-
-### Step 2: Copy complete cross-language files from the current monorepo
-
-Copy verbatim:
+Use `apache/arrow@1b0b16a8f68c0082534aa185c0bb4052614df924`:
 
 ```text
 format/Schema.fbs
@@ -1153,32 +903,18 @@ python/pyarrow/types.pxi
 python/pyarrow/includes/libarrow.pxd
 ```
 
-Do not assume the current Apache Arrow monorepo contains the Java implementation; it does not at this exact revision. This case uses canonical FlatBuffers format plus C++ and Python/Cython manifestations available in the pinned repository.
+Record actual SHA-256 values. Do not assume a Java implementation exists in this exact monorepo revision.
 
-Compute and record exact SHA-256 values.
+- [ ] **Step 2: Write golden truth**
 
-### Step 3: Establish golden truth
+Use the smallest defensible shared contract `arrow.schema.field`. Represent FlatBuffers schema as interchange/spec authority, C++ `Field`/schema semantics as an implementation manifestation, and Python/Cython declarations as language binding manifestations. Encode project/implementation relationships without declaring every Arrow datatype a separate benchmark contract.
 
-At minimum encode:
-
-- logical contract `arrow.schema.field` and/or the smallest defensible shared schema contract established by manual review;
-- canonical FlatBuffers format representation;
-- C++ representation of Field/Schema type semantics;
-- Python/Cython binding manifestation;
-- authority on the canonical format for interchange semantics while language implementation details remain implementation manifestations;
-- cross-language projection/implementation relationships;
-- non-contract examples for helper/binding machinery.
-
-Do not inflate every Arrow physical/logical type into a benchmark contract merely because the files contain them.
-
-### Step 4: Verify and run
+- [ ] **Step 3: Verify/run/commit**
 
 ```sh
 cargo benchmark --verify-sources arrow/cross-language-schema/field-and-schema
 cargo benchmark arrow/cross-language-schema/field-and-schema
 ```
-
-### Step 5: Commit
 
 ```sh
 git add benchmark/arrow
@@ -1187,24 +923,20 @@ git commit -m "test: add Arrow contract benchmark case"
 
 ---
 
-## Task 16: Curate Temporal `multi-dialect-persistence`
+### Task 15: Curate Temporal multi-dialect persistence
 
 **Files:**
 - Create: `benchmark/temporal/multi-dialect-persistence/executions-table/specimen.yaml`
 - Create: `benchmark/temporal/multi-dialect-persistence/executions-table/golden.yaml`
-- Create verbatim fixtures under: `benchmark/temporal/multi-dialect-persistence/executions-table/fixture/`
+- Create verbatim files under: `benchmark/temporal/multi-dialect-persistence/executions-table/fixture/`
 
-### Step 1: Pin exact Temporal revision
+**Interfaces:**
+- Consumes: Tasks 3-7 framework.
+- Produces: case ID `temporal/multi-dialect-persistence/executions-table`.
 
-Use `temporalio/temporal` revision:
+- [ ] **Step 1: Copy exact upstream bytes**
 
-```text
-cd667daadb88d189df0302d8f473858ee7168ce5
-```
-
-### Step 2: Copy complete dialect and test-reference files
-
-Copy verbatim:
+Use `temporalio/temporal@cd667daadb88d189df0302d8f473858ee7168ce5`:
 
 ```text
 schema/mysql/v8/temporal/schema.sql
@@ -1216,29 +948,18 @@ common/persistence/tests/postgresql_test_util.go
 common/persistence/tests/cassandra_test_util.go
 ```
 
-Compute and record exact SHA-256 values.
+Record actual SHA-256 values.
 
-### Step 3: Establish golden truth narrowly around `executions`
+- [ ] **Step 2: Write golden truth**
 
-At minimum encode:
+Use logical contract `temporal.persistence.executions`. Represent MySQL, PostgreSQL, and Cassandra schema forms as dialect-specific manifestations. Do not invent one global dialect authority. Encode `equivalent-to` only for the shared logical executions persistence role, and use the test utility references as verification manifestations. Do not promote dialect-only indexes/helper tables into the selected logical contract.
 
-- logical contract `temporal.persistence.executions`;
-- MySQL, PostgreSQL, and Cassandra schema manifestations;
-- no false claim that one SQL dialect file is globally authoritative over the others;
-- equivalence/projection relationships only where the same logical persistence concept is genuinely represented;
-- test utility references as verification evidence that each dialect schema is intentionally exercised;
-- non-contract examples for dialect-specific indexes/helper tables that are not part of the selected logical contract.
-
-This case should expose whether Chirograph can model one logical contract with multiple dialect-specific manifestations without collapsing them into duplicates or choosing a fake single authority.
-
-### Step 4: Verify and run
+- [ ] **Step 3: Verify/run/commit**
 
 ```sh
 cargo benchmark --verify-sources temporal/multi-dialect-persistence/executions-table
 cargo benchmark temporal/multi-dialect-persistence/executions-table
 ```
-
-### Step 5: Commit
 
 ```sh
 git add benchmark/temporal
@@ -1247,124 +968,78 @@ git commit -m "test: add Temporal contract benchmark case"
 
 ---
 
-## Task 17: Add the eighth-case baseline and regression policy
+### Task 16: Establish reviewed baseline, CI, and methodology docs
 
 **Files:**
-- Create: `benchmark/baseline.json`
 - Create: `crates/chirograph-benchmark/src/baseline.rs`
-- Modify: `crates/chirograph-benchmark/src/lib.rs`
+- Create: `crates/chirograph-benchmark/tests/baseline.rs`
+- Create: `benchmark/baseline.json`
+- Create: `benchmark/README.md`
 - Modify: `crates/chirograph-benchmark/src/main.rs`
-- Test: `crates/chirograph-benchmark/tests/baseline.rs`
+- Modify: `.github/workflows/ci.yml`
+- Modify: `README.md`
 
-### Step 1: Write failing regression tests
+**Interfaces:**
+- Consumes: all eight cases and `BenchmarkReportV1`.
+- Produces: `compare_baseline(current, baseline) -> RegressionResult`; CI command `cargo benchmark all --baseline benchmark/baseline.json`.
 
-Cover:
+- [ ] **Step 1: Write failing baseline tests**
 
-- `execution-failure -> scored`: improvement, allowed;
-- `scored -> execution-failure`: regression;
-- `scored -> invalid-output`: regression;
-- higher-is-better metric decreases: regression;
-- false-contract rate increases: regression;
-- contract-inflation distance from `1.0` increases: regression;
-- `null lifecycle -> scored lifecycle`: improvement/activation, allowed;
-- baseline missing a corpus case: corpus/baseline validation failure;
-- baseline contains removed case: validation failure;
-- current golden file changes without baseline update: fail via stored golden digest.
-
-### Step 2: Store truth identity in the baseline
-
-Each baseline entry must contain:
-
-- case status;
-- scored metrics when available;
-- SHA-256 of `golden.yaml`;
-- SHA-256 of `specimen.yaml`.
-
-This makes a golden/provenance change an explicit reviewed baseline event.
-
-### Step 3: Implement metric directionality
-
-Regression rules:
-
-- precision/recall/F1/authority/relationship/finding/lifecycle: higher is better;
-- false-contract rate: lower is better;
-- contract inflation: compare `abs(ratio - 1.0)`; farther from `1.0` is worse;
-- `null` metrics are not numerically compared until both baseline and current run have a value.
-
-Use a small exact tolerance only for floating-point formatting noise; all counts remain exact integers.
-
-### Step 4: Generate initial baseline explicitly
-
-Add an operator command:
+Test these exact transitions:
 
 ```text
-cargo benchmark all --write-baseline benchmark/baseline.json
+execution-failure -> scored        allowed improvement
+scored -> execution-failure        regression
+scored -> invalid-output           regression
+higher-is-better metric decreases  regression
+false-rate increases               regression
+|inflation-1| increases             regression
+null lifecycle -> scored lifecycle allowed activation
+specimen/golden digest changes      requires baseline update
+missing/extra case                  validation failure
 ```
 
-It must require the exact output path and print a warning that this operation accepts current results. It must not be the default behavior of a failing run.
-
-Run the full corpus once. It is acceptable, and expected before public source analysis lands, for all or most cases to be `execution-failure`. That is a truthful starting baseline, not a reason to add benchmark-specific code.
-
-### Step 5: Verify
+- [ ] **Step 2: Run red test**
 
 ```sh
 cargo test -p chirograph-benchmark --test baseline -- --nocapture
+```
+
+Expected: FAIL.
+
+- [ ] **Step 3: Implement baseline format/directionality**
+
+Each baseline entry stores case status, metric vector when scored, SHA-256 of `specimen.yaml`, and SHA-256 of `golden.yaml`.
+
+`--write-baseline PATH` is an explicit operator action that writes current truth to the exact path. Ordinary failing runs never mutate baseline.
+
+- [ ] **Step 4: Generate the initial eight-case baseline**
+
+```sh
+cargo benchmark all --write-baseline benchmark/baseline.json
 cargo benchmark all --baseline benchmark/baseline.json
 ```
 
-Expected: PASS against the just-reviewed baseline.
+Expected: second command PASS. It is acceptable for cases to be `execution-failure` because the public source analyzer does not yet exist. Do not hand-author observed graphs to avoid that status.
 
-### Step 6: Commit
+- [ ] **Step 5: Wire hermetic CI**
 
-```sh
-git add benchmark/baseline.json crates/chirograph-benchmark/src/baseline.rs crates/chirograph-benchmark/src/lib.rs crates/chirograph-benchmark/src/main.rs crates/chirograph-benchmark/tests/baseline.rs
-git commit -m "test: establish benchmark regression baseline"
+Add after workspace tests:
+
+```yaml
+      - name: Build Chirograph CLI
+        run: cargo build --quiet -p chirograph-cli
+      - name: Run contract benchmark regression suite
+        run: cargo benchmark all --baseline benchmark/baseline.json
 ```
 
----
+Do not run `--verify-sources` in normal CI.
 
-## Task 18: Add CI and benchmark methodology documentation
+- [ ] **Step 6: Write benchmark methodology docs**
 
-**Files:**
-- Modify: `.github/workflows/ci.yml`
-- Create: `benchmark/README.md`
-- Modify: `README.md`
+`benchmark/README.md` documents data-only fixtures, exact provenance, selectors, metric vector, false-contract rate, macro/micro, baseline ratchet, failure classes, and case-addition rules. Root README adds one concise link; do not duplicate the methodology.
 
-### Step 1: Update CI
-
-After normal workspace tests, add:
-
-```sh
-cargo build --quiet -p chirograph-cli
-cargo benchmark all --baseline benchmark/baseline.json
-```
-
-Do **not** run `--verify-sources` in every normal CI job; live upstream retrieval is explicitly outside the hermetic benchmark run.
-
-If license/provenance CI from the FOSS-foundation transition later exists, ensure fixture provenance validation composes with it rather than creating a duplicate policy checker.
-
-### Step 2: Document benchmark methodology
-
-`benchmark/README.md` must explain concisely:
-
-- data-only corpus invariant;
-- verbatim fixture policy;
-- exact provenance;
-- repository/scenario/case dimensions;
-- selector examples;
-- scoring vector;
-- false-contract-rate importance;
-- macro vs micro;
-- baseline ratchet behavior;
-- why execution failures are distinct from semantic mismatches;
-- why remote source verification is explicit maintenance, not ordinary scoring;
-- how to add a new case without adding repository-specific code.
-
-### Step 3: Update top-level README navigation
-
-Add one benchmark entry linking to `benchmark/README.md`. Do not duplicate the methodology in the root README.
-
-### Step 4: Verify CI-equivalent commands locally
+- [ ] **Step 7: Run full verification**
 
 ```sh
 cargo fmt --all -- --check
@@ -1376,117 +1051,41 @@ cargo benchmark --list
 cargo benchmark all --baseline benchmark/baseline.json
 ```
 
-Expected: all commands PASS. Real benchmark cases may be recorded as execution failures if that is their reviewed baseline; the benchmark process itself must still exit successfully when current status is no worse than baseline.
+Expected: PASS.
 
-### Step 5: Commit
-
-```sh
-git add .github/workflows/ci.yml benchmark/README.md README.md
-git commit -m "ci: run contract benchmark regression suite"
-```
-
----
-
-## Task 19: Amend Overcenter project truth to match the approved benchmark architecture
-
-This is orchestration state, not benchmark implementation. Perform it only after re-reading the live `mcp/project.amend.js` contract and re-running `project.inspect` for an exact current authority revision.
-
-**Current conflict to remove:** the existing future `validate-cargo-rust-specimen` transition references the old plural `benchmarks/` layout and explicitly permits Cargo-specific stance mapping in the benchmark layer. That contradicts the approved design.
-
-### Step 1: Inspect exact current project authority
-
-Invoke:
-
-```text
-project.inspect { project_ref: "github:laurajoyhutchins/chirograph" }
-```
-
-Record the returned exact `authority_revision`. If it differs from the revision used to prepare the amendment, recompute the amendment from the new graph and fail closed on ambiguity.
-
-### Step 2: Amend semantic transitions
-
-Use `project.amend` with the exact observed revision.
-
-Remove or replace the obsolete future Cargo validation transition before it can execute.
-
-Add benchmark work as small semantic transitions corresponding to the implementation checkpoints above, with dependencies that preserve the public-boundary rule. A suitable graph shape is:
-
-```text
-implement-benchmark-graph-json
-        |
-implement-benchmark-framework
-        |
-        +--> curate-benchmark-cargo
-        +--> curate-benchmark-kafka
-        +--> curate-benchmark-kubernetes
-        +--> curate-benchmark-pydantic
-        +--> curate-benchmark-rails
-        +--> curate-benchmark-envoy
-        +--> curate-benchmark-arrow
-        +--> curate-benchmark-temporal
-                    |
-            establish-benchmark-baseline
-                    |
-              wire-benchmark-ci
-```
-
-The eight curation transitions may proceed independently once the framework exists.
-
-Do **not** encode run IDs, leases, branches, PR numbers, or implementation bookkeeping in the amendment. Overcenter owns those.
-
-### Step 3: Read back authoritative graph
-
-Re-run `project.inspect` and verify the new frontier/dependencies match the intended semantic graph. Treat a mutation with uncertain outcome or mismatched readback as unresolved; do not retry blindly.
-
----
-
-## Final verification checkpoint
-
-Before claiming the benchmark work complete, run:
-
-```sh
-cargo fmt --all -- --check
-cargo check --workspace --all-targets
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace --all-features
-cargo build --quiet -p chirograph-cli
-cargo benchmark --list
-cargo benchmark all --baseline benchmark/baseline.json
-```
-
-Then explicitly run source verification for all eight pinned cases as a separate, networked provenance check:
+Then run the explicit networked provenance check separately:
 
 ```sh
 cargo benchmark --verify-sources
 ```
 
-Record:
+Expected: all committed fixture bytes match their exact upstream revisions.
 
-- exact Chirograph commit SHA;
-- exact eight upstream revisions;
-- fixture SHA-256 values;
-- benchmark case statuses and score vectors;
-- macro/micro aggregates for scored cases;
-- any execution-failure cases still waiting on generic public analysis capabilities;
-- CI result.
+- [ ] **Step 8: Commit**
 
-Do not convert execution failures into hand-authored graphs to improve the final report.
+```sh
+git add crates/chirograph-benchmark/src/baseline.rs crates/chirograph-benchmark/tests/baseline.rs benchmark/baseline.json benchmark/README.md .github/workflows/ci.yml README.md crates/chirograph-benchmark/src/main.rs
+git commit -m "ci: gate contract benchmark regressions"
+```
 
 ---
 
-## Definition of done
+## Final evidence required before settlement
 
-The implementation is complete when:
+The implementing worker must provide exact evidence for:
 
-1. `benchmark/` is a single data-only corpus root with all eight approved repository/scenario families.
-2. Every fixture file is verbatim upstream content pinned to an exact revision with a local SHA-256.
-3. No benchmark case contains repository-specific executable analysis glue.
-4. `cargo benchmark` supports repository, scenario, intersection, exact-case, and all-corpus selectors.
-5. The scorer implements the approved metric vector with strict logical identity and fail-closed false contracts.
-6. Macro and micro aggregation are both available, with macro as the headline view.
-7. Normal benchmark execution is hermetic/offline.
-8. Explicit source verification/refresh is exact-revision-only and never rewrites golden truth.
-9. The runner invokes only the public general Chirograph analysis boundary.
-10. Unsupported real cases remain explicit execution failures rather than being rescued by private benchmark paths.
-11. CI gates regressions against a reviewed baseline and never auto-accepts a failing run.
-12. Overcenter project truth no longer advertises the superseded Cargo-specific benchmark mapping path.
+```text
+Chirograph commit SHA
+all test/format/check/clippy commands
+cargo benchmark --list
+cargo benchmark all --baseline benchmark/baseline.json
+cargo benchmark --verify-sources
+all eight upstream revision SHAs
+all committed fixture SHA-256 values
+case statuses and scored metric vectors
+macro/micro aggregates for scored cases
+remaining execution-failure cases and the generic capability they await
+CI result
+```
+
+Do not claim benchmark semantic success from acquisition diagnostics. Do not convert execution failures into bespoke benchmark observations. Settle the Overcenter transition only with evidence from the exact implementation revision.

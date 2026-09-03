@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+use chirograph_core::model::{Observation, ObservationId, Revision, SourceId};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use tree_sitter::{Node, Parser};
@@ -33,6 +34,12 @@ pub struct JavaFact {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JavaAcquisition {
+    pub facts: Vec<JavaFact>,
+    pub observations: Vec<Observation>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum JavaAdapterError {
     Language(String),
     ParseFailed,
@@ -52,6 +59,30 @@ impl fmt::Display for JavaAdapterError {
 }
 
 impl std::error::Error for JavaAdapterError {}
+
+pub fn observe_java_source(
+    source_id: SourceId,
+    revision: Revision,
+    path: &str,
+    source: &str,
+) -> Result<JavaAcquisition, JavaAdapterError> {
+    let facts = extract_java_facts(path, source)?;
+    let observations = facts
+        .iter()
+        .map(|fact| Observation {
+            id: observation_id(&source_id, fact),
+            source: source_id.clone(),
+            revision: revision.clone(),
+            locator: locator(fact),
+            fact: format!("Java {}: {}", fact_kind_name(fact.kind), fact.text),
+        })
+        .collect();
+
+    Ok(JavaAcquisition {
+        facts,
+        observations,
+    })
+}
 
 pub fn extract_java_facts(path: &str, source: &str) -> Result<Vec<JavaFact>, JavaAdapterError> {
     let mut parser = Parser::new();
@@ -75,6 +106,39 @@ pub fn extract_java_facts(path: &str, source: &str) -> Result<Vec<JavaFact>, Jav
             .then_with(|| fact_kind_order(left.kind).cmp(&fact_kind_order(right.kind)))
     });
     Ok(facts)
+}
+
+fn observation_id(source_id: &SourceId, fact: &JavaFact) -> ObservationId {
+    ObservationId::new(format!(
+        "obs.java.{}.{}.{}.{}.{}",
+        source_id.as_str(),
+        fact.path,
+        fact.span.start_line,
+        fact.span.start_column,
+        fact_kind_name(fact.kind),
+    ))
+    .expect("generated Java observation ids are non-empty and trimmed")
+}
+
+fn locator(fact: &JavaFact) -> String {
+    format!(
+        "{}:L{}:C{}-L{}:C{}",
+        fact.path,
+        fact.span.start_line,
+        fact.span.start_column,
+        fact.span.end_line,
+        fact.span.end_column,
+    )
+}
+
+const fn fact_kind_name(kind: JavaFactKind) -> &'static str {
+    match kind {
+        JavaFactKind::FieldDeclaration => "field declaration",
+        JavaFactKind::MethodInvocation => "method invocation",
+        JavaFactKind::ConditionalThrow => "conditional throw",
+        JavaFactKind::Comment => "comment",
+        JavaFactKind::TestAssertion => "test assertion",
+    }
 }
 
 fn fact_kind_order(kind: JavaFactKind) -> u8 {

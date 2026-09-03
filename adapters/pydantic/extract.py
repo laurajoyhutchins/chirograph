@@ -19,8 +19,8 @@ import pydantic
 import pydantic_core
 from pydantic import BaseModel, computed_field, field_validator
 
-EXPECTED_PYDANTIC_VERSION = "2.14.0b1"
-EXPECTED_CORE_VERSION = "2.48.0"
+EXPECTED_PYDANTIC_VERSION = "2.13.5"
+EXPECTED_CORE_VERSION = "2.46.5"
 SHA1 = re.compile(r"^[0-9a-f]{40}$")
 
 

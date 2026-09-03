@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ADAPTER = ROOT / "adapters" / "pydantic" / "extract.py"
 STALE_VALIDATION_SCHEMA = ROOT / "adapters" / "pydantic" / "fixtures" / "stale-validation-schema.json"
-UPSTREAM_REVISION = "27f473c24ed63a475903d8289c84fb81987f04e9"
+UPSTREAM_REVISION = "001dea020e0809844e5b17666432c9135a976f46"
 
 
 def extract_and_inspect(*extra_args: str) -> tuple[dict, str]:

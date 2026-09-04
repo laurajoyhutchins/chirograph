@@ -108,12 +108,7 @@ fn load_case(
 }
 
 fn validate_case_entries(root: &Path) -> Result<(), CorpusError> {
-    let allowed = BTreeSet::from([
-        "fixture",
-        "golden.yaml",
-        "provenance.json",
-        "specimen.yaml",
-    ]);
+    let allowed = BTreeSet::from(["fixture", "golden.yaml", "provenance.json", "specimen.yaml"]);
     let entries = read_dir_sorted(root)?;
     for entry in entries {
         let name = entry

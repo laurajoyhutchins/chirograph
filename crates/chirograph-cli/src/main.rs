@@ -7,11 +7,11 @@ use std::process::ExitCode;
 
 use chirograph_core::evidence::parse_evidence_json;
 use chirograph_core::model::{
-    AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph,
+    AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph, ContractId, Revision,
 };
 use chirograph_core::query::SemanticQuery;
 
-const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph --version\n  chirograph --help\n";
+const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph --version\n  chirograph --help\n";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -35,6 +35,9 @@ fn run(args: Vec<String>) -> Result<String, String> {
         }
         [command, path] if command == "inspect" => inspect(Path::new(path)),
         [command, path] if command == "contestations" => contestations(Path::new(path)),
+        [command, path, contract] if command == "evidence" => {
+            evidence(Path::new(path), contract)
+        }
         _ => Err(format!("invalid arguments\n\n{HELP}")),
     }
 }
@@ -77,6 +80,30 @@ fn contestations(path: &Path) -> Result<String, String> {
             "  contradicts: {}\n",
             join_representation_ids(&assessment.contradicting_representations)
         ));
+    }
+    Ok(output)
+}
+
+fn evidence(path: &Path, contract: &str) -> Result<String, String> {
+    let graph = read_graph(path)?;
+    let contract = ContractId::new(contract)
+        .map_err(|error| format!("invalid contract id {contract:?}: {error:?}"))?;
+    let query = SemanticQuery::new(&graph)
+        .map_err(|error| format!("cannot query contract graph: {error:?}"))?;
+    let observations = query
+        .evidence_for(&contract)
+        .map_err(|error| format!("cannot query evidence: {error:?}"))?;
+
+    let mut output = format!("evidence {}\n", contract.as_str());
+    for observation in observations {
+        output.push_str(&format!(
+            "  {} source={} revision={} locator={}\n",
+            observation.id.as_str(),
+            observation.source.as_str(),
+            revision_name(&observation.revision),
+            observation.locator,
+        ));
+        output.push_str(&format!("    {}\n", observation.fact));
     }
     Ok(output)
 }
@@ -155,6 +182,14 @@ fn join_representation_ids(ids: &[chirograph_core::model::RepresentationId]) -> 
         .map(|id| id.as_str())
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+fn revision_name(value: &Revision) -> String {
+    match value {
+        Revision::Exact(value) => format!("exact:{value}"),
+        Revision::Unversioned => "unversioned".into(),
+        Revision::Unknown => "unknown".into(),
+    }
 }
 
 const fn facet_name(value: ContractFacet) -> &'static str {

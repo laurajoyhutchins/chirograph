@@ -11,7 +11,7 @@ use chirograph_core::model::{
 };
 use chirograph_core::query::SemanticQuery;
 
-const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph --version\n  chirograph --help\n";
+const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph authority <evidence.json> <contract-id> <facet>\n  chirograph --version\n  chirograph --help\n";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -36,6 +36,9 @@ fn run(args: Vec<String>) -> Result<String, String> {
         [command, path] if command == "inspect" => inspect(Path::new(path)),
         [command, path] if command == "contestations" => contestations(Path::new(path)),
         [command, path, contract] if command == "evidence" => evidence(Path::new(path), contract),
+        [command, path, contract, facet] if command == "authority" => {
+            authority(Path::new(path), contract, facet)
+        }
         _ => Err(format!("invalid arguments\n\n{HELP}")),
     }
 }
@@ -102,6 +105,34 @@ fn evidence(path: &Path, contract: &str) -> Result<String, String> {
             observation.locator,
         ));
         output.push_str(&format!("    {}\n", observation.fact));
+    }
+    Ok(output)
+}
+
+fn authority(path: &Path, contract: &str, facet: &str) -> Result<String, String> {
+    let graph = read_graph(path)?;
+    let contract = ContractId::new(contract)
+        .map_err(|error| format!("invalid contract id {contract:?}: {error:?}"))?;
+    let facet = parse_facet(facet)?;
+    let query = SemanticQuery::new(&graph)
+        .map_err(|error| format!("cannot query contract graph: {error:?}"))?;
+    let claims = query
+        .authority_for(&contract, facet)
+        .map_err(|error| format!("cannot query authority: {error:?}"))?;
+
+    let mut output = format!("authority {} {}\n", contract.as_str(), facet_name(facet));
+    for claim in claims {
+        output.push_str(&format!(
+            "  {} ({}) evidence={}\n",
+            claim.representation.as_str(),
+            authority_basis_name(claim.basis),
+            claim
+                .evidence
+                .iter()
+                .map(|id| id.as_str())
+                .collect::<Vec<_>>()
+                .join(", "),
+        ));
     }
     Ok(output)
 }
@@ -187,6 +218,19 @@ fn revision_name(value: &Revision) -> String {
         Revision::Exact(value) => format!("exact:{value}"),
         Revision::Unversioned => "unversioned".into(),
         Revision::Unknown => "unknown".into(),
+    }
+}
+
+fn parse_facet(value: &str) -> Result<ContractFacet, String> {
+    match value {
+        "structural" => Ok(ContractFacet::Structural),
+        "executable" => Ok(ContractFacet::Executable),
+        "semantic" => Ok(ContractFacet::Semantic),
+        "failure" => Ok(ContractFacet::Failure),
+        "concurrency" => Ok(ContractFacet::Concurrency),
+        "recovery" => Ok(ContractFacet::Recovery),
+        "verification" => Ok(ContractFacet::Verification),
+        _ => Err(format!("invalid contract facet {value:?}")),
     }
 }
 

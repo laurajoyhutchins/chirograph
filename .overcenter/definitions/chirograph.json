@@ -368,6 +368,18 @@
       }
     },
     {
+      "id": "restore-benchmark-subsystem-after-history-sanitation",
+      "priority": 99,
+      "requires": [
+        "implement-semantic-query-api"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Recover the stranded formal benchmark subsystem onto the current authoritative Chirograph history after public-history sanitation. Treat the completed Overcenter receipts and recoverable historical source ending at c76edbbeadc3c29309e133ed1925485fb733a135 as recovery evidence, not as current authority. Start from the exact current GitHub authority. Restore only the known-good general benchmark/product-analysis capabilities and data-only benchmark corpus needed to re-establish the completed benchmark work through the Temporal case, including canonical graph JSON, the public analyze path, chirograph-benchmark, source maintenance, and benchmark/ fixtures/goldens, plus workspace/lock/CI edits only where mechanically required. Reconcile rather than overwrite newer semantic-alignment and semantic-query API work already on current main; never rewind or replace current history. Preserve the benchmark invariants: benchmark/ is data-only, no specimen-specific code, static v1, exact provenance, analyzer cannot consume golden truth, strict false-contract scoring, and the runner uses the public analysis path. Do not curate Kubernetes in this recovery transition. Use TDD where adaptation to current code is required, run the full repository formatting/check/clippy/test suite and benchmark validation, and finish only after the recovered source is authoritatively integrated and reread at the current GitHub project authority. A work-branch commit or green CI without authoritative integration is not sufficient completion evidence."
+      }
+    },
+    {
       "id": "validate-kafka-perspectives",
       "priority": 80,
       "requires": [],

@@ -35,6 +35,7 @@ fn graph(reverse: bool) -> ContractGraph {
     let runtime = representation_id("runtime-status");
     let schema = representation_id("schema-status");
     let docs = representation_id("docs-status");
+    let other_runtime = representation_id("other-runtime");
     let review_clause = clause_id("review-wire-value");
     let other_clause = clause_id("other-clause");
 
@@ -91,6 +92,14 @@ fn graph(reverse: bool) -> ContractGraph {
                 source: source_id("docs"),
                 kind: RepresentationKind::Documentation,
                 locator: "Review status".into(),
+                facets: vec![ContractFacet::Semantic],
+            },
+            Representation {
+                id: other_runtime.clone(),
+                contract: other.clone(),
+                source: source_id("runtime"),
+                kind: RepresentationKind::ExecutableSurface,
+                locator: "GET /other".into(),
                 facets: vec![ContractFacet::Semantic],
             },
         ],
@@ -161,7 +170,7 @@ fn graph(reverse: bool) -> ContractGraph {
             },
             ClauseAssertion {
                 clause: other_clause,
-                representation: runtime.clone(),
+                representation: other_runtime,
                 stance: ClauseStance::Supports,
                 evidence: vec![observation_id("obs-runtime")],
             },

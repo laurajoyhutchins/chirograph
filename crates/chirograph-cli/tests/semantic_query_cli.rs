@@ -156,7 +156,10 @@ fn invalid_authority_facet_fails_explicitly() {
 
     assert!(!output.status.success());
     let stderr = String::from_utf8(output.stderr).expect("stderr should be UTF-8");
-    assert!(stderr.contains("invalid contract facet"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("invalid contract facet"),
+        "stderr: {stderr}"
+    );
 }
 
 #[test]

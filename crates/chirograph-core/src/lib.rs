@@ -5,6 +5,7 @@
 pub mod alignment;
 pub mod evidence;
 pub mod model;
+pub mod query;
 
 /// Returns the Chirograph core package version.
 #[must_use]

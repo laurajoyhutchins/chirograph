@@ -27,9 +27,7 @@
     {"clause":"review-wire-value","representation":"schema-status","stance":"supports","evidence":["obs-schema"]},
     {"clause":"review-wire-value","representation":"docs-status","stance":"contradicts","evidence":["obs-docs"]}
   ],
-  "relations": [
-    {"from":{"kind":"representation","id":"schema-status"},"to":{"kind":"contract","id":"review-status"},"kind":"defines","basis":["obs-schema"]}
-  ],
+  "relations": [],
   "authority_claims": [
     {"contract":"review-status","representation":"schema-status","facet":"semantic","basis":"explicit_declaration","evidence":["obs-schema"]},
     {"contract":"review-status","representation":"runtime-status","facet":"semantic","basis":"observed_behavior","evidence":["obs-runtime"]}

@@ -173,9 +173,7 @@ fn parse_state(value: &str) -> Result<AlignmentState, AlignmentInterchangeError>
     }
 }
 
-fn parse_representation_kind(
-    value: &str,
-) -> Result<RepresentationKind, AlignmentInterchangeError> {
+fn parse_representation_kind(value: &str) -> Result<RepresentationKind, AlignmentInterchangeError> {
     match value {
         "executable_surface" => Ok(RepresentationKind::ExecutableSurface),
         "source_code" => Ok(RepresentationKind::SourceCode),

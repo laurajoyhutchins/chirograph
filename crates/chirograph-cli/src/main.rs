@@ -5,13 +5,16 @@ use std::fs;
 use std::path::Path;
 use std::process::ExitCode;
 
+use chirograph_core::alignment::AlignmentState;
+use chirograph_core::alignment_interchange::parse_alignment_json;
 use chirograph_core::evidence::parse_evidence_json;
 use chirograph_core::model::{
-    AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph, ContractId, Revision,
+    AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph, ContractId,
+    RepresentationId, Revision,
 };
 use chirograph_core::query::SemanticQuery;
 
-const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph authority <evidence.json> <contract-id> <facet>\n  chirograph --version\n  chirograph --help\n";
+const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph authority <evidence.json> <contract-id> <facet>\n  chirograph alignment <evidence.json> <alignments.json> <representation-id>\n  chirograph --version\n  chirograph --help\n";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -38,6 +41,13 @@ fn run(args: Vec<String>) -> Result<String, String> {
         [command, path, contract] if command == "evidence" => evidence(Path::new(path), contract),
         [command, path, contract, facet] if command == "authority" => {
             authority(Path::new(path), contract, facet)
+        }
+        [command, evidence_path, alignment_path, representation] if command == "alignment" => {
+            alignment(
+                Path::new(evidence_path),
+                Path::new(alignment_path),
+                representation,
+            )
         }
         _ => Err(format!("invalid arguments\n\n{HELP}")),
     }
@@ -126,6 +136,49 @@ fn authority(path: &Path, contract: &str, facet: &str) -> Result<String, String>
             "  {} ({}) evidence={}\n",
             claim.representation.as_str(),
             authority_basis_name(claim.basis),
+            claim
+                .evidence
+                .iter()
+                .map(|id| id.as_str())
+                .collect::<Vec<_>>()
+                .join(", "),
+        ));
+    }
+    Ok(output)
+}
+
+fn alignment(
+    evidence_path: &Path,
+    alignment_path: &Path,
+    representation: &str,
+) -> Result<String, String> {
+    let graph = read_graph(evidence_path)?;
+    let source = fs::read_to_string(alignment_path)
+        .map_err(|error| format!("cannot read {}: {error}", alignment_path.display()))?;
+    let catalog = parse_alignment_json(&source, &graph)
+        .map_err(|error| format!("invalid Chirograph alignments: {error:?}"))?;
+    let representation = RepresentationId::new(representation)
+        .map_err(|error| format!("invalid representation id {representation:?}: {error:?}"))?;
+    if !catalog
+        .representations
+        .iter()
+        .any(|candidate| candidate.id == representation)
+    {
+        return Err(format!(
+            "unknown observed representation {:?}",
+            representation.as_str()
+        ));
+    }
+
+    let query = SemanticQuery::with_alignments(&graph, &catalog)
+        .map_err(|error| format!("cannot query contract graph: {error:?}"))?;
+    let mut output = format!("alignment {}\n", representation.as_str());
+    for claim in query.alignments_for(&representation) {
+        output.push_str(&format!(
+            "  {} {} {} evidence={}\n",
+            facet_name(claim.facet),
+            claim.contract.as_str(),
+            alignment_state_name(claim.state),
             claim
                 .evidence
                 .iter()
@@ -243,6 +296,14 @@ const fn facet_name(value: ContractFacet) -> &'static str {
         ContractFacet::Concurrency => "concurrency",
         ContractFacet::Recovery => "recovery",
         ContractFacet::Verification => "verification",
+    }
+}
+
+const fn alignment_state_name(value: AlignmentState) -> &'static str {
+    match value {
+        AlignmentState::Confirmed => "CONFIRMED",
+        AlignmentState::Rejected => "REJECTED",
+        AlignmentState::Unresolved => "UNRESOLVED",
     }
 }
 

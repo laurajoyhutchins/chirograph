@@ -10,8 +10,9 @@ Chirograph is early-stage software. Its evidence format is explicitly versioned,
 
 - [`docs/model.md`](docs/model.md) — concepts, facets, invariants, and the epistemic boundary
 - [`docs/guarantees.md`](docs/guarantees.md) — what Chirograph does and does not establish
-- [`docs/query-api.md`](docs/query-api.md) — deterministic semantic queries, evidence closure, and non-guarantees
+- [`docs/query-api.md`](docs/query-api.md) — deterministic semantic queries, CLI surfaces, evidence closure, and non-guarantees
 - [`docs/evidence-interchange.md`](docs/evidence-interchange.md) — `chirograph-evidence-v1` and compatibility rules
+- [`docs/alignment-interchange.md`](docs/alignment-interchange.md) — `chirograph-alignments-v1` for pre-alignment claims
 - [`docs/adapters.md`](docs/adapters.md) — requirements for general-purpose acquisition adapters
 - [`docs/benchmarks.md`](docs/benchmarks.md) — benchmark structure, scoring, and ground-truth rules
 - [`docs/licensing.md`](docs/licensing.md) — project licensing and third-party specimen provenance
@@ -43,10 +44,14 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 python tools/check_release_metadata.py
 ```
 
-Run the current CLI with:
+Run the CLI with:
 
 ```sh
 cargo run -p chirograph-cli -- --help
+cargo run -p chirograph-cli -- contestations evidence.json
+cargo run -p chirograph-cli -- evidence evidence.json review-status
+cargo run -p chirograph-cli -- authority evidence.json review-status semantic
+cargo run -p chirograph-cli -- alignment evidence.json alignments.json candidate-example
 ```
 
 ## Contributing

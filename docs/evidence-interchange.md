@@ -32,6 +32,12 @@ Adapters must not hide interpretation inside an observation merely to make it ap
 
 See [`model.md`](model.md) for the full epistemic boundary and graph invariants.
 
+## Pre-alignment state is separate
+
+`chirograph-evidence-v1` remains a post-alignment format: every `representation` in it is already assigned to a logical contract. Observed artifacts whose contract membership is still being evaluated are represented separately in `chirograph-alignments-v1`.
+
+That separation is intentional. Adding candidate representations or unresolved alignment claims to evidence-v1 would silently change the meaning of its `representations` collection. See [`alignment-interchange.md`](alignment-interchange.md) for the pre-alignment wire contract.
+
 ## Revision identity
 
 Every observation carries one of three revision states:

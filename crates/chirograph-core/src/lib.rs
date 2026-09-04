@@ -2,6 +2,7 @@
 
 //! Language-agnostic core for Chirograph.
 
+pub mod alignment;
 pub mod evidence;
 pub mod model;
 

@@ -35,9 +35,7 @@ fn run(args: Vec<String>) -> Result<String, String> {
         }
         [command, path] if command == "inspect" => inspect(Path::new(path)),
         [command, path] if command == "contestations" => contestations(Path::new(path)),
-        [command, path, contract] if command == "evidence" => {
-            evidence(Path::new(path), contract)
-        }
+        [command, path, contract] if command == "evidence" => evidence(Path::new(path), contract),
         _ => Err(format!("invalid arguments\n\n{HELP}")),
     }
 }

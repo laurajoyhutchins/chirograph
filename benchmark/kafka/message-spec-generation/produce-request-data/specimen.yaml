@@ -1,0 +1,23 @@
+schema: chirograph-benchmark-specimen-v1
+id: kafka/message-spec-generation/produce-request-data
+repository: kafka
+scenario: message-spec-generation
+upstream:
+  repository: apache/kafka
+  revision: b57cf6e56eb59a952db7236b4da67cc2fdbb8cdf
+files:
+  - fixture_path: fixture/clients/src/main/resources/common/message/ProduceRequest.json
+    upstream_path: clients/src/main/resources/common/message/ProduceRequest.json
+    sha256: 779c104bdd1753731b946384ea1fc1af08c6c6fd47f2496eadc6530a2db35966
+  - fixture_path: fixture/generator/src/main/java/org/apache/kafka/message/MessageGenerator.java
+    upstream_path: generator/src/main/java/org/apache/kafka/message/MessageGenerator.java
+    sha256: 3147fe9f63e488b1dcbf1fbfbbb24342cfc1e8b4de7df3bb25abffc768d368b3
+  - fixture_path: fixture/generator/src/main/java/org/apache/kafka/message/MessageSpec.java
+    upstream_path: generator/src/main/java/org/apache/kafka/message/MessageSpec.java
+    sha256: 247831df8e969dfbdd7b99e62f5d97bc8b04278b85056841cf038f7bcb8a1e93
+  - fixture_path: fixture/generator/src/main/java/org/apache/kafka/message/MessageDataGenerator.java
+    upstream_path: generator/src/main/java/org/apache/kafka/message/MessageDataGenerator.java
+    sha256: c25280fd86b7c08a9a599a60583f39900af7f592b456370298fdfa2f854bedb6
+  - fixture_path: fixture/clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java
+    upstream_path: clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java
+    sha256: 9508698997c565b4a429d32c7b10624118a079a976cce9f881d1e0cc14393152

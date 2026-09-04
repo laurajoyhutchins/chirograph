@@ -4,6 +4,7 @@
 
 pub mod alignment;
 pub mod evidence;
+pub mod graph_json;
 pub mod model;
 pub mod query;
 

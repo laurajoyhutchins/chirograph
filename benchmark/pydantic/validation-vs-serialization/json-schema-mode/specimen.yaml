@@ -1,0 +1,17 @@
+schema: chirograph-benchmark-specimen-v1
+id: pydantic/validation-vs-serialization/json-schema-mode
+repository: pydantic
+scenario: validation-vs-serialization
+upstream:
+  repository: pydantic/pydantic
+  revision: 001dea020e0809844e5b17666432c9135a976f46
+files:
+  - fixture_path: fixture/pydantic/json_schema.py
+    upstream_path: pydantic/json_schema.py
+    sha256: 75ade143dbd03cb1213ecac39d49628df4357ee0825621959d4cceac064b803b
+  - fixture_path: fixture/pydantic/main.py
+    upstream_path: pydantic/main.py
+    sha256: 35b842cfe92ef300e060b40c062ef93afee1cb075cf0b7b0037a1434867c2554
+  - fixture_path: fixture/tests/test_json_schema.py
+    upstream_path: tests/test_json_schema.py
+    sha256: 39d0066e62a5e580246d77701233113eadc25cadebbc5f158a388736675cdc0b

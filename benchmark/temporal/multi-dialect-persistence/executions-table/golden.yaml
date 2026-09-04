@@ -1,0 +1,40 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: temporal.persistence.executions
+    facets: [structural, verification]
+representations:
+  - id: temporal.persistence.executions.mysql
+    contract: temporal.persistence.executions
+    kind: schema
+    locator: schema/mysql/v8/temporal/schema.sql::executions
+    facets: [structural]
+  - id: temporal.persistence.executions.postgresql
+    contract: temporal.persistence.executions
+    kind: schema
+    locator: schema/postgresql/v12/temporal/schema.sql::executions
+    facets: [structural]
+  - id: temporal.persistence.executions.cassandra
+    contract: temporal.persistence.executions
+    kind: schema
+    locator: schema/cassandra/temporal/schema.cql::executions
+    facets: [structural]
+  - id: temporal.persistence.executions.tests
+    contract: temporal.persistence.executions
+    kind: test
+    locator: common/persistence/tests/*_test_util.go
+    facets: [verification]
+authority_claims: []
+relationships:
+  - from: {kind: representation, id: temporal.persistence.executions.mysql}
+    kind: equivalent-to
+    to: {kind: representation, id: temporal.persistence.executions.postgresql}
+  - from: {kind: representation, id: temporal.persistence.executions.postgresql}
+    kind: equivalent-to
+    to: {kind: representation, id: temporal.persistence.executions.cassandra}
+  - from: {kind: representation, id: temporal.persistence.executions.tests}
+    kind: validates
+    to: {kind: contract, id: temporal.persistence.executions}
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []

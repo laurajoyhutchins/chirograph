@@ -1,0 +1,14 @@
+schema: chirograph-benchmark-specimen-v1
+id: rails/migration-db-schema-authority/schema-dump-current-state
+repository: rails
+scenario: migration-db-schema-authority
+upstream:
+  repository: rails/rails
+  revision: 2164c6c6f7fb91cc1caff5ee4b05931445de42ea
+files:
+  - fixture_path: fixture/guides/source/active_record_migrations.md
+    upstream_path: guides/source/active_record_migrations.md
+    sha256: 65c5fc1a82f456b533838c1d4dc72c83a917f20582860b146fe7ff01de5f0f00
+  - fixture_path: fixture/activerecord/lib/active_record/schema_dumper.rb
+    upstream_path: activerecord/lib/active_record/schema_dumper.rb
+    sha256: 22006670ba190e182593866260428cb77ce2f9eb1d6b3556e7b7bdb063e9751d

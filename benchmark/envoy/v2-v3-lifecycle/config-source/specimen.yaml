@@ -1,0 +1,17 @@
+schema: chirograph-benchmark-specimen-v1
+id: envoy/v2-v3-lifecycle/config-source
+repository: envoy
+scenario: v2-v3-lifecycle
+upstream:
+  repository: envoyproxy/envoy
+  revision: 6609c01e330fb84049d54a9dbffae8609b1ec9f7
+files:
+  - fixture_path: fixture/api/API_VERSIONING.md
+    upstream_path: api/API_VERSIONING.md
+    sha256: a175b8961c1f66a1dc22c1beb2773a8faaff71d5d8604602c3c056e6942c6940
+  - fixture_path: fixture/api/envoy/api/v2/core/config_source.proto
+    upstream_path: api/envoy/api/v2/core/config_source.proto
+    sha256: cefe9658b96d8cae92eaf5f915beab82a394ddf29fcae187bceefdb26ab65bf4
+  - fixture_path: fixture/api/envoy/config/core/v3/config_source.proto
+    upstream_path: api/envoy/config/core/v3/config_source.proto
+    sha256: a7febf530579087616987afddb05fa0bf0ec8f32527d629f014c6f45c14f95a2

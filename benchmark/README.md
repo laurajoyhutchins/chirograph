@@ -323,3 +323,16 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
+
+### Envoy
+
+Fixture files under `benchmark/envoy/` are verbatim source files from `envoyproxy/envoy` at revisions declared in each `specimen.yaml`. Envoy is redistributed under Apache License 2.0; the full Apache License 2.0 text is included above in this file.
+
+Envoy NOTICE from revision `6609c01e330fb84049d54a9dbffae8609b1ec9f7`:
+
+```text
+Envoy
+Copyright The Envoy Project Authors
+
+Licensed under Apache License 2.0.  See LICENSE for terms.
+```

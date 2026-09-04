@@ -1,0 +1,37 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: envoy.config-source
+    facets: [structural, semantic]
+representations:
+  - id: envoy.config-source.v2
+    contract: envoy.config-source
+    kind: schema
+    locator: api/envoy/api/v2/core/config_source.proto
+    facets: [structural, semantic]
+  - id: envoy.config-source.v3
+    contract: envoy.config-source
+    kind: schema
+    locator: api/envoy/config/core/v3/config_source.proto
+    facets: [structural, semantic]
+  - id: envoy.api-versioning
+    contract: envoy.config-source
+    kind: documentation
+    locator: api/API_VERSIONING.md
+    facets: [semantic]
+authority_claims:
+  - contract: envoy.config-source
+    facet: structural
+    representation: envoy.config-source.v3
+    basis: explicit-declaration
+relationships:
+  - from: {kind: representation, id: envoy.api-versioning}
+    kind: documents
+    to: {kind: contract, id: envoy.config-source}
+clauses: []
+lifecycle:
+  - subject: {kind: representation, id: envoy.config-source.v2}
+    status: frozen
+  - subject: {kind: representation, id: envoy.config-source.v3}
+    status: active
+expected_findings: []
+non_contracts: []

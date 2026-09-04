@@ -9,3 +9,4 @@ pub mod report;
 pub mod runner;
 pub mod score;
 pub mod selector;
+pub mod source;

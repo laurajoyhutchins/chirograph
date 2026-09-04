@@ -1,0 +1,27 @@
+{
+  "schema": "chirograph-alignments-v1",
+  "representations": [
+    {
+      "id": "candidate-example",
+      "source": "docs",
+      "kind": "documentation",
+      "locator": "Candidate example"
+    }
+  ],
+  "claims": [
+    {
+      "representation": "candidate-example",
+      "contract": "review-status",
+      "facet": "semantic",
+      "state": "unresolved",
+      "evidence": ["obs-docs"]
+    },
+    {
+      "representation": "candidate-example",
+      "contract": "review-status",
+      "facet": "structural",
+      "state": "rejected",
+      "evidence": ["obs-docs"]
+    }
+  ]
+}

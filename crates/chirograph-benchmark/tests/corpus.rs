@@ -147,6 +147,18 @@ fn permits_non_semantic_provenance_metadata() {
 }
 
 #[test]
+fn permits_non_semantic_root_provenance_schema_metadata() {
+    let root = temp_root("provenance-schema");
+    write_case(&root, false);
+    fs::write(root.join("provenance.schema.json"), "{}\n").expect("write provenance schema");
+
+    let cases = discover_corpus(&root).expect("root provenance schema is allowed");
+    assert_eq!(cases.len(), 1);
+
+    fs::remove_dir_all(root).expect("remove temp root");
+}
+
+#[test]
 fn rejects_executable_case_glue() {
     let root = temp_root("glue");
     write_case(&root, true);

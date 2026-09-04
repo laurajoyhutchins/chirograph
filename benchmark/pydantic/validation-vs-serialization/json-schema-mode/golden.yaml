@@ -1,0 +1,42 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: pydantic.json-schema.mode
+    facets: [structural, semantic, verification]
+representations:
+  - id: pydantic.json-schema.mode.definition
+    contract: pydantic.json-schema.mode
+    kind: source-code
+    locator: pydantic/json_schema.py::JsonSchemaMode
+    facets: [structural, semantic]
+  - id: pydantic.json-schema.mode.tests
+    contract: pydantic.json-schema.mode
+    kind: test
+    locator: tests/test_json_schema.py
+    facets: [verification]
+authority_claims:
+  - contract: pydantic.json-schema.mode
+    facet: structural
+    representation: pydantic.json-schema.mode.definition
+    basis: explicit-declaration
+  - contract: pydantic.json-schema.mode
+    facet: semantic
+    representation: pydantic.json-schema.mode.definition
+    basis: mechanical-enforcement
+relationships:
+  - from: {kind: representation, id: pydantic.json-schema.mode.tests}
+    kind: validates
+    to: {kind: contract, id: pydantic.json-schema.mode}
+clauses:
+  - id: pydantic.json-schema.mode.validation-inputs
+    contract: pydantic.json-schema.mode
+    facet: semantic
+    kind: guarantee
+    statement: Validation mode describes JSON schema for accepted validation inputs.
+  - id: pydantic.json-schema.mode.serialization-outputs
+    contract: pydantic.json-schema.mode
+    facet: semantic
+    kind: guarantee
+    statement: Serialization mode describes JSON schema matched by serialization outputs.
+lifecycle: []
+expected_findings: []
+non_contracts: []

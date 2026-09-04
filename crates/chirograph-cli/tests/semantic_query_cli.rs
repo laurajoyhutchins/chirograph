@@ -62,3 +62,34 @@ fn evidence_command_returns_only_explicit_provenance_closure() {
         "unlinked source observation leaked into evidence closure:\n{stdout}"
     );
 }
+
+#[test]
+fn authority_command_preserves_multiple_claims_without_selecting_a_winner() {
+    let output = Command::new(env!("CARGO_BIN_EXE_chirograph"))
+        .arg("authority")
+        .arg(fixture("semantic-query.json"))
+        .arg("review-status")
+        .arg("semantic")
+        .output()
+        .expect("chirograph should execute");
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8(output.stdout).expect("stdout should be UTF-8");
+    for expected in [
+        "review-status",
+        "semantic",
+        "runtime-status",
+        "observed_behavior",
+        "schema-status",
+        "explicit_declaration",
+    ] {
+        assert!(
+            stdout.contains(expected),
+            "expected {expected:?} in output:\n{stdout}"
+        );
+    }
+}

@@ -186,6 +186,16 @@
       }
     },
     {
+      "id": "formalize-semantic-alignment-boundary",
+      "priority": 95,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Make semantic alignment an explicit provenance-bearing core concept instead of assuming contract membership has already been decided before a Representation enters the graph. Model at least confirmed, rejected, and unresolved alignment state between observed representations and logical contracts, with evidence/provenance sufficient to explain the decision. Preserve the epistemic boundary: unresolved alignment must not become truth by repetition, file count, or majority consensus. Do not implement fuzzy matching, confidence thresholds, global authority ranking, benchmark-derived heuristics, or specimen-specific rules. Keep chirograph-core language-agnostic. Add synthetic invariant tests covering false-alignment restraint, unresolved state preservation, deterministic ordering, and validation failures."
+      }
+    },
+    {
       "id": "implement-benchmark-corpus-model",
       "priority": 92,
       "requires": [
@@ -297,6 +307,18 @@
         "kind": "agent",
         "role": "contract-acquisition-engineer",
         "skill": "Implement Task 2 of docs/superpowers/plans/2026-09-03-tree-sitter-rust-cargo-slice.md using TDD. Build the generic chirograph-rust adapter on the shared Tree-sitter substrate, emitting deterministic provenance-rich source-local Rust facts only. Do not add Cargo-specific symbols, clause stances, macro expansion, name resolution, trait solving, or cross-file inference. Run the plan's exact verification commands and finish with exact commit and test evidence."
+      }
+    },
+    {
+      "id": "implement-semantic-query-api",
+      "priority": 94,
+      "requires": [
+        "formalize-semantic-alignment-boundary"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Add deterministic read-only semantic query operations over validated Chirograph graphs for contracts, representations, clauses, evidence/provenance, contestations, and facet-scoped authority, forming the core behind agent-facing operations such as evidence_for(contract), contestations(), and authority_for(contract, facet). Expose alignment state without inventing or resolving it. Queries must preserve contradictory evidence rather than majority-voting, must not infer new authority, and must produce stable results independent of input ordering. Keep this benchmark-independent: no fuzzy semantic matching, benchmark scoring logic, parser proliferation, or repository/specimen-specific behavior. Add focused synthetic tests and document the query guarantees and non-guarantees."
       }
     },
     {

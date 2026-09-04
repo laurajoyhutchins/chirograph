@@ -35,3 +35,30 @@ fn contestations_command_preserves_both_sides_of_a_disagreement() {
         );
     }
 }
+
+#[test]
+fn evidence_command_returns_only_explicit_provenance_closure() {
+    let output = Command::new(env!("CARGO_BIN_EXE_chirograph"))
+        .arg("evidence")
+        .arg(fixture("semantic-query.json"))
+        .arg("review-status")
+        .output()
+        .expect("chirograph should execute");
+
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8(output.stdout).expect("stdout should be UTF-8");
+    for expected in ["obs-docs", "obs-runtime", "obs-schema"] {
+        assert!(
+            stdout.contains(expected),
+            "expected {expected:?} in output:\n{stdout}"
+        );
+    }
+    assert!(
+        !stdout.contains("obs-unlinked"),
+        "unlinked source observation leaked into evidence closure:\n{stdout}"
+    );
+}

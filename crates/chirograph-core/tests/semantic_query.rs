@@ -255,27 +255,27 @@ fn semantic_queries_are_stable_under_input_reordering() {
 
     let contract_ids_a: Vec<_> = query_a
         .contracts()
-        .iter()
-        .map(|contract| contract.id.as_str())
+        .into_iter()
+        .map(|contract| contract.id.as_str().to_owned())
         .collect();
     let contract_ids_b: Vec<_> = query_b
         .contracts()
-        .iter()
-        .map(|contract| contract.id.as_str())
+        .into_iter()
+        .map(|contract| contract.id.as_str().to_owned())
         .collect();
     assert_eq!(contract_ids_a, contract_ids_b);
 
     let representation_ids_a: Vec<_> = query_a
         .representations_for(&contract_id("review-status"))
         .expect("known contract")
-        .iter()
-        .map(|representation| representation.id.as_str())
+        .into_iter()
+        .map(|representation| representation.id.as_str().to_owned())
         .collect();
     let representation_ids_b: Vec<_> = query_b
         .representations_for(&contract_id("review-status"))
         .expect("known contract")
-        .iter()
-        .map(|representation| representation.id.as_str())
+        .into_iter()
+        .map(|representation| representation.id.as_str().to_owned())
         .collect();
     assert_eq!(representation_ids_a, representation_ids_b);
 

@@ -162,6 +162,18 @@
       }
     },
     {
+      "id": "expose-semantic-query-cli",
+      "priority": 95,
+      "requires": [
+        "implement-semantic-query-api"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use test-driven development. Expose the existing deterministic SemanticQuery surface through real chirograph CLI commands: `contestations <evidence.json>`, `evidence <evidence.json> <contract-id>`, and `authority <evidence.json> <contract-id> <facet>`. Add a separate versioned `chirograph-alignments-v1` document and parser for pre-alignment ObservedRepresentation and AlignmentClaim state; keep chirograph-evidence-v1 unchanged. Expose `alignment <evidence.json> <alignments.json> <representation-id>` by validating both documents and querying recorded alignment claims without inference. Output must be stable and human-readable, preserve contradictions and multiple authority claims, exclude unlinked observations from evidence closure, return unresolved/rejected alignment exactly as recorded, and fail explicitly on invalid identifiers, facets, documents, or unknown contracts. Add process-level CLI tests that exercise the built executable, including ordering stability and failure cases. Update CLI/query/interchange docs without introducing fuzzy matching, authority ranking, benchmark logic, parser-specific behavior, or specimen-specific code."
+      }
+    },
+    {
       "id": "formalize-contract-clauses",
       "priority": 80,
       "requires": [

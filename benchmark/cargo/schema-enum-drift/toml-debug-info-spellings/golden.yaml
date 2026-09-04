@@ -1,0 +1,42 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: cargo.profile.debug-info
+    facets:
+      - structural
+representations:
+  - id: cargo.profile.debug-info.implementation
+    contract: cargo.profile.debug-info
+    kind: source-code
+    locator: crates/cargo-util-schemas/src/manifest/mod.rs
+    facets:
+      - structural
+  - id: cargo.profile.debug-info.schema
+    contract: cargo.profile.debug-info
+    kind: schema
+    locator: crates/cargo-util-schemas/manifest.schema.json
+    facets:
+      - structural
+authority_claims:
+  - contract: cargo.profile.debug-info
+    facet: structural
+    representation: cargo.profile.debug-info.implementation
+    basis: mechanical-enforcement
+relationships:
+  - from:
+      kind: representation
+      id: cargo.profile.debug-info.implementation
+    kind: projects
+    to:
+      kind: representation
+      id: cargo.profile.debug-info.schema
+clauses:
+  - id: cargo.profile.debug-info.enum-spellings
+    contract: cargo.profile.debug-info
+    facet: structural
+    kind: invariant
+    statement: Accepted serialized debug-info spellings in the generated schema must match the implementation spellings.
+lifecycle: []
+expected_findings:
+  - kind: contested-clause
+    clause: cargo.profile.debug-info.enum-spellings
+non_contracts: []

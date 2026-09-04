@@ -47,6 +47,21 @@ In particular, `authority_for` may return several claims. Their order does not i
 
 A `SemanticQuery` constructed without an alignment catalog has no pre-alignment claims to expose. An empty alignment result is therefore not evidence that an artifact cannot align to a contract; it means only that this query view has no recorded claim for that observed representation.
 
+## CLI
+
+The command-line interface exposes the same read-only semantics without adding a second interpretation layer:
+
+```sh
+chirograph contestations evidence.json
+chirograph evidence evidence.json review-status
+chirograph authority evidence.json review-status semantic
+chirograph alignment evidence.json alignments.json candidate-example
+```
+
+`contestations` preserves both sides of every disagreement. `evidence` prints only the explicit provenance closure for the named contract. `authority` prints every recorded claim for the exact contract facet without ranking them. `alignment` additionally reads a separate `chirograph-alignments-v1` document and reports the recorded pre-alignment states exactly as supplied.
+
+The CLI validates identifiers and documents before querying. Output ordering follows the deterministic query layer, so rearranging collections in an otherwise identical input document does not change the semantic output.
+
 ## Non-guarantees
 
 The query layer does not:

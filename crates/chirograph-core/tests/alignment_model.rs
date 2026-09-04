@@ -109,7 +109,11 @@ fn claim(
 fn unresolved_alignment_is_not_resolved_by_confirmed_peers() {
     let catalog = AlignmentCatalog {
         representations: vec![
-            observed("runtime-status", "runtime", RepresentationKind::ExecutableSurface),
+            observed(
+                "runtime-status",
+                "runtime",
+                RepresentationKind::ExecutableSurface,
+            ),
             observed("schema-status", "schema", RepresentationKind::Schema),
             observed("docs-status", "docs", RepresentationKind::Documentation),
         ],
@@ -138,7 +142,9 @@ fn unresolved_alignment_is_not_resolved_by_confirmed_peers() {
         ],
     };
 
-    catalog.validate_against(&graph()).expect("catalog is valid");
+    catalog
+        .validate_against(&graph())
+        .expect("catalog is valid");
     assert_eq!(
         catalog.state_for(
             &representation_id("docs-status"),
@@ -153,7 +159,11 @@ fn unresolved_alignment_is_not_resolved_by_confirmed_peers() {
 fn rejected_alignment_is_not_overridden_by_confirmed_peers() {
     let catalog = AlignmentCatalog {
         representations: vec![
-            observed("runtime-status", "runtime", RepresentationKind::ExecutableSurface),
+            observed(
+                "runtime-status",
+                "runtime",
+                RepresentationKind::ExecutableSurface,
+            ),
             observed("schema-status", "schema", RepresentationKind::Schema),
             observed("docs-status", "docs", RepresentationKind::Documentation),
         ],
@@ -182,7 +192,9 @@ fn rejected_alignment_is_not_overridden_by_confirmed_peers() {
         ],
     };
 
-    catalog.validate_against(&graph()).expect("catalog is valid");
+    catalog
+        .validate_against(&graph())
+        .expect("catalog is valid");
     assert_eq!(
         catalog.state_for(
             &representation_id("docs-status"),
@@ -226,7 +238,9 @@ fn claims_for_representation_are_deterministically_ordered() {
         ],
     };
 
-    catalog.validate_against(&graph()).expect("catalog is valid");
+    catalog
+        .validate_against(&graph())
+        .expect("catalog is valid");
     let ordered = catalog.claims_for(&representation_id("docs-status"));
     let keys: Vec<_> = ordered
         .iter()
@@ -288,7 +302,9 @@ fn alignment_claim_rejects_unknown_observation() {
 
     assert_eq!(
         catalog.validate_against(&graph()),
-        Err(AlignmentError::UnknownObservation(observation_id("missing")))
+        Err(AlignmentError::UnknownObservation(observation_id(
+            "missing"
+        )))
     );
 }
 

@@ -1,0 +1,37 @@
+{
+  "schema": "chirograph-evidence-v1",
+  "sources": [
+    {"id":"runtime","kind":"executable","locator":"runtime://service"},
+    {"id":"schema","kind":"file_system","locator":"openapi.yaml"},
+    {"id":"docs","kind":"file_system","locator":"docs/api.md"}
+  ],
+  "contracts": [
+    {"id":"review-status","name":"review status","facets":["structural","semantic"]}
+  ],
+  "representations": [
+    {"id":"runtime-status","contract":"review-status","source":"runtime","kind":"executable_surface","locator":"GET /status","facets":["semantic"]},
+    {"id":"schema-status","contract":"review-status","source":"schema","kind":"schema","locator":"components.schemas.ReviewStatus","facets":["structural","semantic"]},
+    {"id":"docs-status","contract":"review-status","source":"docs","kind":"documentation","locator":"Review status","facets":["semantic"]}
+  ],
+  "observations": [
+    {"id":"obs-runtime","source":"runtime","revision":{"kind":"exact","value":"runtime@abc"},"locator":"GET /status","fact":"pending review serializes as pending-review"},
+    {"id":"obs-schema","source":"schema","revision":{"kind":"exact","value":"git@abc"},"locator":"ReviewStatus","fact":"schema enum contains pending-review"},
+    {"id":"obs-docs","source":"docs","revision":{"kind":"exact","value":"git@abc"},"locator":"Review status","fact":"example contains PendingReview"},
+    {"id":"obs-unlinked","source":"docs","revision":{"kind":"exact","value":"git@abc"},"locator":"unrelated","fact":"unrelated observation from same source"}
+  ],
+  "clauses": [
+    {"id":"review-wire-value","contract":"review-status","facet":"semantic","kind":"guarantee","statement":"pending review serializes as pending-review"}
+  ],
+  "clause_assertions": [
+    {"clause":"review-wire-value","representation":"runtime-status","stance":"supports","evidence":["obs-runtime"]},
+    {"clause":"review-wire-value","representation":"schema-status","stance":"supports","evidence":["obs-schema"]},
+    {"clause":"review-wire-value","representation":"docs-status","stance":"contradicts","evidence":["obs-docs"]}
+  ],
+  "relations": [
+    {"from":{"kind":"representation","id":"schema-status"},"to":{"kind":"contract","id":"review-status"},"kind":"defines","basis":["obs-schema"]}
+  ],
+  "authority_claims": [
+    {"contract":"review-status","representation":"schema-status","facet":"semantic","basis":"explicit_declaration","evidence":["obs-schema"]},
+    {"contract":"review-status","representation":"runtime-status","facet":"semantic","basis":"observed_behavior","evidence":["obs-runtime"]}
+  ]
+}

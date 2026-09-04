@@ -10,6 +10,7 @@ Chirograph is early-stage software. Its evidence format is explicitly versioned,
 
 - [`docs/model.md`](docs/model.md) — concepts, facets, invariants, and the epistemic boundary
 - [`docs/guarantees.md`](docs/guarantees.md) — what Chirograph does and does not establish
+- [`docs/query-api.md`](docs/query-api.md) — deterministic semantic queries, evidence closure, and non-guarantees
 - [`docs/evidence-interchange.md`](docs/evidence-interchange.md) — `chirograph-evidence-v1` and compatibility rules
 - [`docs/adapters.md`](docs/adapters.md) — requirements for general-purpose acquisition adapters
 - [`docs/benchmarks.md`](docs/benchmarks.md) — benchmark structure, scoring, and ground-truth rules

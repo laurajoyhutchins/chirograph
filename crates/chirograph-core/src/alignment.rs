@@ -74,7 +74,11 @@ impl AlignmentCatalog {
     pub fn validate_against(&self, graph: &ContractGraph) -> Result<(), AlignmentError> {
         graph.validate().map_err(AlignmentError::InvalidGraph)?;
 
-        let source_ids: BTreeSet<_> = graph.sources.iter().map(|source| source.id.clone()).collect();
+        let source_ids: BTreeSet<_> = graph
+            .sources
+            .iter()
+            .map(|source| source.id.clone())
+            .collect();
         let contract_ids: BTreeSet<_> = graph
             .contracts
             .iter()

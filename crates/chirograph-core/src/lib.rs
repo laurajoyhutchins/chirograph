@@ -3,8 +3,8 @@
 //! Language-agnostic core for Chirograph.
 
 pub mod alignment;
-pub mod alignment_interchange;
 pub mod evidence;
+pub mod graph_json;
 pub mod model;
 pub mod query;
 

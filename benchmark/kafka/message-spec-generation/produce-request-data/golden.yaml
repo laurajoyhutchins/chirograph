@@ -1,0 +1,62 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: kafka.protocol.produce-request
+    facets:
+      - structural
+      - executable
+representations:
+  - id: kafka.produce-request.message-spec
+    contract: kafka.protocol.produce-request
+    kind: schema
+    locator: clients/src/main/resources/common/message/ProduceRequest.json
+    facets:
+      - structural
+  - id: kafka.produce-request.generated-data
+    contract: kafka.protocol.produce-request
+    kind: generated-artifact
+    locator: org.apache.kafka.common.message.ProduceRequestData
+    facets:
+      - structural
+  - id: kafka.produce-request.wrapper
+    contract: kafka.protocol.produce-request
+    kind: source-code
+    locator: clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java
+    facets:
+      - executable
+  - id: kafka.message-data-generator
+    contract: kafka.protocol.produce-request
+    kind: source-code
+    locator: generator/src/main/java/org/apache/kafka/message/MessageDataGenerator.java
+    facets:
+      - structural
+authority_claims:
+  - contract: kafka.protocol.produce-request
+    facet: structural
+    representation: kafka.produce-request.message-spec
+    basis: explicit-declaration
+relationships:
+  - from:
+      kind: representation
+      id: kafka.produce-request.message-spec
+    kind: projects
+    to:
+      kind: representation
+      id: kafka.produce-request.generated-data
+  - from:
+      kind: representation
+      id: kafka.message-data-generator
+    kind: generates
+    to:
+      kind: representation
+      id: kafka.produce-request.generated-data
+  - from:
+      kind: representation
+      id: kafka.produce-request.wrapper
+    kind: depends-on
+    to:
+      kind: representation
+      id: kafka.produce-request.generated-data
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []

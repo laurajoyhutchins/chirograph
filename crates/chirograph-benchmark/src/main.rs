@@ -2,9 +2,11 @@ use std::path::{Path, PathBuf};
 
 use chirograph_benchmark::aggregate::aggregate_report;
 use chirograph_benchmark::corpus::discover_corpus;
+use chirograph_benchmark::model::BenchmarkCase;
 use chirograph_benchmark::report::{render_human_report, render_json_report};
 use chirograph_benchmark::runner::{resolve_chirograph_bin, run_case};
 use chirograph_benchmark::selector::select_cases;
+use chirograph_benchmark::source::{GitSourceFetcher, refresh_sources, verify_sources};
 
 const HELP: &str = "Chirograph contract benchmark\n\n\
 Usage:\n\
@@ -70,12 +72,8 @@ fn run(args: impl IntoIterator<Item = String>) -> Result<(), String> {
             Ok(())
         }
         Command::Run(options) => run_selection(options),
-        Command::VerifySources { selector } => Err(format!(
-            "source verification for selector {selector:?} is added by the source-maintenance task"
-        )),
-        Command::Refresh { selector, revision } => Err(format!(
-            "source refresh for selector {selector:?} at revision {revision} is added by the source-maintenance task"
-        )),
+        Command::VerifySources { selector } => verify_selection(&selector),
+        Command::Refresh { selector, revision } => refresh_selection(&selector, &revision),
     }
 }
 
@@ -112,7 +110,32 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
     Ok(())
 }
 
-fn discover() -> Result<Vec<chirograph_benchmark::model::BenchmarkCase>, String> {
+fn verify_selection(selector: &str) -> Result<(), String> {
+    let selected = selected_owned(selector)?;
+    let fetcher = GitSourceFetcher::new().map_err(|error| error.to_string())?;
+    verify_sources(&selected, &fetcher).map_err(|error| error.to_string())?;
+    println!("verified {} benchmark source case(s)", selected.len());
+    Ok(())
+}
+
+fn refresh_selection(selector: &str, revision: &str) -> Result<(), String> {
+    let mut selected = selected_owned(selector)?;
+    let fetcher = GitSourceFetcher::new().map_err(|error| error.to_string())?;
+    refresh_sources(&mut selected, revision, &fetcher).map_err(|error| error.to_string())?;
+    println!(
+        "refreshed {} benchmark source case(s) to {revision}",
+        selected.len()
+    );
+    Ok(())
+}
+
+fn selected_owned(selector: &str) -> Result<Vec<BenchmarkCase>, String> {
+    let cases = discover()?;
+    let selected = select_cases(&cases, selector).map_err(|error| error.to_string())?;
+    Ok(selected.into_iter().cloned().collect())
+}
+
+fn discover() -> Result<Vec<BenchmarkCase>, String> {
     discover_corpus(Path::new("benchmark")).map_err(|error| error.to_string())
 }
 

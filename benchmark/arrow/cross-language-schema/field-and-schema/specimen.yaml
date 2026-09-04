@@ -1,0 +1,20 @@
+schema: chirograph-benchmark-specimen-v1
+id: arrow/cross-language-schema/field-and-schema
+repository: arrow
+scenario: cross-language-schema
+upstream:
+  repository: apache/arrow
+  revision: 1b0b16a8f68c0082534aa185c0bb4052614df924
+files:
+  - fixture_path: fixture/format/Schema.fbs
+    upstream_path: format/Schema.fbs
+    sha256: c5187ee92f011736e3877f22372869aaf11930fb176eb63fa942d39a9a11be8d
+  - fixture_path: fixture/cpp/src/arrow/type.h
+    upstream_path: cpp/src/arrow/type.h
+    sha256: ab4c568110faadd4620588f0b64fad3fbcd01cb8a02f85940bcab591d1ceb4e1
+  - fixture_path: fixture/python/pyarrow/types.pxi
+    upstream_path: python/pyarrow/types.pxi
+    sha256: 809b6df3b4a4b168181cc4b983485ba0fd403f69961083c6c3189f5dc5f556f5
+  - fixture_path: fixture/python/pyarrow/includes/libarrow.pxd
+    upstream_path: python/pyarrow/includes/libarrow.pxd
+    sha256: 15ef3f129429f243d43929a9ccc734fe45eea395a3f056a189abf8be9d8a9987

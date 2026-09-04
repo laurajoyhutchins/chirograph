@@ -9,9 +9,9 @@ use chirograph_core::evidence::parse_evidence_json;
 use chirograph_core::model::{
     AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph,
 };
+use chirograph_core::query::SemanticQuery;
 
-const HELP: &str =
-    "Usage:\n  chirograph inspect <evidence.json>\n  chirograph --version\n  chirograph --help\n";
+const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph --version\n  chirograph --help\n";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -34,16 +34,51 @@ fn run(args: Vec<String>) -> Result<String, String> {
             Ok(format!("chirograph {}\n", chirograph_core::version()))
         }
         [command, path] if command == "inspect" => inspect(Path::new(path)),
+        [command, path] if command == "contestations" => contestations(Path::new(path)),
         _ => Err(format!("invalid arguments\n\n{HELP}")),
     }
 }
 
-fn inspect(path: &Path) -> Result<String, String> {
+fn read_graph(path: &Path) -> Result<ContractGraph, String> {
     let source = fs::read_to_string(path)
         .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
-    let graph = parse_evidence_json(&source)
-        .map_err(|error| format!("invalid Chirograph evidence: {error:?}"))?;
+    parse_evidence_json(&source).map_err(|error| format!("invalid Chirograph evidence: {error:?}"))
+}
+
+fn inspect(path: &Path) -> Result<String, String> {
+    let graph = read_graph(path)?;
     render_graph(&graph).map_err(|error| format!("cannot assess contract graph: {error:?}"))
+}
+
+fn contestations(path: &Path) -> Result<String, String> {
+    let graph = read_graph(path)?;
+    let query = SemanticQuery::new(&graph)
+        .map_err(|error| format!("cannot query contract graph: {error:?}"))?;
+    let mut output = String::new();
+    for assessment in query.contestations() {
+        let clause = graph
+            .clauses
+            .iter()
+            .find(|candidate| candidate.id == assessment.clause)
+            .expect("validated assessment must reference a known clause");
+        output.push_str(&format!(
+            "{} clause {} [{}] {}\n",
+            facet_name(clause.facet),
+            clause.id.as_str(),
+            clause_kind_name(clause.kind),
+            clause_status_name(assessment.status),
+        ));
+        output.push_str(&format!("  {}\n", clause.statement));
+        output.push_str(&format!(
+            "  supports: {}\n",
+            join_representation_ids(&assessment.supporting_representations)
+        ));
+        output.push_str(&format!(
+            "  contradicts: {}\n",
+            join_representation_ids(&assessment.contradicting_representations)
+        ));
+    }
+    Ok(output)
 }
 
 fn render_graph(graph: &ContractGraph) -> Result<String, chirograph_core::model::ModelError> {

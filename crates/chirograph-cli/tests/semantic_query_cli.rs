@@ -125,3 +125,69 @@ fn alignment_command_reports_recorded_state_without_resolving_it() {
         );
     }
 }
+
+#[test]
+fn contestation_output_is_stable_under_input_reordering() {
+    let ordered = Command::new(env!("CARGO_BIN_EXE_chirograph"))
+        .arg("contestations")
+        .arg(fixture("semantic-query.json"))
+        .output()
+        .expect("chirograph should execute");
+    let reversed = Command::new(env!("CARGO_BIN_EXE_chirograph"))
+        .arg("contestations")
+        .arg(fixture("semantic-query-reversed.json"))
+        .output()
+        .expect("chirograph should execute");
+
+    assert!(ordered.status.success());
+    assert!(reversed.status.success());
+    assert_eq!(ordered.stdout, reversed.stdout);
+}
+
+#[test]
+fn invalid_authority_facet_fails_explicitly() {
+    let output = Command::new(env!("CARGO_BIN_EXE_chirograph"))
+        .arg("authority")
+        .arg(fixture("semantic-query.json"))
+        .arg("review-status")
+        .arg("not-a-facet")
+        .output()
+        .expect("chirograph should execute");
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).expect("stderr should be UTF-8");
+    assert!(stderr.contains("invalid contract facet"), "stderr: {stderr}");
+}
+
+#[test]
+fn alignment_rejects_the_wrong_interchange_schema() {
+    let output = Command::new(env!("CARGO_BIN_EXE_chirograph"))
+        .arg("alignment")
+        .arg(fixture("semantic-query.json"))
+        .arg(fixture("semantic-query.json"))
+        .arg("candidate-example")
+        .output()
+        .expect("chirograph should execute");
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).expect("stderr should be UTF-8");
+    assert!(stderr.contains("UnsupportedSchema"), "stderr: {stderr}");
+}
+
+#[test]
+fn alignment_rejects_unknown_observed_representation() {
+    let output = Command::new(env!("CARGO_BIN_EXE_chirograph"))
+        .arg("alignment")
+        .arg(fixture("semantic-query.json"))
+        .arg(fixture("alignments.json"))
+        .arg("missing-example")
+        .output()
+        .expect("chirograph should execute");
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).expect("stderr should be UTF-8");
+    assert!(
+        stderr.contains("unknown observed representation"),
+        "stderr: {stderr}"
+    );
+}

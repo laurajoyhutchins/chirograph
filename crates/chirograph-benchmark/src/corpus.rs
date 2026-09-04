@@ -33,7 +33,10 @@ impl std::error::Error for CorpusError {}
 
 pub fn discover_corpus(root: &Path) -> Result<Vec<BenchmarkCase>, CorpusError> {
     let mut cases = Vec::new();
-    for repository in directory_children(root, &["README.md", "baseline.json"])? {
+    for repository in directory_children(
+        root,
+        &["README.md", "baseline.json", "provenance.schema.json"],
+    )? {
         let repository_name = file_name(&repository)?;
         for scenario in directory_children(&repository, &[])? {
             let scenario_name = file_name(&scenario)?;
@@ -105,7 +108,12 @@ fn load_case(
 }
 
 fn validate_case_entries(root: &Path) -> Result<(), CorpusError> {
-    let allowed = BTreeSet::from(["fixture", "golden.yaml", "specimen.yaml"]);
+    let allowed = BTreeSet::from([
+        "fixture",
+        "golden.yaml",
+        "provenance.json",
+        "specimen.yaml",
+    ]);
     let entries = read_dir_sorted(root)?;
     for entry in entries {
         let name = entry

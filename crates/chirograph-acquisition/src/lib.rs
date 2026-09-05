@@ -146,7 +146,10 @@ impl fmt::Display for AcquisitionError {
                 adapter,
                 path,
                 message,
-            } => write!(formatter, "{adapter} acquisition failed for {path}: {message}"),
+            } => write!(
+                formatter,
+                "{adapter} acquisition failed for {path}: {message}"
+            ),
             Self::MalformedSyntax {
                 adapter,
                 path,

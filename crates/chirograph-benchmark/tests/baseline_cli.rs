@@ -40,7 +40,7 @@ fn fake_chirograph(root: &Path) -> PathBuf {
     fs::write(
         &path,
         format!(
-            "#!/bin/sh\nset -eu\ntest \"$1\" = analyze\ntest \"$3\" = --format\ntest \"$4\" = graph-json\ncat <<'JSON'\n{graph}\nJSON\n"
+            "#!/bin/sh\nset -eu\ntest \"$#\" -eq 8\ntest \"$1\" = analyze\ntest \"$3\" = --source-repository\ntest -n \"$4\"\ntest \"$5\" = --revision\ntest -n \"$6\"\ntest \"$7\" = --format\ntest \"$8\" = graph-json\ncat <<'JSON'\n{graph}\nJSON\n"
         ),
     )
     .expect("write fake analyzer");

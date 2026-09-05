@@ -14,6 +14,10 @@ pub fn run_case(case: &BenchmarkCase, chirograph_bin: &Path) -> CaseResult {
     let output = Command::new(chirograph_bin)
         .arg("analyze")
         .arg(&case.fixture_dir)
+        .arg("--source-repository")
+        .arg(&case.specimen.upstream.repository)
+        .arg("--revision")
+        .arg(&case.specimen.upstream.revision)
         .arg("--format")
         .arg("graph-json")
         .output();

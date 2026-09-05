@@ -38,12 +38,20 @@ fn run(args: Vec<String>) -> Result<String, String> {
         [arg] if arg == "--version" || arg == "-V" => {
             Ok(format!("chirograph {}\n", chirograph_core::version()))
         }
-        [command, path, repository_flag, repository, revision_flag, revision, format_flag, format]
-            if command == "analyze"
-                && repository_flag == "--source-repository"
-                && revision_flag == "--revision"
-                && format_flag == "--format"
-                && format == "graph-json" =>
+        [
+            command,
+            path,
+            repository_flag,
+            repository,
+            revision_flag,
+            revision,
+            format_flag,
+            format,
+        ] if command == "analyze"
+            && repository_flag == "--source-repository"
+            && revision_flag == "--revision"
+            && format_flag == "--format"
+            && format == "graph-json" =>
         {
             analyze(Path::new(path), repository, revision)
         }

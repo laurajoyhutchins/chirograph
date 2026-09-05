@@ -133,6 +133,16 @@
       }
     },
     {
+      "id": "design-deterministic-analysis-pipeline",
+      "priority": 100,
+      "requires": [],
+      "executor": {
+        "kind": "agent",
+        "role": "architecture",
+        "skill": "Write and commit docs/superpowers/specs/2026-09-05-deterministic-analysis-pipeline-design.md only. Extend the existing Tree-sitter acquisition architecture with the missing deterministic production analysis seam: source discovery/acquisition, representation candidates, conservative provenance-bound alignment, semantic graph assembly, and the public chirograph analyze boundary. Preserve benchmark hermeticity, data-only corpus, no golden-truth access, false-contract restraint, unresolved alignment, facet-scoped authority, deterministic output, and exact provenance. Do not implement production code or write an implementation plan. Self-review the committed design for placeholders, contradictions, scope, ambiguity, and benchmark leakage, then stop for owner review."
+      }
+    },
+    {
       "id": "establish-contract-benchmark-baseline",
       "priority": 75,
       "requires": [

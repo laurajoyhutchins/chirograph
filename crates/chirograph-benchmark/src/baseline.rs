@@ -65,7 +65,10 @@ pub fn read_baseline(path: &Path) -> Result<BenchmarkBaselineV1, String> {
     let baseline: BenchmarkBaselineV1 = serde_json::from_str(&source)
         .map_err(|error| format!("invalid benchmark baseline {}: {error}", path.display()))?;
     if baseline.schema != BASELINE_SCHEMA {
-        return Err(format!("unsupported benchmark baseline schema: {}", baseline.schema));
+        return Err(format!(
+            "unsupported benchmark baseline schema: {}",
+            baseline.schema
+        ));
     }
     Ok(baseline)
 }

@@ -280,7 +280,10 @@ fn unique_field_target(
     });
     let mut type_fact = type_facts.next()?;
     for candidate in type_facts {
-        let current_width = type_fact.span.end_byte.saturating_sub(type_fact.span.start_byte);
+        let current_width = type_fact
+            .span
+            .end_byte
+            .saturating_sub(type_fact.span.start_byte);
         let candidate_width = candidate
             .span
             .end_byte

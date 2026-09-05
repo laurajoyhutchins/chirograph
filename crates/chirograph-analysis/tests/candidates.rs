@@ -35,12 +35,18 @@ fn candidate_preserves_identity_facets_revision_and_stable_evidence() {
             CandidateMechanism::RustSerializedField,
             CandidateMechanism::RustClosedValueSet,
         ]),
-        vec![evidence("src/lib.rs#L20", "enum values"), evidence("src/lib.rs#L10", "field path")],
+        vec![
+            evidence("src/lib.rs#L20", "enum values"),
+            evidence("src/lib.rs#L10", "field path"),
+        ],
     )
     .unwrap();
 
     assert_eq!(candidate.qualified_local_identity, "fixture::DebugInfo");
-    assert_eq!(candidate.facets, BTreeSet::from([ContractFacet::Structural]));
+    assert_eq!(
+        candidate.facets,
+        BTreeSet::from([ContractFacet::Structural])
+    );
     assert_eq!(candidate.evidence[0].locator, "src/lib.rs#L10");
     assert_eq!(candidate.evidence[1].locator, "src/lib.rs#L20");
     assert!(matches!(candidate.evidence[0].revision, Revision::Exact(_)));

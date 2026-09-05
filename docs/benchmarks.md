@@ -1,66 +1,110 @@
 # Benchmark methodology
 
-Chirograph's benchmark is a curated corpus of known contract situations. Its job is to measure general analysis behavior against pinned evidence, not to reward repository-specific recognition.
+Chirograph's contract benchmark is a curated, data-only corpus of known cross-representation contract situations. It measures general analysis behavior against reviewed ground truth. Benchmark cases may contain specimen-specific facts; the benchmark runner and production analyzers must not contain specimen-specific recognition code.
 
-## Two independent dimensions
+## Corpus layout
 
-Every case names both a **specimen** and a **phenomenon**.
-
-```text
-benchmarks/
-  <specimen>/
-    <case>/
-      provenance.json
-      expected.json
-      fixture/...
-```
-
-The runner should discover cases generically and support aggregation in either direction:
+Cases live at a fixed depth:
 
 ```text
-by phenomenon: schema-enum-drift -> every specimen exercising that phenomenon
-by specimen:   cargo             -> every Cargo case
+benchmark/
+  <repository>/
+    <scenario>/
+      <case>/
+        specimen.yaml
+        golden.yaml
+        fixture/...
 ```
 
-That means adding another `schema-enum-drift` case does not require changing a Cargo-specific registry, and adding another Cargo case does not require a new invocation path.
+`specimen.yaml` identifies the upstream repository, an exact 40-character revision, every bundled fixture path, the corresponding upstream path, and its SHA-256 digest. `golden.yaml` describes the reviewed logical contracts, representations, authority claims, relationships, clauses, findings, lifecycle expectations, and known non-contracts for that case.
 
-## What belongs in a case
+The runner discovers cases generically. Selectors let the same corpus be evaluated by repository, scenario, repository/scenario, or individual case without adding per-specimen invocation code.
 
-A case may contain pinned source excerpts or generated artifacts when their upstream terms permit redistribution, expected contract outcomes, and metadata describing the phenomenon. Specimen-specific facts and expected stances belong in the case data. Specimen-specific production code does not belong in the benchmark harness or language adapters.
-
-Each case that uses third-party material must include `provenance.json` conforming to [`../benchmarks/provenance.schema.json`](../benchmarks/provenance.schema.json). Source revisions and bundled-file digests are part of benchmark identity.
+```sh
+cargo benchmark --list
+cargo benchmark all
+cargo benchmark cargo
+cargo benchmark scenario:schema-enum-drift
+cargo benchmark kubernetes/go-protobuf-openapi/core-v1-pod
+```
 
 ## Ground truth
 
-Ground truth should describe the contract situation being tested and the evidence needed to recognize it. It should be reviewable without trusting the current Chirograph output. When a case is derived from an upstream bug, schema mismatch, documented invariant, or executable behavior, record the exact upstream revision and the relevant source locations.
+Golden truth should be as narrow as the situation under test. It must be reviewable without trusting Chirograph's current output and must preserve genuine contradiction, ambiguity, and known negatives.
 
-A benchmark should preserve genuine contradiction. Do not rewrite a fixture until Chirograph agrees with it.
+A dependency or neighboring type is not automatically another logical contract. The Kubernetes Pod case, for example, deliberately includes a large surrounding API surface while golden truth stays centered on one Pod contract. This makes false-contract restraint measurable rather than rewarding broad name harvesting.
+
+Case directories are data. Executable case-specific glue is rejected by the corpus model.
 
 ## Scoring
 
-Score atomic expectations first, then aggregate. At minimum, keep these separable:
+Each successfully decoded graph is scored by typed identity. The report keeps separate metrics for:
 
-- acquisition: was the relevant evidence found with correct provenance?
-- representation: were the intended contract representations modeled?
-- assessment: was the expected consistent/contested relationship derived?
-- diagnostic fidelity: were unknown or unsupported conditions reported without invented certainty?
+- contract precision, recall, and F1;
+- false-contract rate and contract inflation;
+- authority correctness;
+- relationship precision and recall;
+- lifecycle correctness when lifecycle is observed;
+- expected-finding precision and recall;
+- diagnostics for unsupported or unobserved conditions.
 
-Report counts as well as percentages so small categories are not visually inflated. Aggregate by phenomenon and by specimen independently. A global score may be useful as a summary, but it must not hide a regression in a specific phenomenon.
+Counts remain attached to ratios. A case that cannot execute or emits invalid graph JSON remains an explicit `execution-failure` or `invalid-output`; failures are never converted into zero-quality scored results.
 
-## Retrieval is not implicitly scored
+## Reviewed baseline semantics
 
-Pinned fixture content is the benchmark input by default. Fetching source live at runtime can be a useful demo and an integration test, but network retrieval is not part of benchmark scoring unless a benchmark explicitly targets retrieval correctness. This keeps benchmark results reproducible and separates Chirograph analysis quality from network availability.
+`benchmark/baseline.json` is a reviewed regression floor, not a target score. Each entry stores the full case result plus SHA-256 digests of that case's `specimen.yaml` and `golden.yaml`. A corpus change therefore cannot be compared silently against stale ground truth.
+
+Baseline comparison is directional:
+
+- `execution-failure` or `invalid-output` becoming `scored` is an improvement;
+- `scored` becoming a failure is a regression;
+- higher-is-better quality metrics may increase but may not decrease;
+- false-contract rate may decrease but may not increase;
+- contract inflation may move toward `1.0` but not farther away;
+- changed specimen or golden digests fail closed and require explicit baseline review.
+
+To create a candidate baseline intentionally:
+
+```sh
+cargo benchmark all --write-baseline /tmp/baseline.json
+```
+
+Review the corpus and result changes before replacing `benchmark/baseline.json`. Do not update the baseline merely to make CI green.
+
+## Hermetic CI
+
+Normal CI analyzes only the committed fixtures. It explicitly builds the public CLI and then runs the benchmark against the reviewed baseline:
+
+```sh
+cargo build --quiet -p chirograph-cli
+cargo benchmark all \
+  --baseline benchmark/baseline.json \
+  --chirograph-bin target/debug/chirograph
+```
+
+This path has no live source fetch. Benchmark failures therefore describe Chirograph behavior or committed-corpus drift rather than network availability.
+
+## Source verification and refresh
+
+Live upstream access is a maintenance operation, not part of normal benchmark scoring or CI. Use it when curating or auditing specimens:
+
+```sh
+cargo benchmark --verify-sources
+cargo benchmark --verify-sources kubernetes/go-protobuf-openapi/core-v1-pod
+cargo benchmark --refresh SELECTOR --revision EXACT_SHA
+```
+
+Source verification fetches the exact pinned revision and requires byte-for-byte equality with every committed fixture and its declared SHA-256. Refresh requires an exact revision and updates fixture/provenance data; golden truth remains a separate review decision.
 
 ## Reproducibility
 
-A published result should identify:
+A reproducible result is bound by:
 
-- Chirograph revision
-- benchmark corpus revision
-- each upstream specimen revision
-- content digests for bundled third-party files
-- adapter versions or workspace revision
-- exact command used
-- scoring schema version
+- the Chirograph revision;
+- the benchmark corpus revision;
+- each case's exact upstream revision and fixture digests;
+- the `specimen.yaml` and `golden.yaml` digests recorded in the baseline;
+- the public `chirograph analyze <fixture> --format graph-json` process boundary;
+- the benchmark scoring and baseline schema versions.
 
-The corpus should make it possible to reproduce a historical score without silently following a moving upstream branch.
+The benchmark intentionally separates retrieval correctness, contract analysis, scoring, and regression policy so a failure in one layer is not mislabeled as another.

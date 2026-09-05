@@ -186,9 +186,7 @@
     {
       "id": "establish-polyglot-acquisition-runtime",
       "priority": 100,
-      "requires": [
-        "audit-reviewed-benchmark-identity-derivability"
-      ],
+      "requires": [],
       "executor": {
         "kind": "agent",
         "role": "contract-acquisition-engineer",
@@ -573,7 +571,8 @@
       "id": "productionize-cpp-acquisition",
       "priority": 98,
       "requires": [
-        "establish-polyglot-acquisition-runtime"
+        "establish-polyglot-acquisition-runtime",
+        "implement-tree-sitter-substrate"
       ],
       "executor": {
         "kind": "agent",
@@ -608,7 +607,8 @@
       "id": "productionize-go-acquisition",
       "priority": 99,
       "requires": [
-        "establish-polyglot-acquisition-runtime"
+        "establish-polyglot-acquisition-runtime",
+        "implement-tree-sitter-substrate"
       ],
       "executor": {
         "kind": "agent",
@@ -643,7 +643,8 @@
       "id": "productionize-java-acquisition",
       "priority": 99,
       "requires": [
-        "establish-polyglot-acquisition-runtime"
+        "establish-polyglot-acquisition-runtime",
+        "implement-tree-sitter-substrate"
       ],
       "executor": {
         "kind": "agent",
@@ -678,7 +679,8 @@
       "id": "productionize-proto-acquisition",
       "priority": 99,
       "requires": [
-        "establish-polyglot-acquisition-runtime"
+        "establish-polyglot-acquisition-runtime",
+        "implement-tree-sitter-substrate"
       ],
       "executor": {
         "kind": "agent",
@@ -713,7 +715,8 @@
       "id": "productionize-python-acquisition",
       "priority": 99,
       "requires": [
-        "establish-polyglot-acquisition-runtime"
+        "establish-polyglot-acquisition-runtime",
+        "implement-tree-sitter-substrate"
       ],
       "executor": {
         "kind": "agent",
@@ -748,7 +751,8 @@
       "id": "productionize-ruby-acquisition",
       "priority": 98,
       "requires": [
-        "establish-polyglot-acquisition-runtime"
+        "establish-polyglot-acquisition-runtime",
+        "implement-tree-sitter-substrate"
       ],
       "executor": {
         "kind": "agent",
@@ -849,7 +853,8 @@
       "id": "productionize-typescript-acquisition",
       "priority": 98,
       "requires": [
-        "establish-polyglot-acquisition-runtime"
+        "establish-polyglot-acquisition-runtime",
+        "implement-tree-sitter-substrate"
       ],
       "executor": {
         "kind": "agent",

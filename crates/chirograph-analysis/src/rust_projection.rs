@@ -69,9 +69,10 @@ pub fn extract_rust_candidates(
         )?;
     }
     candidates.sort_by(|left, right| {
-        left.semantic_path
-            .cmp(&right.semantic_path)
-            .then_with(|| left.qualified_local_identity.cmp(&right.qualified_local_identity))
+        left.semantic_path.cmp(&right.semantic_path).then_with(|| {
+            left.qualified_local_identity
+                .cmp(&right.qualified_local_identity)
+        })
     });
     candidates.dedup();
     Ok(candidates)
@@ -146,7 +147,8 @@ fn walk_struct(
             continue;
         };
         let field_attributes = attributes_inside_span(facts, field);
-        let Some(serialized_name) = serialized_name(field_name, &field_attributes, rename_all.as_deref())
+        let Some(serialized_name) =
+            serialized_name(field_name, &field_attributes, rename_all.as_deref())
         else {
             continue;
         };
@@ -293,8 +295,12 @@ fn serialized_name(
     rename_all.and_then(|rule| apply_case_rule(field_name, rule))
 }
 
-fn enum_closed_values(facts: &[RustFact], declaration: &Declaration<'_>) -> Option<BTreeSet<String>> {
-    let rename_all = serde_rename_all(attributes_for_container(facts, &declaration.full_container))?;
+fn enum_closed_values(
+    facts: &[RustFact],
+    declaration: &Declaration<'_>,
+) -> Option<BTreeSet<String>> {
+    let rename_all =
+        serde_rename_all(attributes_for_container(facts, &declaration.full_container))?;
     let variants = facts
         .iter()
         .filter(|fact| {

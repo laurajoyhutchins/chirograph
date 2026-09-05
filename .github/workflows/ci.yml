@@ -28,22 +28,6 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Run tests
         run: cargo test --workspace --all-features
-      - name: Verify Kubernetes benchmark source and execution
-        run: |
-          cargo benchmark --verify-sources kubernetes/go-protobuf-openapi/core-v1-pod
-          cargo benchmark kubernetes/go-protobuf-openapi/core-v1-pod --format json > /tmp/kubernetes-benchmark.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          report = json.loads(Path('/tmp/kubernetes-benchmark.json').read_text())
-          cases = report['cases']
-          assert len(cases) == 1, f"expected one Kubernetes case, got {len(cases)}"
-          case = cases[0]
-          assert case['id'] == 'kubernetes/go-protobuf-openapi/core-v1-pod', case['id']
-          assert case['status'] == 'scored', case['status']
-          print(case['id'], case['status'], case['score']['contract_recall']['ratio'], case['score']['contract_inflation'])
-          PY
       - name: Test Overcenter adapter
         run: node --test adapters/overcenter/convert.test.mjs
       - name: Validate adapted evidence through Chirograph

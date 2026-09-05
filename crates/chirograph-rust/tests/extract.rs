@@ -49,7 +49,8 @@ fn extracts_declarations_variants_match_arms_and_assertions() {
         extraction
             .facts
             .iter()
-            .any(|fact| fact.kind == RustFactKind::MatchArm && fact.text.contains("Self::None => \"none\""))
+            .any(|fact| fact.kind == RustFactKind::MatchArm
+                && fact.text.contains("Self::None => \"none\""))
     );
     assert!(
         extraction

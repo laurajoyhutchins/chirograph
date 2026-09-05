@@ -106,6 +106,52 @@ fn unsupported_branch_shapes_do_not_abort_unrelated_defensible_candidates() {
 }
 
 #[test]
+fn boolean_subschema_reference_does_not_abort_unrelated_candidates() {
+    let schema = br##"{
+        "$defs": {
+            "OpenValue": true
+        },
+        "properties": {
+            "open": { "$ref": "#/$defs/OpenValue" },
+            "profile": {
+                "properties": {
+                    "debug-info": { "enum": ["none", "full"] }
+                }
+            }
+        }
+    }"##;
+
+    let candidates = extract_json_schema_candidates(&context(), "schema.json", schema).unwrap();
+    assert_eq!(candidates.len(), 1);
+    assert_eq!(candidates[0].semantic_path.dotted(), "profile.debug-info");
+}
+
+#[test]
+fn recursive_local_reference_does_not_abort_unrelated_candidates() {
+    let schema = br##"{
+        "$defs": {
+            "Node": {
+                "properties": {
+                    "child": { "$ref": "#/$defs/Node" }
+                }
+            }
+        },
+        "properties": {
+            "profile": {
+                "properties": {
+                    "debug-info": { "enum": ["none", "full"] }
+                }
+            },
+            "recursive": { "$ref": "#/$defs/Node" }
+        }
+    }"##;
+
+    let candidates = extract_json_schema_candidates(&context(), "schema.json", schema).unwrap();
+    assert_eq!(candidates.len(), 1);
+    assert_eq!(candidates[0].semantic_path.dotted(), "profile.debug-info");
+}
+
+#[test]
 fn broken_local_reference_fails_closed() {
     let schema = br##"{
         "type": "object",

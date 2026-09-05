@@ -98,8 +98,8 @@ fn extracts_declarations_variants_match_arms_and_assertions() {
 
 #[test]
 fn covers_the_documented_v0_syntax_boundary() {
-    let extraction = extract_rust_facts(BOUNDARY_SOURCE.as_bytes(), exact_fixture_provenance())
-        .unwrap();
+    let extraction =
+        extract_rust_facts(BOUNDARY_SOURCE.as_bytes(), exact_fixture_provenance()).unwrap();
     let facts = &extraction.facts;
 
     for kind in [
@@ -123,7 +123,10 @@ fn covers_the_documented_v0_syntax_boundary() {
         RustFactKind::Comment,
         RustFactKind::Assertion,
     ] {
-        assert!(facts.iter().any(|fact| fact.kind == kind), "missing {kind:?}");
+        assert!(
+            facts.iter().any(|fact| fact.kind == kind),
+            "missing {kind:?}"
+        );
     }
 
     let method = facts
@@ -145,14 +148,14 @@ fn covers_the_documented_v0_syntax_boundary() {
 
 #[test]
 fn malformed_source_is_diagnostic_and_not_semantic_certainty() {
-    let extraction =
-        extract_rust_facts(b"fn broken( {", exact_fixture_provenance()).unwrap();
+    let extraction = extract_rust_facts(b"fn broken( {", exact_fixture_provenance()).unwrap();
     assert!(!extraction.diagnostics.is_empty());
     assert!(
         !extraction
             .facts
             .iter()
-            .any(|fact| fact.kind == RustFactKind::Function && fact.name.as_deref() == Some("broken"))
+            .any(|fact| fact.kind == RustFactKind::Function
+                && fact.name.as_deref() == Some("broken"))
     );
 }
 
@@ -177,5 +180,8 @@ fn multibyte_source_preserves_byte_offsets_and_tree_sitter_points() {
     assert_eq!(constant.span.start_byte, 6);
     assert_eq!(constant.span.start.row, 1);
     assert_eq!(constant.span.start.column, 0);
-    assert_eq!(&source.as_bytes()[constant.span.start_byte..constant.span.end_byte], constant.text.as_bytes());
+    assert_eq!(
+        &source.as_bytes()[constant.span.start_byte..constant.span.end_byte],
+        constant.text.as_bytes()
+    );
 }

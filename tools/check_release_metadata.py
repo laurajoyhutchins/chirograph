@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""Check Chirograph release metadata without third-party Python packages."""
+"""Check Chirograph release metadata and canonical benchmark layout."""
 
 from __future__ import annotations
 
-import json
-import re
 import sys
 import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_LICENSE = "Apache-2.0"
-PROVENANCE_SCHEMA = "chirograph-benchmark-provenance-v1"
-SHA256 = re.compile(r"^[0-9a-f]{64}$")
-ALLOWED_MATERIALIZATION = {"bundled", "reference-only", "generated"}
 
 
 def fail(message: str) -> None:
@@ -52,89 +47,32 @@ def check_cargo_metadata() -> None:
             fail(f"{manifest.relative_to(ROOT)} must declare license.workspace = true or Apache-2.0")
 
 
-def require_text(value: object, field: str, path: Path) -> str:
-    if not isinstance(value, str) or not value.strip():
-        fail(f"{path.relative_to(ROOT)}: {field} must be a non-empty string")
-    return value.strip()
+def check_benchmark_layout() -> None:
+    legacy_root = ROOT / "benchmarks"
+    if legacy_root.exists():
+        fail("legacy benchmarks/ directory must not exist; use benchmark/")
 
-
-def check_provenance(path: Path) -> None:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        fail(f"{path.relative_to(ROOT)}: invalid JSON: {error}")
-
-    if not isinstance(data, dict):
-        fail(f"{path.relative_to(ROOT)}: top level must be an object")
-
-    required = {"schema", "specimen", "case", "phenomenon", "materialization", "source", "files"}
-    missing = sorted(required - data.keys())
-    unknown = sorted(data.keys() - required)
-    if missing:
-        fail(f"{path.relative_to(ROOT)}: missing fields: {', '.join(missing)}")
-    if unknown:
-        fail(f"{path.relative_to(ROOT)}: unknown fields: {', '.join(unknown)}")
-    if data["schema"] != PROVENANCE_SCHEMA:
-        fail(f"{path.relative_to(ROOT)}: unsupported schema {data['schema']!r}")
-
-    require_text(data["specimen"], "specimen", path)
-    require_text(data["case"], "case", path)
-    require_text(data["phenomenon"], "phenomenon", path)
-    if data["materialization"] not in ALLOWED_MATERIALIZATION:
-        fail(f"{path.relative_to(ROOT)}: invalid materialization {data['materialization']!r}")
-
-    source = data["source"]
-    if not isinstance(source, dict):
-        fail(f"{path.relative_to(ROOT)}: source must be an object")
-    source_required = {"origin", "revision", "license"}
-    if set(source) != source_required:
-        fail(f"{path.relative_to(ROOT)}: source fields must be origin, revision, license")
-    for field in sorted(source_required):
-        require_text(source[field], f"source.{field}", path)
-
-    files = data["files"]
-    if not isinstance(files, list):
-        fail(f"{path.relative_to(ROOT)}: files must be an array")
-    for index, entry in enumerate(files):
-        if not isinstance(entry, dict):
-            fail(f"{path.relative_to(ROOT)}: files[{index}] must be an object")
-        allowed = {"source_path", "fixture_path", "sha256", "license"}
-        if not {"source_path", "sha256"}.issubset(entry):
-            fail(f"{path.relative_to(ROOT)}: files[{index}] requires source_path and sha256")
-        if set(entry) - allowed:
-            fail(f"{path.relative_to(ROOT)}: files[{index}] has unsupported fields")
-        require_text(entry["source_path"], f"files[{index}].source_path", path)
-        digest = require_text(entry["sha256"], f"files[{index}].sha256", path)
-        if not SHA256.fullmatch(digest):
-            fail(f"{path.relative_to(ROOT)}: files[{index}].sha256 must be lowercase SHA-256")
-        if "fixture_path" in entry and entry["fixture_path"] is not None:
-            require_text(entry["fixture_path"], f"files[{index}].fixture_path", path)
-        if "license" in entry:
-            require_text(entry["license"], f"files[{index}].license", path)
-
-
-def check_benchmark_cases() -> None:
-    benchmark_root = ROOT / "benchmarks"
+    benchmark_root = ROOT / "benchmark"
     if not benchmark_root.is_dir():
-        fail("benchmarks directory is missing")
+        fail("benchmark directory is missing")
+    for required in ("README.md", "baseline.json"):
+        if not (benchmark_root / required).is_file():
+            fail(f"benchmark/{required} is missing")
 
-    provenance_paths = sorted(benchmark_root.glob("**/provenance.json"))
-    for path in provenance_paths:
-        check_provenance(path)
-
-    case_markers = set()
-    for pattern in ("**/expected.json", "**/fixture"):
-        for marker in benchmark_root.glob(pattern):
-            case_markers.add(marker.parent)
-    for case_dir in sorted(case_markers):
-        if not (case_dir / "provenance.json").is_file():
-            fail(f"{case_dir.relative_to(ROOT)} contains benchmark case data without provenance.json")
+    specimen_paths = sorted(benchmark_root.glob("*/*/*/specimen.yaml"))
+    if not specimen_paths:
+        fail("benchmark corpus contains no specimen.yaml cases")
+    for specimen in specimen_paths:
+        case_dir = specimen.parent
+        for required in ("golden.yaml", "fixture"):
+            if not (case_dir / required).exists():
+                fail(f"{case_dir.relative_to(ROOT)} is missing {required}")
 
 
 def main() -> int:
     check_license_file()
     check_cargo_metadata()
-    check_benchmark_cases()
+    check_benchmark_layout()
     print("release-metadata: ok")
     return 0
 

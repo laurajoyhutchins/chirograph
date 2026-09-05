@@ -1,5 +1,6 @@
 use chirograph_benchmark::baseline::{
     BaselineCaseV1, BaselineDigests, BenchmarkBaselineV1, compare_baseline_cases,
+    compare_baseline_cases_complete,
 };
 use chirograph_benchmark::score::{CaseResult, CaseScore, CaseStatus, RatioCounts};
 
@@ -8,6 +9,14 @@ fn ratio(value: f64) -> RatioCounts {
         numerator: (value * 1000.0) as u64,
         denominator: 1000,
         ratio: Some(value),
+    }
+}
+
+fn unavailable() -> RatioCounts {
+    RatioCounts {
+        numerator: 0,
+        denominator: 0,
+        ratio: None,
     }
 }
 
@@ -136,6 +145,94 @@ fn inflation_may_move_toward_one_and_higher_metrics_may_increase() {
         "{:?}",
         comparison.regressions
     );
+}
+
+#[test]
+fn newly_observed_zero_quality_metrics_do_not_pass_as_improvements() {
+    let mut previous = score(0.0, 0.0, 0.0);
+    previous.contract_precision = unavailable();
+    previous.relationship_precision = unavailable();
+    previous.false_contract_rate = unavailable();
+
+    let mut current = previous.clone();
+    current.contract_precision = ratio(0.0);
+    current.relationship_precision = ratio(0.0);
+    current.false_contract_rate = ratio(1.0);
+
+    let comparison = compare_baseline_cases(
+        &baseline(CaseStatus::Scored, Some(previous)),
+        &[(result(CaseStatus::Scored, Some(current)), digests())],
+    )
+    .expect("comparison should succeed");
+
+    assert!(
+        comparison
+            .regressions
+            .iter()
+            .any(|item| item.contains("contract_precision"))
+    );
+    assert!(
+        comparison
+            .regressions
+            .iter()
+            .any(|item| item.contains("relationship_precision"))
+    );
+    assert!(
+        comparison
+            .regressions
+            .iter()
+            .any(|item| item.contains("false_contract_rate"))
+    );
+    assert!(
+        !comparison
+            .improvements
+            .iter()
+            .any(|item| item.contains("contract_precision")
+                || item.contains("relationship_precision"))
+    );
+}
+
+#[test]
+fn newly_observed_zero_false_contract_rate_may_improve() {
+    let mut previous = score(0.0, 0.0, 1.0);
+    previous.false_contract_rate = unavailable();
+    let mut current = previous.clone();
+    current.false_contract_rate = ratio(0.0);
+
+    let comparison = compare_baseline_cases(
+        &baseline(CaseStatus::Scored, Some(previous)),
+        &[(result(CaseStatus::Scored, Some(current)), digests())],
+    )
+    .expect("comparison should succeed");
+
+    assert!(comparison.regressions.is_empty());
+    assert!(
+        comparison
+            .improvements
+            .iter()
+            .any(|item| item.contains("false_contract_rate"))
+    );
+}
+
+#[test]
+fn full_corpus_comparison_rejects_stale_baseline_cases_but_subset_comparison_allows_them() {
+    let current_result = result(CaseStatus::Scored, Some(score(0.5, 0.0, 1.0)));
+    let mut reviewed = baseline(CaseStatus::Scored, Some(score(0.5, 0.0, 1.0)));
+    let mut removed_result = current_result.clone();
+    removed_result.id = "repo/scenario/removed-case".to_owned();
+    reviewed.cases.push(BaselineCaseV1 {
+        id: removed_result.id.clone(),
+        specimen_sha256: "c".repeat(64),
+        golden_sha256: "d".repeat(64),
+        result: removed_result,
+    });
+
+    compare_baseline_cases(&reviewed, &[(current_result.clone(), digests())])
+        .expect("selector-scoped comparison may use a superset baseline");
+
+    let error = compare_baseline_cases_complete(&reviewed, &[(current_result, digests())])
+        .expect_err("full corpus comparison must reject stale baseline cases");
+    assert!(error.contains("absent from current benchmark corpus"));
 }
 
 #[test]

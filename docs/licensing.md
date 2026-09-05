@@ -21,11 +21,9 @@ If these facts cannot be established, do not copy the material into the reposito
 
 ## Benchmark provenance
 
-Every benchmark case that incorporates or references third-party material must contain a machine-readable `provenance.json` conforming to [`../benchmarks/provenance.schema.json`](../benchmarks/provenance.schema.json).
+The canonical benchmark root is [`../benchmark/`](../benchmark/). Each case contains `specimen.yaml`, `golden.yaml`, and `fixture/`; there is no parallel `benchmarks/` format. `specimen.yaml` records the upstream repository, exact revision, each bundled fixture's upstream path, and its SHA-256 digest. The benchmark corpus loader validates those identities before scoring.
 
-The record distinguishes the source repository and exact revision from the way the case is materialized. `bundled` means third-party bytes are committed in the case. `reference-only` means the case records upstream coordinates without committing those bytes. `generated` is reserved for artifacts generated from identified inputs and must still record the source coordinates needed to reproduce them.
-
-SPDX license expressions identify upstream license terms. A per-file license expression may override the source-level expression when an upstream repository contains mixed licensing.
+Third-party license and NOTICE obligations remain properties of the upstream material, not of the benchmark metadata schema. Preserve required notices in the distributed corpus, with repository-level attribution summarized in [`../benchmark/README.md`](../benchmark/README.md). If redistribution rights are unclear, do not commit the bytes merely to make a benchmark convenient.
 
 ## NOTICE files
 
@@ -37,4 +35,4 @@ Contributions intentionally submitted for inclusion in Chirograph are accepted u
 
 ## Automated checks
 
-`python tools/check_release_metadata.py` verifies the repository's Apache-2.0 Cargo metadata and validates the required shape of any benchmark `provenance.json` records. It is a consistency check, not legal advice and not a substitute for reviewing an upstream license before copying third-party material.
+`python tools/check_release_metadata.py` verifies Apache-2.0 Cargo metadata, requires the single canonical `benchmark/` root, and rejects a revived legacy `benchmarks/` directory. The Rust benchmark corpus loader performs the deeper case validation, including exact revisions and fixture SHA-256 identities, and the reviewed baseline binds each case's `specimen.yaml` and `golden.yaml` digests. These are consistency checks, not legal advice and not substitutes for reviewing upstream license obligations before copying third-party material.

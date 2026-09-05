@@ -42,6 +42,8 @@ cargo test --workspace --all-features
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 python tools/check_release_metadata.py
+cargo build --quiet -p chirograph-cli
+cargo benchmark all --baseline benchmark/baseline.json --chirograph-bin target/debug/chirograph
 ```
 
 Run the CLI with:

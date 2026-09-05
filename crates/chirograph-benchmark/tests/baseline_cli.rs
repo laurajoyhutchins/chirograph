@@ -18,6 +18,13 @@ fn temp_root() -> PathBuf {
     root
 }
 
+fn workspace_root() -> &'static Path {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(Path::parent)
+        .expect("workspace root")
+}
+
 fn fake_chirograph(root: &Path) -> PathBuf {
     let path = root.join("fake-chirograph");
     let graph = serde_json::json!({
@@ -43,25 +50,27 @@ fn fake_chirograph(root: &Path) -> PathBuf {
     path
 }
 
+fn benchmark_command(analyzer: &Path) -> Command {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_chirograph-benchmark"));
+    command
+        .current_dir(workspace_root())
+        .arg("kubernetes/go-protobuf-openapi/core-v1-pod")
+        .arg("--chirograph-bin")
+        .arg(analyzer)
+        .arg("--format")
+        .arg("json");
+    command
+}
+
 #[test]
 fn write_baseline_records_case_result_and_corpus_digests() {
     let root = temp_root();
     let baseline = root.join("baseline.json");
     let analyzer = fake_chirograph(&root);
-    let workspace = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(Path::parent)
-        .expect("workspace root");
 
-    let output = Command::new(env!("CARGO_BIN_EXE_chirograph-benchmark"))
-        .current_dir(workspace)
-        .arg("kubernetes/go-protobuf-openapi/core-v1-pod")
+    let output = benchmark_command(&analyzer)
         .arg("--write-baseline")
         .arg(&baseline)
-        .arg("--chirograph-bin")
-        .arg(&analyzer)
-        .arg("--format")
-        .arg("json")
         .output()
         .expect("benchmark binary should run");
 
@@ -87,6 +96,34 @@ fn write_baseline_records_case_result_and_corpus_digests() {
         assert!(digest.bytes().all(|byte| byte.is_ascii_hexdigit()));
     }
     assert_eq!(value["cases"][0]["result"]["status"], "scored");
+
+    fs::remove_dir_all(root).expect("remove temp root");
+}
+
+#[test]
+fn identical_result_and_corpus_pass_baseline_comparison() {
+    let root = temp_root();
+    let baseline = root.join("baseline.json");
+    let analyzer = fake_chirograph(&root);
+
+    let write = benchmark_command(&analyzer)
+        .arg("--write-baseline")
+        .arg(&baseline)
+        .output()
+        .expect("benchmark baseline should be written");
+    assert!(write.status.success());
+
+    let compare = benchmark_command(&analyzer)
+        .arg("--baseline")
+        .arg(&baseline)
+        .output()
+        .expect("benchmark baseline should be compared");
+
+    assert!(
+        compare.status.success(),
+        "identical baseline comparison failed: {}",
+        String::from_utf8_lossy(&compare.stderr)
+    );
 
     fs::remove_dir_all(root).expect("remove temp root");
 }

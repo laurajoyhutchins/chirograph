@@ -63,42 +63,80 @@ fn digests() -> BaselineDigests {
 fn execution_failure_to_scored_is_improvement_but_scored_to_failure_is_regression() {
     let improvement = compare_baseline_cases(
         &baseline(CaseStatus::ExecutionFailure, None),
-        &[(result(CaseStatus::Scored, Some(score(0.5, 0.0, 0.5))), digests())],
+        &[(
+            result(CaseStatus::Scored, Some(score(0.5, 0.0, 0.5))),
+            digests(),
+        )],
     )
     .expect("comparison should succeed");
     assert!(improvement.regressions.is_empty());
-    assert!(improvement.improvements.iter().any(|item| item.contains("execution-failure -> scored")));
+    assert!(
+        improvement
+            .improvements
+            .iter()
+            .any(|item| item.contains("execution-failure -> scored"))
+    );
 
     let regression = compare_baseline_cases(
         &baseline(CaseStatus::Scored, Some(score(0.5, 0.0, 0.5))),
         &[(result(CaseStatus::InvalidOutput, None), digests())],
     )
     .expect("comparison should succeed");
-    assert!(regression.regressions.iter().any(|item| item.contains("scored -> invalid-output")));
+    assert!(
+        regression
+            .regressions
+            .iter()
+            .any(|item| item.contains("scored -> invalid-output"))
+    );
 }
 
 #[test]
 fn metric_directionality_is_fail_closed() {
     let comparison = compare_baseline_cases(
         &baseline(CaseStatus::Scored, Some(score(0.8, 0.1, 0.8))),
-        &[(result(CaseStatus::Scored, Some(score(0.7, 0.2, 0.5))), digests())],
+        &[(
+            result(CaseStatus::Scored, Some(score(0.7, 0.2, 0.5))),
+            digests(),
+        )],
     )
     .expect("comparison should succeed");
 
-    assert!(comparison.regressions.iter().any(|item| item.contains("contract_precision")));
-    assert!(comparison.regressions.iter().any(|item| item.contains("false_contract_rate")));
-    assert!(comparison.regressions.iter().any(|item| item.contains("contract_inflation")));
+    assert!(
+        comparison
+            .regressions
+            .iter()
+            .any(|item| item.contains("contract_precision"))
+    );
+    assert!(
+        comparison
+            .regressions
+            .iter()
+            .any(|item| item.contains("false_contract_rate"))
+    );
+    assert!(
+        comparison
+            .regressions
+            .iter()
+            .any(|item| item.contains("contract_inflation"))
+    );
 }
 
 #[test]
 fn inflation_may_move_toward_one_and_higher_metrics_may_increase() {
     let comparison = compare_baseline_cases(
         &baseline(CaseStatus::Scored, Some(score(0.5, 0.2, 0.4))),
-        &[(result(CaseStatus::Scored, Some(score(0.7, 0.1, 0.8))), digests())],
+        &[(
+            result(CaseStatus::Scored, Some(score(0.7, 0.1, 0.8))),
+            digests(),
+        )],
     )
     .expect("comparison should succeed");
 
-    assert!(comparison.regressions.is_empty(), "{:?}", comparison.regressions);
+    assert!(
+        comparison.regressions.is_empty(),
+        "{:?}",
+        comparison.regressions
+    );
 }
 
 #[test]
@@ -107,7 +145,10 @@ fn stale_corpus_digests_are_rejected_instead_of_compared() {
     changed.golden_sha256 = "c".repeat(64);
     let error = compare_baseline_cases(
         &baseline(CaseStatus::Scored, Some(score(0.5, 0.0, 1.0))),
-        &[(result(CaseStatus::Scored, Some(score(0.5, 0.0, 1.0))), changed)],
+        &[(
+            result(CaseStatus::Scored, Some(score(0.5, 0.0, 1.0))),
+            changed,
+        )],
     )
     .expect_err("stale golden truth must fail closed");
 

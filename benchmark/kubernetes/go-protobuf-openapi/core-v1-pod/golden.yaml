@@ -1,0 +1,41 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: kubernetes.core.v1.pod
+    facets: [structural]
+representations:
+  - id: kubernetes.core.v1.pod.go
+    contract: kubernetes.core.v1.pod
+    kind: type-definition
+    locator: staging/src/k8s.io/api/core/v1/types.go::Pod
+    facets: [structural]
+  - id: kubernetes.core.v1.pod.protobuf
+    contract: kubernetes.core.v1.pod
+    kind: schema
+    locator: staging/src/k8s.io/api/core/v1/generated.proto::k8s.io.api.core.v1.Pod
+    facets: [structural]
+  - id: kubernetes.core.v1.pod.protobuf-go
+    contract: kubernetes.core.v1.pod
+    kind: generated-artifact
+    locator: staging/src/k8s.io/api/core/v1/generated.pb.go::Pod
+    facets: [structural]
+  - id: kubernetes.core.v1.pod.openapi
+    contract: kubernetes.core.v1.pod
+    kind: generated-artifact
+    locator: pkg/generated/openapi/zz_generated.openapi.go::schema_k8sio_api_core_v1_Pod
+    facets: [structural]
+authority_claims:
+  - contract: kubernetes.core.v1.pod
+    facet: structural
+    representation: kubernetes.core.v1.pod.go
+    basis: explicit-declaration
+relationships: []
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts:
+  - locator: staging/src/k8s.io/api/core/v1/types.go::PodSpec
+    reason: PodSpec is a dependency of Pod, not a second representation of the Pod contract.
+  - locator: staging/src/k8s.io/api/core/v1/types.go::PodStatus
+    reason: PodStatus is a dependency of Pod, not a second representation of the Pod contract.
+  - locator: staging/src/k8s.io/api/core/v1/types.go::PodList
+    reason: PodList is a neighboring API object, not a representation of the Pod contract.

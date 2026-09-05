@@ -1,0 +1,20 @@
+schema: chirograph-benchmark-specimen-v1
+id: kubernetes/go-protobuf-openapi/core-v1-pod
+repository: kubernetes
+scenario: go-protobuf-openapi
+upstream:
+  repository: kubernetes/kubernetes
+  revision: 82ca8014fabed9e61cf6c14560cdb9f1e4e1d067
+files:
+  - fixture_path: fixture/staging/src/k8s.io/api/core/v1/types.go
+    upstream_path: staging/src/k8s.io/api/core/v1/types.go
+    sha256: 9c3e54db21041c2f5075d79b4ddf4a0e72070ccc3a53a876ae8dddd48228441a
+  - fixture_path: fixture/staging/src/k8s.io/api/core/v1/generated.proto
+    upstream_path: staging/src/k8s.io/api/core/v1/generated.proto
+    sha256: 41c4bcfbc59fa31d86c55b795726597136fe8a2e4ff57ae6a569e5b4f0b5d78b
+  - fixture_path: fixture/staging/src/k8s.io/api/core/v1/generated.pb.go
+    upstream_path: staging/src/k8s.io/api/core/v1/generated.pb.go
+    sha256: 0ba5db84e89e7afae2719f1d323432a2a4543711236af295f6718738d0895e9a
+  - fixture_path: fixture/pkg/generated/openapi/zz_generated.openapi.go
+    upstream_path: pkg/generated/openapi/zz_generated.openapi.go
+    sha256: 111ee9658003d9671f6beebdabd48a1f9a7524bae1acfcece4c6db795a01c4f0

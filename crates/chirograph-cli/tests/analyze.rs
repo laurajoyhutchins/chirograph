@@ -85,7 +85,10 @@ fn analyze_rejects_malformed_supported_source() {
     let output = analyze(&root);
     fs::remove_dir_all(&root).expect("temporary source tree should be removed");
 
-    assert!(!output.status.success(), "malformed supported source must fail closed");
+    assert!(
+        !output.status.success(),
+        "malformed supported source must fail closed"
+    );
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
         stderr.contains("broken.json") && stderr.contains("JSON"),

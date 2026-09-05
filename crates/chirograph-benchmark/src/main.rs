@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use chirograph_benchmark::aggregate::aggregate_report;
+use chirograph_benchmark::baseline::{build_baseline, write_baseline};
 use chirograph_benchmark::corpus::discover_corpus;
 use chirograph_benchmark::model::BenchmarkCase;
 use chirograph_benchmark::report::{render_human_report, render_json_report};
@@ -84,12 +85,6 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
             path.display()
         ));
     }
-    if let Some(path) = &options.write_baseline {
-        return Err(format!(
-            "baseline writing at {} is added by the baseline task",
-            path.display()
-        ));
-    }
 
     let cases = discover()?;
     let selected = select_cases(&cases, &options.selector).map_err(|error| error.to_string())?;
@@ -99,6 +94,11 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
         .map(|case| run_case(case, &chirograph_bin))
         .collect::<Vec<_>>();
     let report = aggregate_report(&results);
+
+    if let Some(path) = &options.write_baseline {
+        let baseline = build_baseline(&selected, &results)?;
+        write_baseline(path, &baseline)?;
+    }
 
     match options.format {
         OutputFormat::Human => print!("{}", render_human_report(&report)),

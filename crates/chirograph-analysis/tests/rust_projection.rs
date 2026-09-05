@@ -65,6 +65,43 @@ enum DebugInfo {
 }
 
 #[test]
+fn traverses_unique_transparent_newtype_without_inventing_a_path_segment() {
+    let source = br#"
+#[serde(rename_all = "kebab-case")]
+struct Root {
+    profiles: Profiles,
+}
+
+struct Profiles(BTreeMap<ProfileName, Profile>);
+
+#[serde(rename_all = "kebab-case")]
+struct Profile {
+    debug: DebugInfo,
+}
+
+#[serde(rename_all = "kebab-case")]
+enum DebugInfo {
+    None,
+    Full,
+}
+"#;
+
+    let candidates = extract_rust_candidates(&context(), "src/lib.rs", source).unwrap();
+    let candidate = candidates
+        .iter()
+        .find(|candidate| candidate.semantic_path.dotted() == "profiles.debug")
+        .expect("unique newtype wrapper should preserve the consumer path while traversing its inner local type");
+
+    assert_eq!(
+        candidate.closed_values,
+        Some(BTreeSet::from(["full".to_owned(), "none".to_owned()]))
+    );
+    assert!(candidate.evidence.iter().any(|evidence| {
+        evidence.fact.contains("transparent wrapper") && evidence.fact.contains("Profile")
+    }));
+}
+
+#[test]
 fn ambiguous_same_named_type_edges_do_not_resolve() {
     let source = br#"
 mod left {

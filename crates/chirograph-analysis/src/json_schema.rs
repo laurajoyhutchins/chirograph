@@ -41,7 +41,10 @@ pub fn extract_json_schema_candidates(
     candidates.sort_by(|left, right| {
         left.semantic_path
             .cmp(&right.semantic_path)
-            .then_with(|| left.qualified_local_identity.cmp(&right.qualified_local_identity))
+            .then_with(|| {
+                left.qualified_local_identity
+                    .cmp(&right.qualified_local_identity)
+            })
             .then_with(|| left.locator.cmp(&right.locator))
     });
     candidates.dedup();

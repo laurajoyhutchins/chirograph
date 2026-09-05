@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use chirograph_core::alignment::{
     AlignmentCatalog, AlignmentClaim, AlignmentState, ObservedRepresentation,

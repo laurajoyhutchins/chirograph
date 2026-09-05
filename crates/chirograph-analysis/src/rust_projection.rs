@@ -142,9 +142,46 @@ fn walk_struct(
         return Ok(());
     }
     let declaration = &declarations[declaration_index];
-    let rename_all = serde_rename_all(leading_attributes(facts, declaration.fact, bytes));
+    let declaration_attributes = leading_attributes(facts, declaration.fact, bytes);
+    let rename_all = serde_rename_all(declaration_attributes.clone());
+    let fields = fields_for(facts, declaration);
 
-    for field in fields_for(facts, declaration) {
+    if fields.len() == 1
+        && fields[0].name.is_none()
+        && derives_serialize(&declaration_attributes)
+        && let Some(target_index) = unique_field_target(facts, fields[0], by_name)
+        && declarations[target_index].fact.kind == RustFactKind::Struct
+    {
+        let target = &declarations[target_index];
+        let mut evidence = inherited_evidence.to_vec();
+        evidence.push(CandidateEvidence {
+            source: context.source.clone(),
+            revision: context.revision.clone(),
+            locator: span_locator(locator, fields[0]),
+            fact: format!(
+                "transparent wrapper {} with unique serialized inner type edge to {}",
+                qualified_identity(declaration),
+                qualified_identity(target)
+            ),
+        });
+        let result = walk_struct(
+            target_index,
+            path,
+            &evidence,
+            bytes,
+            facts,
+            declarations,
+            by_name,
+            context,
+            locator,
+            active,
+            candidates,
+        );
+        active.remove(&declaration_index);
+        return result;
+    }
+
+    for field in fields {
         let Some(field_name) = field.name.as_deref() else {
             continue;
         };
@@ -293,6 +330,13 @@ fn whitespace_only(bytes: &[u8], start: usize, end: usize) -> bool {
         && bytes[start..end]
             .iter()
             .all(|byte| byte.is_ascii_whitespace())
+}
+
+fn derives_serialize(attributes: &[&RustFact]) -> bool {
+    attributes.iter().any(|attribute| {
+        let names = identifiers(&attribute.text);
+        names.contains("derive") && names.contains("Serialize")
+    })
 }
 
 fn serde_rename_all(attributes: Vec<&RustFact>) -> Option<String> {

@@ -164,7 +164,7 @@ fn direct_kind(node: Node<'_>, in_impl: bool) -> Option<RustFactKind> {
         "impl_item" => Some(RustFactKind::Impl),
         "function_item" if in_impl => Some(RustFactKind::Method),
         "function_item" => Some(RustFactKind::Function),
-        "field_declaration" => Some(RustFactKind::Field),
+        "field_declaration" | "tuple_field_declaration" => Some(RustFactKind::Field),
         "const_item" => Some(RustFactKind::Const),
         "static_item" => Some(RustFactKind::Static),
         "attribute_item" => Some(RustFactKind::Attribute),

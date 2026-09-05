@@ -59,6 +59,30 @@ pub fn build_baseline(
     })
 }
 
+pub fn read_baseline(path: &Path) -> Result<BenchmarkBaselineV1, String> {
+    let source = fs::read_to_string(path)
+        .map_err(|error| format!("cannot read baseline {}: {error}", path.display()))?;
+    let baseline: BenchmarkBaselineV1 = serde_json::from_str(&source)
+        .map_err(|error| format!("invalid benchmark baseline {}: {error}", path.display()))?;
+    if baseline.schema != BASELINE_SCHEMA {
+        return Err(format!("unsupported benchmark baseline schema: {}", baseline.schema));
+    }
+    Ok(baseline)
+}
+
+pub fn compare_exact_baseline(
+    baseline: &BenchmarkBaselineV1,
+    cases: &[&BenchmarkCase],
+    results: &[CaseResult],
+) -> Result<(), String> {
+    let current = build_baseline(cases, results)?;
+    if baseline == &current {
+        Ok(())
+    } else {
+        Err("benchmark result or corpus differs from baseline".to_owned())
+    }
+}
+
 pub fn write_baseline(path: &Path, baseline: &BenchmarkBaselineV1) -> Result<(), String> {
     let encoded = serde_json::to_string_pretty(baseline)
         .map_err(|error| format!("cannot encode benchmark baseline: {error}"))?;

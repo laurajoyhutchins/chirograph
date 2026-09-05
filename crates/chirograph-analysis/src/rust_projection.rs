@@ -59,6 +59,7 @@ pub fn extract_rust_candidates(
             root,
             &[],
             &[],
+            bytes,
             &extraction.facts,
             &declarations,
             &by_name,
@@ -128,6 +129,7 @@ fn walk_struct(
     declaration_index: usize,
     path: &[String],
     inherited_evidence: &[CandidateEvidence],
+    bytes: &[u8],
     facts: &[RustFact],
     declarations: &[Declaration<'_>],
     by_name: &BTreeMap<String, Vec<usize>>,
@@ -140,13 +142,13 @@ fn walk_struct(
         return Ok(());
     }
     let declaration = &declarations[declaration_index];
-    let rename_all = serde_rename_all(attributes_for_container(facts, &declaration.full_container));
+    let rename_all = serde_rename_all(leading_attributes(facts, declaration.fact, bytes));
 
     for field in fields_for(facts, declaration) {
         let Some(field_name) = field.name.as_deref() else {
             continue;
         };
-        let field_attributes = attributes_inside_span(facts, field);
+        let field_attributes = leading_attributes(facts, field, bytes);
         let Some(serialized_name) =
             serialized_name(field_name, &field_attributes, rename_all.as_deref())
         else {
@@ -174,6 +176,7 @@ fn walk_struct(
                 target_index,
                 &next_path,
                 &evidence,
+                bytes,
                 facts,
                 declarations,
                 by_name,
@@ -183,7 +186,7 @@ fn walk_struct(
                 candidates,
             )?,
             RustFactKind::Enum => {
-                let Some(values) = enum_closed_values(facts, target) else {
+                let Some(values) = enum_closed_values(facts, target, bytes) else {
                     continue;
                 };
                 evidence.push(CandidateEvidence {
@@ -256,23 +259,40 @@ fn unique_field_target(
     }
 }
 
-fn attributes_for_container<'a>(facts: &'a [RustFact], container: &[String]) -> Vec<&'a RustFact> {
-    facts
-        .iter()
-        .filter(|fact| fact.kind == RustFactKind::Attribute && fact.container == container)
-        .collect()
-}
-
-fn attributes_inside_span<'a>(facts: &'a [RustFact], owner: &RustFact) -> Vec<&'a RustFact> {
-    facts
+fn leading_attributes<'a>(
+    facts: &'a [RustFact],
+    owner: &RustFact,
+    bytes: &[u8],
+) -> Vec<&'a RustFact> {
+    let mut candidates = facts
         .iter()
         .filter(|fact| {
             fact.kind == RustFactKind::Attribute
                 && fact.container == owner.container
-                && fact.span.start_byte >= owner.span.start_byte
-                && fact.span.end_byte <= owner.span.end_byte
+                && fact.span.end_byte <= owner.span.start_byte
         })
-        .collect()
+        .collect::<Vec<_>>();
+    candidates.sort_by_key(|fact| fact.span.start_byte);
+
+    let mut cursor = owner.span.start_byte;
+    let mut leading = Vec::new();
+    for attribute in candidates.into_iter().rev() {
+        if !whitespace_only(bytes, attribute.span.end_byte, cursor) {
+            break;
+        }
+        leading.push(attribute);
+        cursor = attribute.span.start_byte;
+    }
+    leading.reverse();
+    leading
+}
+
+fn whitespace_only(bytes: &[u8], start: usize, end: usize) -> bool {
+    start <= end
+        && end <= bytes.len()
+        && bytes[start..end]
+            .iter()
+            .all(|byte| byte.is_ascii_whitespace())
 }
 
 fn serde_rename_all(attributes: Vec<&RustFact>) -> Option<String> {
@@ -298,9 +318,9 @@ fn serialized_name(
 fn enum_closed_values(
     facts: &[RustFact],
     declaration: &Declaration<'_>,
+    bytes: &[u8],
 ) -> Option<BTreeSet<String>> {
-    let rename_all =
-        serde_rename_all(attributes_for_container(facts, &declaration.full_container))?;
+    let rename_all = serde_rename_all(leading_attributes(facts, declaration.fact, bytes))?;
     let variants = facts
         .iter()
         .filter(|fact| {

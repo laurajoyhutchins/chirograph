@@ -22,7 +22,7 @@ enum DebugInfo {
 "#;
 
 #[test]
-fn source_facts_preserve_projection_edges_and_serde_evidence() {
+fn source_facts_keep_leading_attributes_in_the_parent_container() {
     let extraction = extract_rust_facts(
         SOURCE.as_bytes(),
         SourceProvenance {
@@ -55,15 +55,22 @@ fn source_facts_preserve_projection_edges_and_serde_evidence() {
         );
     }
 
-    for container in [vec!["Manifest"], vec!["Profile"], vec!["DebugInfo"]] {
-        assert!(
-            facts.iter().any(|fact| {
-                fact.kind == RustFactKind::Attribute
-                    && fact.container == container
-                    && fact.text.contains("rename_all")
-            }),
-            "missing serde rename_all in {container:?}; facts={facts:#?}"
-        );
+    let attributes = facts
+        .iter()
+        .filter(|fact| fact.kind == RustFactKind::Attribute && fact.text.contains("rename_all"))
+        .collect::<Vec<_>>();
+    assert_eq!(attributes.len(), 3);
+    assert!(attributes.iter().all(|attribute| attribute.container.is_empty()));
+
+    for declaration in facts.iter().filter(|fact| {
+        matches!(fact.kind, RustFactKind::Struct | RustFactKind::Enum)
+    }) {
+        assert!(attributes.iter().any(|attribute| {
+            attribute.span.end_byte <= declaration.span.start_byte
+                && SOURCE.as_bytes()[attribute.span.end_byte..declaration.span.start_byte]
+                    .iter()
+                    .all(|byte| byte.is_ascii_whitespace())
+        }));
     }
 
     for (container, text) in [

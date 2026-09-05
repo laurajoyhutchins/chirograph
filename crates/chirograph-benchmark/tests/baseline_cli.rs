@@ -62,23 +62,27 @@ fn benchmark_command(analyzer: &Path) -> Command {
     command
 }
 
+fn write_current_baseline(analyzer: &Path, baseline: &Path) {
+    let output = benchmark_command(analyzer)
+        .arg("--write-baseline")
+        .arg(baseline)
+        .output()
+        .expect("benchmark baseline should be written");
+    assert!(
+        output.status.success(),
+        "write-baseline failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
 #[test]
 fn write_baseline_records_case_result_and_corpus_digests() {
     let root = temp_root();
     let baseline = root.join("baseline.json");
     let analyzer = fake_chirograph(&root);
 
-    let output = benchmark_command(&analyzer)
-        .arg("--write-baseline")
-        .arg(&baseline)
-        .output()
-        .expect("benchmark binary should run");
+    write_current_baseline(&analyzer, &baseline);
 
-    assert!(
-        output.status.success(),
-        "write-baseline failed: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
     let value: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(&baseline).expect("baseline should be written"))
             .expect("baseline should be JSON");
@@ -106,12 +110,7 @@ fn identical_result_and_corpus_pass_baseline_comparison() {
     let baseline = root.join("baseline.json");
     let analyzer = fake_chirograph(&root);
 
-    let write = benchmark_command(&analyzer)
-        .arg("--write-baseline")
-        .arg(&baseline)
-        .output()
-        .expect("benchmark baseline should be written");
-    assert!(write.status.success());
+    write_current_baseline(&analyzer, &baseline);
 
     let compare = benchmark_command(&analyzer)
         .arg("--baseline")
@@ -122,6 +121,44 @@ fn identical_result_and_corpus_pass_baseline_comparison() {
     assert!(
         compare.status.success(),
         "identical baseline comparison failed: {}",
+        String::from_utf8_lossy(&compare.stderr)
+    );
+
+    fs::remove_dir_all(root).expect("remove temp root");
+}
+
+#[test]
+fn execution_failure_to_scored_is_an_improvement() {
+    let root = temp_root();
+    let baseline = root.join("baseline.json");
+    let analyzer = fake_chirograph(&root);
+
+    write_current_baseline(&analyzer, &baseline);
+    let mut value: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&baseline).expect("baseline should be readable"))
+            .expect("baseline should be JSON");
+    value["cases"][0]["result"]["status"] = serde_json::json!("execution-failure");
+    value["cases"][0]["result"]["score"] = serde_json::Value::Null;
+    value["cases"][0]["result"]["diagnostics"] =
+        serde_json::json!(["simulated baseline execution failure"]);
+    fs::write(
+        &baseline,
+        format!(
+            "{}\n",
+            serde_json::to_string_pretty(&value).expect("encode edited baseline")
+        ),
+    )
+    .expect("write edited baseline");
+
+    let compare = benchmark_command(&analyzer)
+        .arg("--baseline")
+        .arg(&baseline)
+        .output()
+        .expect("benchmark baseline should be compared");
+
+    assert!(
+        compare.status.success(),
+        "execution-failure to scored should improve: {}",
         String::from_utf8_lossy(&compare.stderr)
     );
 

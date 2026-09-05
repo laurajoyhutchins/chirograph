@@ -63,6 +63,9 @@ fn walk_node(
     active_refs: &mut BTreeSet<String>,
     candidates: &mut Vec<RepresentationCandidate>,
 ) -> Result<(), AnalysisError> {
+    if node.is_boolean() {
+        return Ok(());
+    }
     let object = node.as_object().ok_or_else(|| {
         AnalysisError::InvalidSchema(format!("schema node at {pointer} must be an object"))
     })?;
@@ -77,9 +80,7 @@ fn walk_node(
             )));
         }
         if !active_refs.insert(reference.to_owned()) {
-            return Err(AnalysisError::InvalidSchema(format!(
-                "cyclic local $ref: {reference}"
-            )));
+            return Ok(());
         }
         let target = root.pointer(&reference[1..]).ok_or_else(|| {
             AnalysisError::InvalidSchema(format!("broken local $ref: {reference}"))

@@ -3,7 +3,8 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use chirograph_acquisition::{
-    AcquisitionContext, AcquisitionRuntime, AdapterFamily, DiagnosticKind,
+    AcquiredFact, AcquisitionContext, AcquisitionError, AcquisitionRuntime, AdapterCapability,
+    AdapterError, AdapterFamily, AdapterInput, DiagnosticKind, SourceAdapter,
 };
 use chirograph_core::model::{Revision, SourceId};
 
@@ -54,6 +55,108 @@ fn write_fixture(root: &Path, rust_first: bool) {
     }
     fs::write(root.join("README.txt"), "not a supported source\n")
         .expect("unsupported fixture should be written");
+}
+
+#[derive(Debug)]
+struct SyntheticAdapter {
+    id: &'static str,
+    extension: &'static str,
+}
+
+impl SourceAdapter for SyntheticAdapter {
+    fn capability(&self) -> AdapterCapability {
+        AdapterCapability {
+            adapter: self.id.to_owned(),
+            family: AdapterFamily::StructuredSemantic,
+            extensions: vec![self.extension.to_owned()],
+        }
+    }
+
+    fn acquire(&self, input: AdapterInput<'_>) -> Result<Vec<AcquiredFact>, AdapterError> {
+        Ok(vec![AcquiredFact {
+            adapter: self.id.to_owned(),
+            kind: "synthetic".to_owned(),
+            path: input.path.to_owned(),
+            locator: format!("{}#synthetic", input.path),
+            text: String::from_utf8_lossy(input.bytes).into_owned(),
+            source: input.context.source.clone(),
+            revision: input.context.revision.clone(),
+            span: None,
+        }])
+    }
+}
+
+#[test]
+fn public_registry_accepts_a_thin_custom_adapter() {
+    let root = temp_root("custom-adapter");
+    fs::write(root.join("contract.demo"), "contract-v1\n")
+        .expect("custom fixture should be written");
+    let runtime = AcquisitionRuntime::with_adapters(vec![Box::new(SyntheticAdapter {
+        id: "synthetic",
+        extension: "demo",
+    })])
+    .expect("custom adapter registry should be valid");
+
+    let report = runtime
+        .acquire_tree(&root, &context())
+        .expect("custom adapter acquisition should succeed");
+    fs::remove_dir_all(&root).expect("temporary acquisition root should be removed");
+
+    assert_eq!(report.capabilities.len(), 1);
+    assert_eq!(report.capabilities[0].adapter, "synthetic");
+    assert_eq!(report.facts.len(), 1);
+    assert_eq!(report.facts[0].path, "contract.demo");
+}
+
+#[test]
+fn ambiguous_adapter_selection_fails_closed() {
+    let root = temp_root("ambiguous-adapter");
+    fs::write(root.join("contract.demo"), "contract-v1\n")
+        .expect("ambiguous fixture should be written");
+    let runtime = AcquisitionRuntime::with_adapters(vec![
+        Box::new(SyntheticAdapter {
+            id: "first",
+            extension: "demo",
+        }),
+        Box::new(SyntheticAdapter {
+            id: "second",
+            extension: "demo",
+        }),
+    ])
+    .expect("overlapping extensions are resolved at source selection time");
+
+    let error = runtime
+        .acquire_tree(&root, &context())
+        .expect_err("ambiguous adapter selection must fail closed");
+    fs::remove_dir_all(&root).expect("temporary acquisition root should be removed");
+
+    match error {
+        AcquisitionError::AmbiguousAdapter { path, adapters } => {
+            assert_eq!(path, "contract.demo");
+            assert_eq!(adapters, ["first", "second"]);
+        }
+        other => panic!("expected ambiguous adapter error, got {other}"),
+    }
+}
+
+#[test]
+fn duplicate_adapter_identity_is_rejected_at_registration() {
+    let error = AcquisitionRuntime::with_adapters(vec![
+        Box::new(SyntheticAdapter {
+            id: "duplicate",
+            extension: "one",
+        }),
+        Box::new(SyntheticAdapter {
+            id: "duplicate",
+            extension: "two",
+        }),
+    ])
+    .expect_err("duplicate adapter identity must be rejected");
+
+    assert!(matches!(
+        error,
+        AcquisitionError::DuplicateAdapterId { ref adapter } if adapter == "duplicate"
+    ));
 }
 
 #[test]

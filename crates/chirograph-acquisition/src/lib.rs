@@ -11,6 +11,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use chirograph_core::model::{Revision, SourceId};
+use chirograph_rust::{RustFactKind, extract_rust_facts};
+use chirograph_tree_sitter::{SourceProvenance, SourceSpan};
 use serde_json::Value;
 
 const MAX_DIAGNOSTICS: usize = 64;
@@ -54,6 +56,29 @@ pub struct AcquisitionDiagnostic {
     pub message: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AcquiredSpan {
+    pub start_byte: usize,
+    pub end_byte: usize,
+    pub start_row: usize,
+    pub start_column: usize,
+    pub end_row: usize,
+    pub end_column: usize,
+}
+
+impl From<SourceSpan> for AcquiredSpan {
+    fn from(span: SourceSpan) -> Self {
+        Self {
+            start_byte: span.start_byte,
+            end_byte: span.end_byte,
+            start_row: span.start.row,
+            start_column: span.start.column,
+            end_row: span.end.row,
+            end_column: span.end.column,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AcquiredFact {
     pub adapter: String,
@@ -63,6 +88,7 @@ pub struct AcquiredFact {
     pub text: String,
     pub source: SourceId,
     pub revision: Revision,
+    pub span: Option<AcquiredSpan>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -87,6 +113,16 @@ pub enum AcquisitionError {
         path: String,
         source: serde_json::Error,
     },
+    AdapterFailure {
+        adapter: String,
+        path: String,
+        message: String,
+    },
+    MalformedSyntax {
+        adapter: String,
+        path: String,
+        diagnostic_count: usize,
+    },
 }
 
 impl fmt::Display for AcquisitionError {
@@ -106,6 +142,19 @@ impl fmt::Display for AcquisitionError {
             Self::InvalidJson { path, source } => {
                 write!(formatter, "invalid JSON source {path}: {source}")
             }
+            Self::AdapterFailure {
+                adapter,
+                path,
+                message,
+            } => write!(formatter, "{adapter} acquisition failed for {path}: {message}"),
+            Self::MalformedSyntax {
+                adapter,
+                path,
+                diagnostic_count,
+            } => write!(
+                formatter,
+                "malformed {adapter} source {path}: {diagnostic_count} parse diagnostics"
+            ),
         }
     }
 }
@@ -115,7 +164,10 @@ impl Error for AcquisitionError {
         match self {
             Self::Io { source, .. } => Some(source),
             Self::InvalidJson { source, .. } => Some(source),
-            Self::InvalidRoot(_) | Self::AmbiguousAdapter { .. } => None,
+            Self::InvalidRoot(_)
+            | Self::AmbiguousAdapter { .. }
+            | Self::AdapterFailure { .. }
+            | Self::MalformedSyntax { .. } => None,
         }
     }
 }
@@ -123,24 +175,28 @@ impl Error for AcquisitionError {
 #[derive(Debug, Clone, Copy)]
 enum RegisteredAdapter {
     Json,
+    Rust,
 }
 
 impl RegisteredAdapter {
     const fn id(self) -> &'static str {
         match self {
             Self::Json => "json",
+            Self::Rust => "rust",
         }
     }
 
     const fn family(self) -> AdapterFamily {
         match self {
             Self::Json => AdapterFamily::StructuredSemantic,
+            Self::Rust => AdapterFamily::TreeSitter,
         }
     }
 
     const fn extensions(self) -> &'static [&'static str] {
         match self {
             Self::Json => &["json"],
+            Self::Rust => &["rs"],
         }
     }
 
@@ -158,7 +214,7 @@ pub struct AcquisitionRuntime {
 impl Default for AcquisitionRuntime {
     fn default() -> Self {
         Self {
-            adapters: vec![RegisteredAdapter::Json],
+            adapters: vec![RegisteredAdapter::Json, RegisteredAdapter::Rust],
         }
     }
 }
@@ -273,6 +329,7 @@ impl AcquisitionRuntime {
 
         match adapter {
             RegisteredAdapter::Json => acquire_json(&bytes, &path, context, &mut report.facts),
+            RegisteredAdapter::Rust => acquire_rust(&bytes, &path, context, &mut report.facts),
         }
     }
 }
@@ -435,6 +492,7 @@ fn walk_json(
         text,
         source: context.source.clone(),
         revision: context.revision.clone(),
+        span: None,
     });
 
     match value {

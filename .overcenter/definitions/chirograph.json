@@ -184,6 +184,41 @@
       }
     },
     {
+      "id": "establish-polyglot-acquisition-runtime",
+      "priority": 100,
+      "requires": [
+        "audit-reviewed-benchmark-identity-derivability"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Turn the existing shared Tree-sitter adapter architecture and deterministic analysis pipeline into one production acquisition runtime used by public `chirograph analyze`. Centralize deterministic file discovery, adapter selection/registration, caller-supplied source context, provenance/span handling, diagnostics, capability reporting, and source-local observation dispatch. Preserve `chirograph-core` as language-agnostic and keep syntax-specific fact models in thin language crates. Support both Tree-sitter language adapters and semantic structured-data adapters behind the same acquisition boundary without pretending their fact vocabularies are identical. Unknown or unsupported syntax must produce explicit bounded diagnostics, never evidence of absence. No network access, project-code execution, benchmark-path dispatch, repository-specific recognition, fuzzy alignment, golden access, or authority inference. Make adding another language require only a grammar/parser plus a thin typed extractor and registry entry, not copied parser lifecycle/provenance machinery. Wire the runtime through the public analyzer, add generic conformance tests for deterministic ordering, exact spans/provenance, malformed input, adapter selection, duplicate/ambiguous selection, and path-independent behavior, and document the adapter extension contract. Run fmt/check/clippy/test and the full reviewed benchmark baseline on the exact final head."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph has one production, extensible acquisition runtime behind public `chirograph analyze` so new programming and schema languages plug into shared deterministic discovery, provenance, diagnostics, and dispatch rather than creating independent parser stacks.",
+        "acceptance_evidence": [
+          {
+            "kind": "architecture",
+            "requirement": "`chirograph-core` remains language-agnostic and language-specific semantics stay in thin adapter crates; new adapter authoring does not copy parser lifecycle/provenance machinery."
+          },
+          {
+            "kind": "code",
+            "requirement": "A generic production acquisition runtime dispatches both Tree-sitter language adapters and semantic structured-data adapters through `chirograph analyze`, with no benchmark- or repository-specific branches."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic conformance tests prove deterministic ordering, exact provenance/spans, explicit malformed/unsupported diagnostics, safe adapter selection, and path-independent output."
+          },
+          {
+            "kind": "verification",
+            "requirement": "fmt, workspace check, clippy, tests, and the full reviewed benchmark baseline pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
       "id": "expose-semantic-query-cli",
       "priority": 95,
       "requires": [
@@ -535,6 +570,313 @@
       }
     },
     {
+      "id": "productionize-cpp-acquisition",
+      "priority": 98,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Add a thin generic C/C++ acquisition adapter on the shared Tree-sitter runtime for namespaces, records/classes/structs/enums, fields/constants, functions/methods, signatures/types/templates where source-local, calls, returns/throws/conditionals, comments, preprocessor declarations that can be observed safely without expansion, and assertions/test expectations. Preserve exact provenance and explicitly decline macro expansion, build-system evaluation, and compiler-equivalent name/type resolution. Integrate common C/C++ extensions through public analysis. Use Arrow and Envoy only as exact-revision acceptance specimens. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph gains generic source-local C/C++ acquisition without pretending to be a compiler or preprocessor.",
+        "acceptance_evidence": [
+          {
+            "kind": "acceptance",
+            "requirement": "Exact-revision Arrow and Envoy fixtures demonstrate useful acquisition without project-specific recognition."
+          },
+          {
+            "kind": "code",
+            "requirement": "A registered C/C++ adapter emits deterministic provenance-rich declarations, types, calls/control flow, comments, and bounded preprocessor observations."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic fixtures cover structs/classes/enums/templates, functions/calls, macros as explicit bounded observations, malformed input, and exact spans."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
+      "id": "productionize-go-acquisition",
+      "priority": 99,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Implement a generic Go source acquisition adapter on the shared acquisition runtime. Acquire source-local facts for packages, named types, structs/interfaces, fields, tags, constants, functions/methods and receivers, signatures/type expressions, calls, returns, conditionals, panic/error paths, comments, and assertions/test expectations where syntax supports them. Preserve exact spans, repository identity, revision, and generated-file observations only when mechanically visible; do not infer generated-from lineage merely from filenames or comments unless the source explicitly establishes it. Integrate ordinary `.go` discovery through public `chirograph analyze`. Use tiny generic fixtures first, then Kubernetes and Temporal only as exact-revision acceptance specimens. Do not add Kubernetes, Temporal, Pod, executions, benchmark, or golden identifiers to production recognition. Keep unsupported semantic resolution explicit. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph deterministically acquires useful, provenance-rich Go source facts through the generic public analysis path without repository-specific logic.",
+        "acceptance_evidence": [
+          {
+            "kind": "acceptance",
+            "requirement": "Exact-revision Kubernetes and Temporal fixtures demonstrate useful Go acquisition without specimen-specific production branches."
+          },
+          {
+            "kind": "code",
+            "requirement": "A thin Go adapter uses the shared acquisition substrate and is registered for ordinary Go source discovery."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic fixtures cover declarations, struct fields/tags, methods/receivers, types, calls/control flow, comments, and test assertions with exact spans and deterministic output."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
+      "id": "productionize-java-acquisition",
+      "priority": 99,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Productionize generic Java acquisition on the shared runtime. Acquire packages/imports, classes/interfaces/enums/records/annotation declarations, fields/constants/literals, type parameters and signatures, methods/constructors, annotations and arguments, calls, returns, conditionals/switch, throws, documentation/comments, and assertions/test expectations with exact provenance. Integrate ordinary `.java` discovery through public `chirograph analyze`. Do not perform whole-program resolution or execute builds. Reuse or replace any older Java adapter machinery so parser lifecycle/provenance is shared and there is one production path. Kafka is an exact-revision acceptance specimen only; no Kafka, ProduceRequest, benchmark, or golden-specific recognition. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph has one generic, provenance-rich Java acquisition path integrated into the shared analyzer runtime.",
+        "acceptance_evidence": [
+          {
+            "kind": "acceptance",
+            "requirement": "Exact-revision Kafka fixtures demonstrate useful Java acquisition without Kafka-specific production logic."
+          },
+          {
+            "kind": "code",
+            "requirement": "A thin Java adapter uses the shared substrate and acquires declarations, types, annotations, literals, calls/control flow, documentation, and assertions through public analysis."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic Java fixtures prove exact spans, deterministic ordering, records/interfaces/enums/annotations, methods/calls/throws, and explicit unsupported semantics."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
+      "id": "productionize-proto-acquisition",
+      "priority": 99,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Implement a generic Protocol Buffers acquisition adapter using a pinned, compatibility-tested parser/Tree-sitter grammar. Acquire syntax/package/imports, messages, nested messages, enums, fields with numbers/types/labels, oneofs, services/RPCs, options, reserved declarations, comments, and explicit language/package options with exact provenance. Expose qualified semantic identities that are mechanically declared by Proto itself, but do not align them to Go/Java/generated artifacts without explicit later evidence. Integrate `.proto` discovery through public `chirograph analyze`. Add grammar compatibility tests so dependency upgrades cannot silently change fact semantics. Use Envoy and Kubernetes as exact-revision acceptance specimens only. No Envoy/Kubernetes/version/golden special cases. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph can acquire deterministic, qualified Protocol Buffers schema facts with exact provenance through its generic acquisition path.",
+        "acceptance_evidence": [
+          {
+            "kind": "acceptance",
+            "requirement": "Exact-revision Envoy and Kubernetes fixtures produce useful Proto observations without specimen-specific production logic."
+          },
+          {
+            "kind": "code",
+            "requirement": "A registered Proto adapter emits package-qualified messages, enums, fields, services, options, imports, and source documentation without assigning cross-representation truth."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic Proto fixtures and grammar compatibility tests prove deterministic extraction, exact spans, malformed-input behavior, and stable adapter semantics."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
+      "id": "productionize-python-acquisition",
+      "priority": 99,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Productionize generic Python acquisition on the shared runtime rather than preserving Pydantic-specific extraction. Acquire modules, classes, functions/methods, parameters/signatures, annotated assignments/type expressions, decorators and arguments, assignments/constants/literals, calls, returns, raises, conditionals/match where supported, docstrings/comments, imports, and assertions/test expectations with exact provenance. Keep runtime execution/probes as a separate explicit trust boundary; static acquisition must not import or execute analyzed Python. Integrate ordinary `.py` discovery through public `chirograph analyze`. Migrate reusable static capability away from bespoke Pydantic machinery where safe, but do not encode Pydantic concepts. Use Pydantic as an exact-revision acceptance specimen and preserve perspective-sensitive uncertainty rather than inventing validation/serialization equivalence. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph has generic static Python acquisition in the shared production runtime, with project execution kept outside the parser trust boundary.",
+        "acceptance_evidence": [
+          {
+            "kind": "acceptance",
+            "requirement": "The exact-revision Pydantic specimen can use generic static acquisition without introducing Pydantic-specific core or parser rules."
+          },
+          {
+            "kind": "code",
+            "requirement": "A thin Python adapter is registered in the shared runtime and acquires typed declarations, decorators, calls/control flow, documentation, and assertions without executing analyzed code."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic Python fixtures verify exact provenance, deterministic output, decorators/annotations, docstrings, raises/control flow, and explicit unsupported behavior."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
+      "id": "productionize-ruby-acquisition",
+      "priority": 98,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Add a thin generic Ruby Tree-sitter adapter on the shared runtime for modules/classes, methods, constants/assignments/literals, calls, blocks, returns/raises/conditionals, comments, and assertions/test expectations where safely extractable. Preserve exact provenance and keep Rails DSL interpretation out of the parser; source-local call structure may be observed without declaring migration or schema authority. Integrate `.rb` discovery through public analysis. Use Rails only as an exact-revision acceptance specimen. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph gains generic Ruby source acquisition suitable for later Rails and other Ruby contract analysis without framework-specific parser rules.",
+        "acceptance_evidence": [
+          {
+            "kind": "code",
+            "requirement": "A registered Ruby adapter emits provenance-rich generic declarations, calls/control flow, documentation, and test facts."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic Ruby fixtures prove deterministic extraction and exact provenance while Rails-style DSL calls remain source-local observations rather than inferred authority."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
+      "id": "productionize-sql-cql-acquisition",
+      "priority": 99,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Implement generic schema acquisition for SQL DDL and Cassandra CQL as dialect-scoped semantic adapters behind the shared acquisition runtime. Prefer a parser that preserves SQL/CQL schema meaning over token heuristics. Acquire CREATE/ALTER/DROP schema facts for tables, columns, declared types, nullability/defaults, primary/foreign/unique keys, indexes, constraints, sequences/enums where supported, and dialect/schema qualification with exact source locations when the parser exposes them. Treat PostgreSQL, MySQL, SQLite, and Cassandra CQL as explicit dialect capabilities; unsupported dialect constructs must remain diagnostics, not guessed normalized semantics. Do not collapse dialect-specific types or authority into one global schema. Integrate `.sql` and `.cql` discovery through public `chirograph analyze`. Use Temporal's pinned multi-dialect schema only as an acceptance specimen. No Temporal/executions/golden recognition. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph acquires dialect-scoped SQL and CQL schema facts through semantic parsers, preserving differences instead of normalizing them into false global agreement.",
+        "acceptance_evidence": [
+          {
+            "kind": "acceptance",
+            "requirement": "Temporal's exact-revision multi-dialect fixture yields useful schema observations while retaining dialect-specific manifestations and no conventional global authority."
+          },
+          {
+            "kind": "code",
+            "requirement": "Registered SQL/CQL semantic adapters acquire DDL table/column/type/key/index/constraint facts with explicit dialect scope and provenance."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic PostgreSQL, MySQL, SQLite, and Cassandra fixtures cover equivalent and differing schemas, unsupported constructs, deterministic ordering, and source locations where available."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/adapters.md"
+      }
+    },
+    {
+      "id": "productionize-structured-schema-acquisition",
+      "priority": 99,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Implement semantic acquisition adapters for structured schema/config representations needed across real repositories: JSON and JSON Schema/OpenAPI first, then TOML and YAML where they expose contract-relevant structure. Acquire object/property paths, enum/value sets, requiredness, declared types/formats, references, definitions/components, defaults, discriminators and explicit generation/schema metadata when mechanically present. Preserve source/revision provenance and useful locators; do not route these formats through Tree-sitter by default or infer logical contract identity from key-name similarity. Keep ordinary data parsing separate from cross-representation alignment. Use Cargo, Kafka, Kubernetes and other reviewed fixtures only as acceptance specimens. No benchmark/golden/repository special cases. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph acquires native structured schema/config facts, especially JSON Schema/OpenAPI, without abusing source-code parsers or leaking benchmark knowledge.",
+        "acceptance_evidence": [
+          {
+            "kind": "acceptance",
+            "requirement": "Reviewed Cargo, Kafka, and Kubernetes fixtures yield useful structured observations without repository-specific production branches."
+          },
+          {
+            "kind": "code",
+            "requirement": "Semantic adapters for JSON/JSON Schema/OpenAPI and contract-relevant TOML/YAML are registered behind the common acquisition runtime with provenance-preserving source-local facts."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic fixtures cover paths, enums, requiredness, types, references/components, defaults, malformed input, deterministic ordering, and false-identity restraint."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-05-deterministic-analysis-pipeline-design.md"
+      }
+    },
+    {
+      "id": "productionize-typescript-acquisition",
+      "priority": 98,
+      "requires": [
+        "establish-polyglot-acquisition-runtime"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-acquisition-engineer",
+        "skill": "Use test-driven development. Add generic TypeScript/TSX acquisition on the shared runtime for modules/imports/exports, interfaces/type aliases/enums/classes, properties/constants/literals, functions/methods, signatures/generics, decorators where supported, calls, returns/throws/conditionals, JSX component/tag structure where source-local, comments, and assertions/test expectations. Preserve exact provenance; do not execute Node, resolve package graphs, or infer framework semantics. Integrate `.ts`/`.tsx` discovery through public analysis. Use Overcenter or another pinned TypeScript repository only as an acceptance specimen and keep Chirograph project-agnostic. Finish with exact-head CI and full-corpus benchmark non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Chirograph gains generic TypeScript/TSX source acquisition through the same shared runtime used by other programming languages.",
+        "acceptance_evidence": [
+          {
+            "kind": "code",
+            "requirement": "A registered TypeScript/TSX adapter emits deterministic provenance-rich declarations, types, calls/control flow, JSX structure, documentation, and test facts."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Generic fixtures cover interfaces/types/classes/functions/generics, TSX, imports/exports, malformed input, deterministic ordering, and exact spans."
+          },
+          {
+            "kind": "verification",
+            "requirement": "Full repository verification and reviewed benchmark non-regression pass on the exact final revision."
+          }
+        ],
+        "source_ref": "docs/superpowers/specs/2026-09-03-tree-sitter-adapter-architecture-design.md"
+      }
+    },
+    {
       "id": "prove-cross-representation-drift",
       "priority": 40,
       "requires": [
@@ -602,6 +944,49 @@
         "kind": "agent",
         "role": "implementation",
         "skill": "test-driven-development"
+      }
+    },
+    {
+      "id": "verify-polyglot-acquisition-suite",
+      "priority": 97,
+      "requires": [
+        "productionize-cpp-acquisition",
+        "productionize-go-acquisition",
+        "productionize-java-acquisition",
+        "productionize-proto-acquisition",
+        "productionize-python-acquisition",
+        "productionize-ruby-acquisition",
+        "productionize-sql-cql-acquisition",
+        "productionize-structured-schema-acquisition",
+        "productionize-typescript-acquisition"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "verification",
+        "skill": "Verify the completed polyglot acquisition architecture as one general-purpose product surface on the exact final revision. Run shared adapter conformance tests across every registered language/format, full fmt/check/clippy/test, release metadata checks, and `cargo benchmark all --baseline benchmark/baseline.json --chirograph-bin target/debug/chirograph`. Add a small synthetic mixed-language repository fixture containing at least Go, Proto, Python, Java, SQL, JSON Schema/OpenAPI, Ruby, C++, and TypeScript and prove public `chirograph analyze` discovers each through generic dispatch with stable provenance and byte-stable output under file-order/path permutation. Verify malformed or unsupported input remains explicit and does not strengthen semantic claims. Audit production source for benchmark/repository-specific recognizers. Do not rewrite benchmark goldens or baseline merely to make verification pass. Settle only with exact final Git SHA, exact command/test evidence, mixed-language public-CLI proof, and full-corpus non-regression."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "The full polyglot acquisition surface is proven to work through one generic public Chirograph path, with deterministic provenance, explicit uncertainty, no specimen leakage, and no benchmark regression.",
+        "acceptance_evidence": [
+          {
+            "kind": "conformance",
+            "requirement": "Every registered adapter passes shared deterministic/provenance/diagnostic conformance tests and malformed/unsupported inputs do not strengthen semantic claims."
+          },
+          {
+            "kind": "leakage-audit",
+            "requirement": "Production acquisition code contains no benchmark-case, golden-truth, or repository-specific recognizers used to improve reviewed scores."
+          },
+          {
+            "kind": "mixed-language-proof",
+            "requirement": "A synthetic mixed-language fixture is analyzed through public `chirograph analyze` and demonstrates generic acquisition of Go, Proto, Python, Java, SQL, structured schema, Ruby, C++, and TypeScript with stable provenance."
+          },
+          {
+            "kind": "verification",
+            "requirement": "fmt, check, clippy, all tests, release metadata checks, and full reviewed benchmark baseline comparison pass on the exact final Git revision."
+          }
+        ],
+        "source_ref": "docs/adapters.md"
       }
     },
     {

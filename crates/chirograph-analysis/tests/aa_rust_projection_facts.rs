@@ -60,11 +60,16 @@ fn source_facts_keep_leading_attributes_in_the_parent_container() {
         .filter(|fact| fact.kind == RustFactKind::Attribute && fact.text.contains("rename_all"))
         .collect::<Vec<_>>();
     assert_eq!(attributes.len(), 3);
-    assert!(attributes.iter().all(|attribute| attribute.container.is_empty()));
+    assert!(
+        attributes
+            .iter()
+            .all(|attribute| attribute.container.is_empty())
+    );
 
-    for declaration in facts.iter().filter(|fact| {
-        matches!(fact.kind, RustFactKind::Struct | RustFactKind::Enum)
-    }) {
+    for declaration in facts
+        .iter()
+        .filter(|fact| matches!(fact.kind, RustFactKind::Struct | RustFactKind::Enum))
+    {
         assert!(attributes.iter().any(|attribute| {
             attribute.span.end_byte <= declaration.span.start_byte
                 && SOURCE.as_bytes()[attribute.span.end_byte..declaration.span.start_byte]

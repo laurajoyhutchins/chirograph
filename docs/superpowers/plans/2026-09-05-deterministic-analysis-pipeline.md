@@ -241,17 +241,13 @@ cargo test -p chirograph-analysis --test rust_projection
 
 The alignment stage is explicit and provenance-bearing. It uses the existing `chirograph_core::alignment::AlignmentState` values rather than silently collapsing candidates into graph membership. Define a stable candidate key from source, revision, representation kind, qualified local identity, and locator, and record each decision with the exact evidence that justified it. `Confirmed` may enter graph assembly; `Unresolved` is retained in the internal analysis result/diagnostics but does not become a graph contract or representation; `Rejected` is emitted only when explicit evidence proves non-identity, not merely because confirmation evidence is absent. The first slice does not need to invent rejected decisions.
 
-**First-slice promotion rule:**
+**First-slice alignment and promotion rules:**
 
-Do not emit every discovered schema property or Rust field as a logical contract. For this first score-improving slice, a contract seed is eligible only when all of the following are true:
+Identity alignment and contract promotion are separate decisions. Confirm alignment when one Rust implementation candidate and one JSON Schema candidate carry the same exact `SemanticPath`, both paths are backed by their explicit mechanisms (`RustSerializedField` and `JsonSchemaProperty`), the candidate identity on each side is unique for that semantic path, and source/revision provenance is compatible. Equal closed value sets do not make that identity alignment unresolved.
 
-1. one Rust implementation candidate and one JSON Schema candidate carry the same exact `SemanticPath`;
-2. both paths are backed by their respective explicit mechanisms (`RustSerializedField` and `JsonSchemaProperty`);
-3. both candidates carry closed value sets backed by `RustClosedValueSet` and `JsonSchemaClosedValueSet`;
-4. the candidate identity on each side is unique for that semantic path;
-5. the value sets are comparable and differ, providing direct cross-representation contradiction evidence.
+Do not emit every confirmed schema/property pair as a logical contract. For this first score-improving slice, a confirmed aligned pair is eligible for graph contract promotion only when both candidates also carry comparable closed value sets backed by `RustClosedValueSet` and `JsonSchemaClosedValueSet`, and those sets differ. The differing sets provide direct cross-representation contradiction evidence that this aligned field is a contract-worthy invariant for the first slice.
 
-This deliberately narrow generic rule turns a mechanically established cross-representation drift into a semantic contract while avoiding mass promotion of unrelated neighboring types and schema properties.
+This deliberately narrow generic promotion rule turns a mechanically established cross-representation drift into a semantic contract while avoiding mass promotion of unrelated neighboring types and schema properties. It does not redefine alignment truth to depend on disagreement.
 
 **Stable identities:**
 
@@ -267,7 +263,7 @@ Create the minimum valid `ContractGraph` containing source, contract, two repres
 
 - [ ] **Step 1: Write the positive alignment RED test**
 
-Two explicit candidates at the same path with different closed sets and the required mechanisms produce one `Confirmed` alignment decision with deterministic contract seed, candidate keys, structural facet, and evidence closure. The decision must be identical under input permutation.
+Two explicit candidates at the same path with the required mechanisms produce one `Confirmed` alignment decision with deterministic semantic-path identity, candidate keys, structural facet, and evidence closure whether their comparable closed sets are equal or different. The decision must be identical under input permutation.
 
 - [ ] **Step 2: Write unresolved alignment RED tests**
 
@@ -275,7 +271,7 @@ Require `Unresolved` rather than a guessed confirmation for same-name/no-path ev
 
 - [ ] **Step 3: Write assembly RED tests**
 
-Only a confirmed decision may produce graph membership. The positive case produces exactly one structural contract and exactly two structural representations with deterministic IDs. Equal value sets in this first slice produce no confirmed decision and therefore an empty graph. Unresolved decisions produce no placeholder contracts.
+Only a confirmed decision that also satisfies the first-slice drift promotion gate may produce graph membership. The differing-value positive case produces exactly one structural contract and exactly two structural representations with deterministic IDs. An equal-value pair remains `Confirmed` alignment internally but does not satisfy this first-slice promotion gate, so graph JSON stays empty. Unresolved decisions produce no placeholder contracts.
 
 - [ ] **Step 4: Write permutation determinism test**
 
@@ -325,6 +321,12 @@ AnalysisSourceContext
         +--> .json -> JSON Schema observations -> schema candidates
                                               |
                                               v
+                                  explicit alignment
+                                              |
+                                              v
+                                     promotion gate
+                                              |
+                                              v
                                   conservative assembly
                                               |
                                               v
@@ -341,7 +343,7 @@ Copy identical synthetic fixture bytes into two unrelated temporary directory na
 
 - [ ] **Step 3: Implement `analyze_tree` orchestration and CLI parsing**
 
-Keep `main.rs` thin. Put discovery/acquisition/assembly behavior in `chirograph-analysis`.
+Keep `main.rs` thin. Put discovery, acquisition, explicit alignment, promotion, and assembly behavior in `chirograph-analysis`.
 
 - [ ] **Step 4: Verify**
 
@@ -448,7 +450,8 @@ Verify the final diff leaves `benchmark/baseline.json` and the Cargo `golden.yam
 - [ ] Source identity/revision are explicit public inputs and survive every emitted observation.
 - [ ] Candidate construction remains pre-semantic; explicit provenance-bearing alignment decisions sit between candidates and graph assembly.
 - [ ] Candidate local identity and supported facets are preserved without treating either as sufficient alignment evidence.
-- [ ] The first-slice promotion rule requires an exact semantic-path bridge plus comparable closed value sets and direct drift evidence.
+- [ ] Alignment confirmation depends on the exact semantic-path bridge and unique compatible provenance, not on whether the aligned values agree or disagree.
+- [ ] The first-slice graph-promotion rule additionally requires comparable closed value sets and direct drift evidence.
 - [ ] Same-name, ambiguous, repeated, or majority evidence cannot promote alignment.
 - [ ] The analyzer cannot observe benchmark scenario/case identity or golden truth.
 - [ ] Moving fixture bytes to another directory cannot change graph identity/output.

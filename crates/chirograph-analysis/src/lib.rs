@@ -2,6 +2,7 @@
 
 //! Deterministic production analysis between source acquisition and Chirograph graphs.
 
+mod assembly;
 mod candidate;
 mod context;
 mod discovery;
@@ -9,6 +10,7 @@ mod error;
 mod json_schema;
 mod rust_projection;
 
+pub use assembly::{AnalysisAssembly, assemble_contract_graph};
 pub use candidate::{CandidateEvidence, CandidateMechanism, RepresentationCandidate, SemanticPath};
 pub use context::AnalysisSourceContext;
 pub use discovery::{DiscoveredSource, SourceFileKind, discover_sources};

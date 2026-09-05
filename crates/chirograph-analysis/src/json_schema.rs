@@ -111,9 +111,7 @@ fn walk_node(
             .filter(|(_, branch)| !is_null_schema(branch))
             .collect::<Vec<_>>();
         if substantive.len() != 1 {
-            return Err(AnalysisError::InvalidSchema(format!(
-                "ambiguous anyOf at {pointer}: expected one non-null branch"
-            )));
+            return Ok(());
         }
         let (index, branch) = substantive[0];
         return walk_node(
@@ -138,22 +136,16 @@ fn walk_node(
         }
         let mut values = BTreeSet::new();
         for value in enum_values {
-            let value = value.as_str().ok_or_else(|| {
-                AnalysisError::InvalidSchema(format!(
-                    "first-slice enum at {pointer} must contain only strings"
-                ))
-            })?;
+            let Some(value) = value.as_str() else {
+                return Ok(());
+            };
             if value.is_empty() {
-                return Err(AnalysisError::InvalidSchema(format!(
-                    "enum at {pointer} contains an empty string"
-                )));
+                return Ok(());
             }
             values.insert(value.to_owned());
         }
         if values.is_empty() {
-            return Err(AnalysisError::InvalidSchema(format!(
-                "enum at {pointer} must not be empty"
-            )));
+            return Ok(());
         }
 
         let semantic_path = SemanticPath::new(path.iter().cloned())?;

@@ -326,13 +326,86 @@ fn acquire_json(
     context: &AcquisitionContext,
     facts: &mut Vec<AcquiredFact>,
 ) -> Result<(), AcquisitionError> {
+    let compatible = strip_json_comments(bytes);
     let value: Value =
-        serde_json::from_slice(bytes).map_err(|source| AcquisitionError::InvalidJson {
+        serde_json::from_slice(&compatible).map_err(|source| AcquisitionError::InvalidJson {
             path: path.to_owned(),
             source,
         })?;
     walk_json(&value, "", path, context, facts);
     Ok(())
+}
+
+fn strip_json_comments(bytes: &[u8]) -> Vec<u8> {
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum State {
+        Normal,
+        String,
+        LineComment,
+        BlockComment,
+    }
+
+    let mut output = bytes.to_vec();
+    let mut state = State::Normal;
+    let mut index = 0;
+    while index < bytes.len() {
+        match state {
+            State::Normal => match bytes[index] {
+                b'\"' => {
+                    state = State::String;
+                    index += 1;
+                }
+                b'/' if bytes.get(index + 1) == Some(&b'/') => {
+                    output[index] = b' ';
+                    output[index + 1] = b' ';
+                    state = State::LineComment;
+                    index += 2;
+                }
+                b'/' if bytes.get(index + 1) == Some(&b'*') => {
+                    output[index] = b' ';
+                    output[index + 1] = b' ';
+                    state = State::BlockComment;
+                    index += 2;
+                }
+                _ => index += 1,
+            },
+            State::String => match bytes[index] {
+                b'\\' => {
+                    index += 1;
+                    if index < bytes.len() {
+                        index += 1;
+                    }
+                }
+                b'\"' => {
+                    state = State::Normal;
+                    index += 1;
+                }
+                _ => index += 1,
+            },
+            State::LineComment => {
+                if matches!(bytes[index], b'\n' | b'\r') {
+                    state = State::Normal;
+                } else {
+                    output[index] = b' ';
+                }
+                index += 1;
+            }
+            State::BlockComment => {
+                if bytes[index] == b'*' && bytes.get(index + 1) == Some(&b'/') {
+                    output[index] = b' ';
+                    output[index + 1] = b' ';
+                    state = State::Normal;
+                    index += 2;
+                } else {
+                    if !matches!(bytes[index], b'\n' | b'\r') {
+                        output[index] = b' ';
+                    }
+                    index += 1;
+                }
+            }
+        }
+    }
+    output
 }
 
 fn walk_json(

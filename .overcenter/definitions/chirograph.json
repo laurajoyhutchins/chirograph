@@ -321,6 +321,41 @@
         "kind": "agent",
         "role": "implementation",
         "skill": "Use Superpowers test-driven-development and executing-plans. Execute docs/superpowers/plans/2026-09-05-deterministic-analysis-pipeline.md Tasks 1-8 from the exact current Chirograph authority. Implement the generic chirograph-analysis pipeline, explicit public analyzer provenance, benchmark provenance forwarding, and Cargo-first score slice. Preserve benchmark/ as data-only; no golden or case semantic leakage; no Cargo/repository-specific production recognition; no fuzzy matching or model calls; unresolved alignment remains unresolved; authority is facet-scoped; output and provenance are deterministic. Use real RED->GREEN tests per task, integrate through exact-head PR/CI, leave benchmark/baseline.json and the Cargo golden unchanged, prove Cargo contract recall > 0 with no false-contract/inflation regression, then run full-corpus baseline non-regression and settle only with exact final revision evidence."
+      },
+      "execution_intent": {
+        "schema": "project-execution-intent-v1",
+        "desired_outcome": "Finish the deterministic Chirograph analysis pipeline defined by docs/superpowers/plans/2026-09-05-deterministic-analysis-pipeline.md Tasks 1-8 from exact repository authority. Deliver the generic chirograph-analysis pipeline, explicit source provenance on the public chirograph analyze boundary, benchmark provenance forwarding without benchmark/golden semantic leakage, conservative provenance-bound alignment and graph assembly, and the Cargo-first score-improving slice. Preserve benchmark/ as data-only, keep unresolved identity unresolved, keep authority facet-scoped, add no Cargo/repository/case-specific production recognizers, fuzzy matching, model calls, majority voting, or hidden golden access. Complete through exact-final-revision verification and Overcenter settlement.",
+        "acceptance_evidence": [
+          {
+            "kind": "architecture",
+            "requirement": "Production code must remain generic and deterministic: no benchmark path, case ID, repository-specific, Cargo-specific, golden-derived, fuzzy, model-based, or majority-vote identity bridges; ambiguous alignment must fail closed or remain unresolved."
+          },
+          {
+            "kind": "benchmark-case",
+            "requirement": "On the unchanged Cargo schema-enum-drift/toml-debug-info-spellings golden and unchanged benchmark/baseline.json, the public analyzer path must remain scored and achieve contract recall greater than zero without increasing false-contract rate or moving inflation farther from 1.0."
+          },
+          {
+            "kind": "benchmark-corpus",
+            "requirement": "The full reviewed benchmark corpus must pass baseline non-regression using only the public analyzer path on the exact final revision."
+          },
+          {
+            "kind": "immutability",
+            "requirement": "benchmark/baseline.json and the Cargo case golden must be unchanged by this transition."
+          },
+          {
+            "kind": "public-interface",
+            "requirement": "The public chirograph analyze command must accept explicit source repository and exact revision provenance, produce deterministic canonical graph JSON, and avoid temporary/local path leakage into semantic identifiers."
+          },
+          {
+            "kind": "revision-binding",
+            "requirement": "PR, CI, direct analyzer output, benchmark scores, and settlement evidence must all be bound to the exact final Git SHA; do not claim completion from stale or different-revision evidence."
+          },
+          {
+            "kind": "tests",
+            "requirement": "Each implementation task must have valid RED then GREEN evidence, and the exact final revision must pass cargo fmt --all -- --check, cargo check --workspace --all-targets, cargo clippy --workspace --all-targets -- -D warnings, and cargo test --workspace."
+          }
+        ],
+        "source_ref": "github:laurajoyhutchins/chirograph:docs/superpowers/plans/2026-09-05-deterministic-analysis-pipeline.md"
       }
     },
     {

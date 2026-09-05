@@ -300,6 +300,18 @@
       }
     },
     {
+      "id": "implement-deterministic-analysis-pipeline",
+      "priority": 100,
+      "requires": [
+        "implement-rust-tree-sitter-adapter"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "implementation",
+        "skill": "Use Superpowers test-driven-development and executing-plans. Execute docs/superpowers/plans/2026-09-05-deterministic-analysis-pipeline.md Tasks 1-8 from the exact current Chirograph authority. Implement the generic chirograph-analysis pipeline, explicit public analyzer provenance, benchmark provenance forwarding, and Cargo-first score slice. Preserve benchmark/ as data-only; no golden or case semantic leakage; no Cargo/repository-specific production recognition; no fuzzy matching or model calls; unresolved alignment remains unresolved; authority is facet-scoped; output and provenance are deterministic. Use real RED->GREEN tests per task, integrate through exact-head PR/CI, leave benchmark/baseline.json and the Cargo golden unchanged, prove Cargo contract recall > 0 with no false-contract/inflation regression, then run full-corpus baseline non-regression and settle only with exact final revision evidence."
+      }
+    },
+    {
       "id": "implement-inspect-cli",
       "priority": 60,
       "requires": [

@@ -499,8 +499,11 @@ fn impl_trait_name(facts: &[RustFact], implementation: &RustFact) -> Option<Stri
     };
     let without_generics = reference.text.split('<').next()?.trim();
     let name = without_generics.rsplit("::").next()?.trim();
-    (!name.is_empty() && name.chars().all(|character| character.is_ascii_alphanumeric() || character == '_'))
-        .then(|| name.to_owned())
+    (!name.is_empty()
+        && name
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || character == '_'))
+    .then(|| name.to_owned())
 }
 
 fn closed_string_match(
@@ -545,8 +548,8 @@ fn closed_string_match(
         let [pattern] = patterns.as_slice() else {
             return None;
         };
-        let body = std::str::from_utf8(bytes.get(pattern.span.end_byte..arm.span.end_byte)?)
-            .ok()?;
+        let body =
+            std::str::from_utf8(bytes.get(pattern.span.end_byte..arm.span.end_byte)?).ok()?;
         if pattern.text.trim() == "_" {
             if body.trim_start().starts_with("=> Err(") || body.contains("return Err(") {
                 rejecting_wildcards += 1;
@@ -583,11 +586,7 @@ fn parse_simple_rust_string_pattern(text: &str) -> Option<String> {
     (!value.is_empty() && value.trim() == value).then_some(value)
 }
 
-fn mapped_enum_variant(
-    body: &str,
-    enum_name: &str,
-    variants: &BTreeSet<String>,
-) -> Option<String> {
+fn mapped_enum_variant(body: &str, enum_name: &str, variants: &BTreeSet<String>) -> Option<String> {
     let matches = variants
         .iter()
         .filter(|variant| {

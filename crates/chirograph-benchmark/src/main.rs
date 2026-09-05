@@ -251,6 +251,8 @@ fn is_exact_revision(value: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::{Command, OutputFormat, parse_args};
 
     fn parse(args: &[&str]) -> Result<Command, String> {

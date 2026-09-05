@@ -1,6 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use chirograph_benchmark::aggregate::aggregate_report;
+use chirograph_benchmark::baseline::{
+    build_baseline, compare_baseline, read_baseline, write_baseline,
+};
 use chirograph_benchmark::corpus::discover_corpus;
 use chirograph_benchmark::model::BenchmarkCase;
 use chirograph_benchmark::report::{render_human_report, render_json_report};
@@ -78,19 +81,6 @@ fn run(args: impl IntoIterator<Item = String>) -> Result<(), String> {
 }
 
 fn run_selection(options: RunOptions) -> Result<(), String> {
-    if let Some(path) = &options.baseline {
-        return Err(format!(
-            "baseline comparison at {} is added by the baseline task",
-            path.display()
-        ));
-    }
-    if let Some(path) = &options.write_baseline {
-        return Err(format!(
-            "baseline writing at {} is added by the baseline task",
-            path.display()
-        ));
-    }
-
     let cases = discover()?;
     let selected = select_cases(&cases, &options.selector).map_err(|error| error.to_string())?;
     let chirograph_bin = resolve_chirograph_bin(options.chirograph_bin.as_deref())?;
@@ -100,12 +90,35 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
         .collect::<Vec<_>>();
     let report = aggregate_report(&results);
 
+    let comparison = if let Some(path) = &options.baseline {
+        let baseline = read_baseline(path)?;
+        Some(compare_baseline(&baseline, &selected, &results)?)
+    } else {
+        None
+    };
+    if let Some(path) = &options.write_baseline {
+        let baseline = build_baseline(&selected, &results)?;
+        write_baseline(path, &baseline)?;
+    }
+
     match options.format {
         OutputFormat::Human => print!("{}", render_human_report(&report)),
         OutputFormat::Json => println!(
             "{}",
             render_json_report(&report).map_err(|error| error.to_string())?
         ),
+    }
+
+    if let Some(comparison) = comparison {
+        for improvement in &comparison.improvements {
+            eprintln!("benchmark baseline improvement: {improvement}");
+        }
+        if !comparison.regressions.is_empty() {
+            return Err(format!(
+                "benchmark baseline regression:\n{}",
+                comparison.regressions.join("\n")
+            ));
+        }
     }
     Ok(())
 }
@@ -217,6 +230,9 @@ fn parse_run(selector: &str, args: &[String]) -> Result<Command, String> {
         }
         index += 2;
     }
+    if options.baseline.is_some() && options.write_baseline.is_some() {
+        return Err("--baseline and --write-baseline are mutually exclusive".to_owned());
+    }
 
     Ok(Command::Run(options))
 }
@@ -235,6 +251,8 @@ fn is_exact_revision(value: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::{Command, OutputFormat, parse_args};
 
     fn parse(args: &[&str]) -> Result<Command, String> {
@@ -258,22 +276,47 @@ mod tests {
         assert!(matches!(
             parse(&[
                 "--refresh",
-                "cargo",
+                "cargo/schema-enum-drift/toml-debug-info-spellings",
                 "--revision",
                 "0123456789abcdef0123456789abcdef01234567",
             ]),
-            Ok(Command::Refresh { .. })
+            Ok(Command::Refresh { selector, revision })
+                if selector == "cargo/schema-enum-drift/toml-debug-info-spellings"
+                    && revision == "0123456789abcdef0123456789abcdef01234567"
         ));
         assert!(matches!(
-            parse(&["cargo", "--format", "json"]),
-            Ok(Command::Run(options)) if options.format == OutputFormat::Json
+            parse(&[
+                "cargo",
+                "--baseline",
+                "baseline.json",
+                "--chirograph-bin",
+                "target/debug/chirograph",
+                "--format",
+                "json",
+            ]),
+            Ok(Command::Run(options))
+                if options.selector == "cargo"
+                    && options.baseline == Some(PathBuf::from("baseline.json"))
+                    && options.chirograph_bin == Some(PathBuf::from("target/debug/chirograph"))
+                    && options.format == OutputFormat::Json
         ));
     }
 
     #[test]
     fn rejects_cli_surface_expansion_and_invalid_revision() {
-        assert!(parse(&["--unknown"]).is_err());
-        assert!(parse(&["cargo", "--format", "yaml"]).is_err());
+        assert!(parse(&["--all"]).is_err());
         assert!(parse(&["--refresh", "cargo", "--revision", "main"]).is_err());
+        assert!(parse(&["all", "--format", "yaml"]).is_err());
+        assert!(parse(&["all", "--unknown", "value"]).is_err());
+        assert!(
+            parse(&[
+                "all",
+                "--baseline",
+                "baseline.json",
+                "--write-baseline",
+                "next.json",
+            ])
+            .is_err()
+        );
     }
 }

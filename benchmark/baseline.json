@@ -1,0 +1,213 @@
+{
+  "schema": "chirograph-benchmark-baseline-v1",
+  "cases": [
+    {
+      "id": "arrow/cross-language-schema/field-and-schema",
+      "specimen_sha256": "404a94faba55b57a40b4bcdff9c87584631949d0e3aaa0e68a5deb18e036bb8f",
+      "golden_sha256": "d00c8932e759aa3af6afcf65b818f8a7ec10934f1967131c7d89f39f7adf37d8",
+      "result": {
+        "id": "arrow/cross-language-schema/field-and-schema",
+        "repository": "arrow",
+        "scenario": "cross-language-schema",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 2, "ratio": 0.0},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "diagnostics": []
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "cargo/schema-enum-drift/toml-debug-info-spellings",
+      "specimen_sha256": "f55c9546443a7084f52ef3778557d8a277b504fcbcda7689a781fc4c675e708d",
+      "golden_sha256": "71e1403649adb71568a31c892d2d34fa677d51e58a69205f5c8a667f4b1564f2",
+      "result": {
+        "id": "cargo/schema-enum-drift/toml-debug-info-spellings",
+        "repository": "cargo",
+        "scenario": "schema-enum-drift",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "diagnostics": []
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "envoy/v2-v3-lifecycle/config-source",
+      "specimen_sha256": "c4aa850cb3744cfb618e1c48b6f977387bdfc61621c8338feb0701bfe493bd0c",
+      "golden_sha256": "b96530cb28fb6e85491a278def03414b8d3239f869af312f024cb0bb874b4c55",
+      "result": {
+        "id": "envoy/v2-v3-lifecycle/config-source",
+        "repository": "envoy",
+        "scenario": "v2-v3-lifecycle",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "diagnostics": ["lifecycle_not_observed"]
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "kafka/message-spec-generation/produce-request-data",
+      "specimen_sha256": "430f4fe1841d9fbfe697337e39c6a492e6622d24322d6297b77ca94c21ac39e2",
+      "golden_sha256": "a1ca518421324a692c2eef79605cd957543d581cf29711f779f80d057251272c",
+      "result": {
+        "id": "kafka/message-spec-generation/produce-request-data",
+        "repository": "kafka",
+        "scenario": "message-spec-generation",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 3, "ratio": 0.0},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "diagnostics": []
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "kubernetes/go-protobuf-openapi/core-v1-pod",
+      "specimen_sha256": "5895e5731b71fae9647de60b747b950d3d67cd5e412cb932568b797842519b23",
+      "golden_sha256": "f82411a17cffc848072a40016e9e43aab4796f13987f5b138f64f6ae77313dbc",
+      "result": {
+        "id": "kubernetes/go-protobuf-openapi/core-v1-pod",
+        "repository": "kubernetes",
+        "scenario": "go-protobuf-openapi",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "diagnostics": []
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "pydantic/validation-vs-serialization/json-schema-mode",
+      "specimen_sha256": "77fa699984622ae315b119fdd661490ba01c3381bc8e1fcd1baa081a3d7b87f7",
+      "golden_sha256": "021b011e1984134fbf926c7c0302d8938d764af2342c07660f96c42bb0d457db",
+      "result": {
+        "id": "pydantic/validation-vs-serialization/json-schema-mode",
+        "repository": "pydantic",
+        "scenario": "validation-vs-serialization",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 2, "ratio": 0.0},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "diagnostics": []
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "rails/migration-db-schema-authority/schema-dump-current-state",
+      "specimen_sha256": "5faa2656828528802449c1e60ed1d32d3f10b496603616d8d2d41f3644ec50ff",
+      "golden_sha256": "864abe71b62d2b6c8520f55588231757ddf52c3afa36699b22fdc16bec387b4f",
+      "result": {
+        "id": "rails/migration-db-schema-authority/schema-dump-current-state",
+        "repository": "rails",
+        "scenario": "migration-db-schema-authority",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 2, "ratio": 0.0},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "diagnostics": ["lifecycle_not_observed"]
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "temporal/multi-dialect-persistence/executions-table",
+      "specimen_sha256": "f576fa92f9869eddf4a428dded0a1954d6ed94d38cf6bab7e992279c95fe1240",
+      "golden_sha256": "63857a9c54065b73342b0b9a1400cc9e3543de19bd1070c79b6148ffe8202c1f",
+      "result": {
+        "id": "temporal/multi-dialect-persistence/executions-table",
+        "repository": "temporal",
+        "scenario": "multi-dialect-persistence",
+        "status": "scored",
+        "score": {
+          "contract_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_recall": {"numerator": 0, "denominator": 1, "ratio": 0.0},
+          "contract_f1": null,
+          "false_contract_rate": {"numerator": 0, "denominator": 0, "ratio": null},
+          "contract_inflation": 0.0,
+          "authority_correctness": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "relationship_recall": {"numerator": 0, "denominator": 3, "ratio": 0.0},
+          "lifecycle_correctness": null,
+          "finding_precision": {"numerator": 0, "denominator": 0, "ratio": null},
+          "finding_recall": {"numerator": 0, "denominator": 0, "ratio": null},
+          "diagnostics": []
+        },
+        "diagnostics": []
+      }
+    }
+  ]
+}

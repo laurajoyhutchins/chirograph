@@ -28,6 +28,8 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Run tests
         run: cargo test --workspace --all-features
+      - name: Enforce contract benchmark baseline
+        run: cargo benchmark all --baseline benchmark/baseline.json
       - name: Test Overcenter adapter
         run: node --test adapters/overcenter/convert.test.mjs
       - name: Validate adapted evidence through Chirograph

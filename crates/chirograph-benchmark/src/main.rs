@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use chirograph_benchmark::aggregate::aggregate_report;
 use chirograph_benchmark::baseline::{
-    build_baseline, compare_exact_baseline, read_baseline, write_baseline,
+    build_baseline, compare_baseline, read_baseline, write_baseline,
 };
 use chirograph_benchmark::corpus::discover_corpus;
 use chirograph_benchmark::model::BenchmarkCase;
@@ -90,10 +90,12 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
         .collect::<Vec<_>>();
     let report = aggregate_report(&results);
 
-    if let Some(path) = &options.baseline {
+    let comparison = if let Some(path) = &options.baseline {
         let baseline = read_baseline(path)?;
-        compare_exact_baseline(&baseline, &selected, &results)?;
-    }
+        Some(compare_baseline(&baseline, &selected, &results)?)
+    } else {
+        None
+    };
     if let Some(path) = &options.write_baseline {
         let baseline = build_baseline(&selected, &results)?;
         write_baseline(path, &baseline)?;
@@ -105,6 +107,18 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
             "{}",
             render_json_report(&report).map_err(|error| error.to_string())?
         ),
+    }
+
+    if let Some(comparison) = comparison {
+        for improvement in &comparison.improvements {
+            eprintln!("benchmark baseline improvement: {improvement}");
+        }
+        if !comparison.regressions.is_empty() {
+            return Err(format!(
+                "benchmark baseline regression:\n{}",
+                comparison.regressions.join("\n")
+            ));
+        }
     }
     Ok(())
 }
@@ -216,6 +230,9 @@ fn parse_run(selector: &str, args: &[String]) -> Result<Command, String> {
         }
         index += 2;
     }
+    if options.baseline.is_some() && options.write_baseline.is_some() {
+        return Err("--baseline and --write-baseline are mutually exclusive".to_owned());
+    }
 
     Ok(Command::Run(options))
 }
@@ -257,22 +274,47 @@ mod tests {
         assert!(matches!(
             parse(&[
                 "--refresh",
-                "cargo",
+                "cargo/schema-enum-drift/toml-debug-info-spellings",
                 "--revision",
                 "0123456789abcdef0123456789abcdef01234567",
             ]),
-            Ok(Command::Refresh { .. })
+            Ok(Command::Refresh { selector, revision })
+                if selector == "cargo/schema-enum-drift/toml-debug-info-spellings"
+                    && revision == "0123456789abcdef0123456789abcdef01234567"
         ));
         assert!(matches!(
-            parse(&["cargo", "--format", "json"]),
-            Ok(Command::Run(options)) if options.format == OutputFormat::Json
+            parse(&[
+                "cargo",
+                "--baseline",
+                "baseline.json",
+                "--chirograph-bin",
+                "target/debug/chirograph",
+                "--format",
+                "json",
+            ]),
+            Ok(Command::Run(options))
+                if options.selector == "cargo"
+                    && options.baseline == Some(PathBuf::from("baseline.json"))
+                    && options.chirograph_bin == Some(PathBuf::from("target/debug/chirograph"))
+                    && options.format == OutputFormat::Json
         ));
     }
 
     #[test]
     fn rejects_cli_surface_expansion_and_invalid_revision() {
-        assert!(parse(&["--unknown"]).is_err());
-        assert!(parse(&["cargo", "--format", "yaml"]).is_err());
+        assert!(parse(&["--all"]).is_err());
         assert!(parse(&["--refresh", "cargo", "--revision", "main"]).is_err());
+        assert!(parse(&["all", "--format", "yaml"]).is_err());
+        assert!(parse(&["all", "--unknown", "value"]).is_err());
+        assert!(
+            parse(&[
+                "all",
+                "--baseline",
+                "baseline.json",
+                "--write-baseline",
+                "next.json",
+            ])
+            .is_err()
+        );
     }
 }

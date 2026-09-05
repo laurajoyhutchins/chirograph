@@ -46,8 +46,7 @@ fn baseline(status: CaseStatus, score: Option<CaseScore>) -> BenchmarkBaselineV1
             id: "repo/scenario/case".to_owned(),
             specimen_sha256: "a".repeat(64),
             golden_sha256: "b".repeat(64),
-            status,
-            score,
+            result: result(status, score),
         }],
     }
 }

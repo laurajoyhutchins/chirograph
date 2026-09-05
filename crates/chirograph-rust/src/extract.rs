@@ -117,6 +117,38 @@ fn walk(
             }
         }
 
+        if node.kind() == "impl_item"
+            && let Some(trait_node) = node.child_by_field_name("trait")
+            && !trait_node.is_error()
+            && !trait_node.is_missing()
+            && !trait_node.has_error()
+        {
+            emit_fact(
+                parsed,
+                trait_node,
+                RustFactKind::TraitReference,
+                None,
+                container,
+                facts,
+            );
+        }
+
+        if node.kind() == "match_arm"
+            && let Some(pattern_node) = node.child_by_field_name("pattern")
+            && !pattern_node.is_error()
+            && !pattern_node.is_missing()
+            && !pattern_node.has_error()
+        {
+            emit_fact(
+                parsed,
+                pattern_node,
+                RustFactKind::MatchPattern,
+                None,
+                container,
+                facts,
+            );
+        }
+
         if let Some(type_node) = node.child_by_field_name("type")
             && !type_node.is_error()
             && !type_node.is_missing()

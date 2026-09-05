@@ -15,6 +15,14 @@ struct Declaration<'a> {
     full_container: Vec<String>,
 }
 
+#[derive(Debug, Clone)]
+struct ClosedValueEvidence {
+    values: BTreeSet<String>,
+    start_byte: usize,
+    end_byte: usize,
+    fact: String,
+}
+
 pub fn extract_rust_candidates(
     context: &AnalysisSourceContext,
     locator: &str,
@@ -223,17 +231,14 @@ fn walk_struct(
                 candidates,
             )?,
             RustFactKind::Enum => {
-                let Some(values) = enum_closed_values(facts, target, bytes) else {
+                let Some(closed) = enum_closed_values(facts, target, bytes) else {
                     continue;
                 };
                 evidence.push(CandidateEvidence {
                     source: context.source.clone(),
                     revision: context.revision.clone(),
-                    locator: span_locator(locator, target.fact),
-                    fact: format!(
-                        "closed serialized enum [{}]",
-                        values.iter().cloned().collect::<Vec<_>>().join(",")
-                    ),
+                    locator: byte_span_locator(locator, closed.start_byte, closed.end_byte),
+                    fact: closed.fact,
                 });
                 candidates.push(RepresentationCandidate::new(
                     RepresentationKind::SourceCode,
@@ -241,7 +246,7 @@ fn walk_struct(
                     locator,
                     BTreeSet::from([ContractFacet::Structural]),
                     SemanticPath::new(next_path)?,
-                    Some(values),
+                    Some(closed.values),
                     BTreeSet::from([
                         CandidateMechanism::RustSerializedField,
                         CandidateMechanism::RustTypeReference,
@@ -382,24 +387,229 @@ fn enum_closed_values(
     facts: &[RustFact],
     declaration: &Declaration<'_>,
     bytes: &[u8],
+) -> Option<ClosedValueEvidence> {
+    let variants = enum_variant_names(facts, declaration)?;
+    if let Some(rename_all) = serde_rename_all(leading_attributes(facts, declaration.fact, bytes)) {
+        let values = variants
+            .iter()
+            .map(|variant| apply_case_rule(variant, &rename_all))
+            .collect::<Option<BTreeSet<_>>>()?;
+        return Some(ClosedValueEvidence {
+            fact: format!(
+                "closed serialized enum [{}]",
+                values.iter().cloned().collect::<Vec<_>>().join(",")
+            ),
+            values,
+            start_byte: declaration.fact.span.start_byte,
+            end_byte: declaration.fact.span.end_byte,
+        });
+    }
+
+    manual_deserialize_closed_string_vocabulary(facts, declaration, bytes, &variants)
+}
+
+fn enum_variant_names(
+    facts: &[RustFact],
+    declaration: &Declaration<'_>,
 ) -> Option<BTreeSet<String>> {
-    let rename_all = serde_rename_all(leading_attributes(facts, declaration.fact, bytes))?;
     let variants = facts
         .iter()
         .filter(|fact| {
             fact.kind == RustFactKind::Variant && fact.container == declaration.full_container
         })
+        .map(|fact| fact.name.clone())
+        .collect::<Option<BTreeSet<_>>>()?;
+    (!variants.is_empty()).then_some(variants)
+}
+
+fn manual_deserialize_closed_string_vocabulary(
+    facts: &[RustFact],
+    declaration: &Declaration<'_>,
+    bytes: &[u8],
+    variants: &BTreeSet<String>,
+) -> Option<ClosedValueEvidence> {
+    let enum_name = declaration.fact.name.as_deref()?;
+    let impls = facts
+        .iter()
+        .filter(|fact| {
+            fact.kind == RustFactKind::Impl
+                && fact.container == declaration.fact.container
+                && impl_targets_declaration(facts, fact, enum_name)
+                && impl_trait_name(facts, fact).as_deref() == Some("Deserialize")
+        })
         .collect::<Vec<_>>();
-    if variants.is_empty() {
+    let [implementation] = impls.as_slice() else {
+        return None;
+    };
+
+    let methods = facts
+        .iter()
+        .filter(|fact| {
+            fact.kind == RustFactKind::Method
+                && fact.name.as_deref() == Some("deserialize")
+                && fact.container == declaration.full_container
+                && contained_by(fact, implementation)
+        })
+        .collect::<Vec<_>>();
+    let [method] = methods.as_slice() else {
+        return None;
+    };
+
+    let mut match_container = declaration.full_container.clone();
+    match_container.push("deserialize".to_owned());
+    let candidates = facts
+        .iter()
+        .filter(|fact| {
+            fact.kind == RustFactKind::Match
+                && fact.container == match_container
+                && contained_by(fact, method)
+        })
+        .filter_map(|fact| closed_string_match(facts, fact, bytes, enum_name, variants))
+        .collect::<Vec<_>>();
+    let [candidate] = candidates.as_slice() else {
+        return None;
+    };
+    Some(candidate.clone())
+}
+
+fn impl_targets_declaration(facts: &[RustFact], implementation: &RustFact, name: &str) -> bool {
+    let targets = facts
+        .iter()
+        .filter(|fact| {
+            fact.kind == RustFactKind::TypeExpression
+                && fact.container == implementation.container
+                && contained_by(fact, implementation)
+                && fact.text.trim() == name
+        })
+        .count();
+    targets == 1
+}
+
+fn impl_trait_name(facts: &[RustFact], implementation: &RustFact) -> Option<String> {
+    let references = facts
+        .iter()
+        .filter(|fact| {
+            fact.kind == RustFactKind::TraitReference
+                && fact.container == implementation.container
+                && contained_by(fact, implementation)
+        })
+        .collect::<Vec<_>>();
+    let [reference] = references.as_slice() else {
+        return None;
+    };
+    let without_generics = reference.text.split('<').next()?.trim();
+    let name = without_generics.rsplit("::").next()?.trim();
+    (!name.is_empty() && name.chars().all(|character| character.is_ascii_alphanumeric() || character == '_'))
+        .then(|| name.to_owned())
+}
+
+fn closed_string_match(
+    facts: &[RustFact],
+    match_fact: &RustFact,
+    bytes: &[u8],
+    enum_name: &str,
+    variants: &BTreeSet<String>,
+) -> Option<ClosedValueEvidence> {
+    if facts.iter().any(|fact| {
+        fact.kind == RustFactKind::Match
+            && fact.container == match_fact.container
+            && strictly_contained_by(fact, match_fact)
+    }) {
         return None;
     }
-    variants
-        .into_iter()
-        .map(|variant| {
-            let name = variant.name.as_deref()?;
-            apply_case_rule(name, &rename_all)
+
+    let arms = facts
+        .iter()
+        .filter(|fact| {
+            fact.kind == RustFactKind::MatchArm
+                && fact.container == match_fact.container
+                && contained_by(fact, match_fact)
         })
-        .collect()
+        .collect::<Vec<_>>();
+    if arms.is_empty() {
+        return None;
+    }
+
+    let mut values = BTreeSet::new();
+    let mut mapped_variants = BTreeSet::new();
+    let mut rejecting_wildcards = 0usize;
+    for arm in arms {
+        let patterns = facts
+            .iter()
+            .filter(|fact| {
+                fact.kind == RustFactKind::MatchPattern
+                    && fact.container == arm.container
+                    && contained_by(fact, arm)
+            })
+            .collect::<Vec<_>>();
+        let [pattern] = patterns.as_slice() else {
+            return None;
+        };
+        let body = std::str::from_utf8(bytes.get(pattern.span.end_byte..arm.span.end_byte)?)
+            .ok()?;
+        if pattern.text.trim() == "_" {
+            if body.trim_start().starts_with("=> Err(") || body.contains("return Err(") {
+                rejecting_wildcards += 1;
+                continue;
+            }
+            return None;
+        }
+
+        let value = parse_simple_rust_string_pattern(&pattern.text)?;
+        let variant = mapped_enum_variant(body, enum_name, variants)?;
+        if !values.insert(value) {
+            return None;
+        }
+        mapped_variants.insert(variant);
+    }
+
+    if rejecting_wildcards != 1 || values.is_empty() || &mapped_variants != variants {
+        return None;
+    }
+
+    Some(ClosedValueEvidence {
+        fact: format!(
+            "manual Deserialize closed string vocabulary [{}]",
+            values.iter().cloned().collect::<Vec<_>>().join(",")
+        ),
+        values,
+        start_byte: match_fact.span.start_byte,
+        end_byte: match_fact.span.end_byte,
+    })
+}
+
+fn parse_simple_rust_string_pattern(text: &str) -> Option<String> {
+    let value = serde_json::from_str::<String>(text.trim()).ok()?;
+    (!value.is_empty() && value.trim() == value).then_some(value)
+}
+
+fn mapped_enum_variant(
+    body: &str,
+    enum_name: &str,
+    variants: &BTreeSet<String>,
+) -> Option<String> {
+    let matches = variants
+        .iter()
+        .filter(|variant| {
+            body.contains(&format!("Self::{variant}"))
+                || body.contains(&format!("{enum_name}::{variant}"))
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    let [variant] = matches.as_slice() else {
+        return None;
+    };
+    Some(variant.clone())
+}
+
+fn contained_by(inner: &RustFact, outer: &RustFact) -> bool {
+    inner.span.start_byte >= outer.span.start_byte && inner.span.end_byte <= outer.span.end_byte
+}
+
+fn strictly_contained_by(inner: &RustFact, outer: &RustFact) -> bool {
+    contained_by(inner, outer)
+        && (inner.span.start_byte != outer.span.start_byte
+            || inner.span.end_byte != outer.span.end_byte)
 }
 
 fn serde_string_argument(text: &str, key: &str) -> Option<String> {
@@ -500,8 +710,9 @@ fn qualified_identity(declaration: &Declaration<'_>) -> String {
 }
 
 fn span_locator(locator: &str, fact: &RustFact) -> String {
-    format!(
-        "{locator}#bytes={}-{}",
-        fact.span.start_byte, fact.span.end_byte
-    )
+    byte_span_locator(locator, fact.span.start_byte, fact.span.end_byte)
+}
+
+fn byte_span_locator(locator: &str, start_byte: usize, end_byte: usize) -> String {
+    format!("{locator}#bytes={start_byte}-{end_byte}")
 }

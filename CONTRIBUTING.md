@@ -13,9 +13,11 @@ Chirograph welcomes bug reports, benchmark cases, language adapters, documentati
    cargo check --workspace --all-targets
    cargo clippy --workspace --all-targets --all-features -- -D warnings
    cargo test --workspace --all-features
+   python tools/check_release_metadata.py
+   cargo build --quiet -p chirograph-cli
+   cargo benchmark all --baseline benchmark/baseline.json --chirograph-bin target/debug/chirograph
    node --test adapters/overcenter/convert.test.mjs
    python -m unittest adapters/pydantic/test_adapter.py -v
-   python tools/check_release_metadata.py
    ```
 
 4. Explain the contract or evidence behavior being changed and cite exact test or benchmark evidence in the pull request.
@@ -36,7 +38,7 @@ New adapters should follow [`docs/adapters.md`](docs/adapters.md). At minimum th
 
 Benchmark machinery must remain generic. A benchmark case may contain specimen-specific data and expected outcomes, but the benchmark runner and production analysis path must not grow specimen-specific branches.
 
-Before adding third-party bytes, read [`docs/licensing.md`](docs/licensing.md). Every benchmark case that bundles or references upstream material must include `provenance.json` conforming to [`benchmarks/provenance.schema.json`](benchmarks/provenance.schema.json). Preserve upstream copyright, license, and NOTICE requirements. Do not assume that public source code is redistributable under Chirograph's license.
+Before adding third-party bytes, read [`docs/licensing.md`](docs/licensing.md). Cases live only under `benchmark/<repository>/<scenario>/<case>/` and contain `specimen.yaml`, `golden.yaml`, and `fixture/`. `specimen.yaml` pins the exact upstream revision and fixture SHA-256 digests; the Rust corpus loader verifies those identities. Preserve upstream copyright, license, and NOTICE requirements documented in [`benchmark/README.md`](benchmark/README.md). Do not recreate the removed legacy `benchmarks/` root or add `provenance.json` case metadata.
 
 ## Developer Certificate of Origin
 

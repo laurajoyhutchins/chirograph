@@ -58,10 +58,11 @@ Baseline comparison is directional:
 
 - `execution-failure` or `invalid-output` becoming `scored` is an improvement;
 - `scored` becoming a failure is a regression;
-- higher-is-better quality metrics may increase but may not decrease;
-- false-contract rate may decrease but may not increase;
+- higher-is-better quality metrics may increase but may not decrease; a previously undefined metric becoming observable at zero is a regression, not an improvement;
+- false-contract rate may decrease but may not increase; previously unavailable becoming positive is a regression, while becoming observable at zero may improve;
 - contract inflation may move toward `1.0` but not farther away;
-- changed specimen or golden digests fail closed and require explicit baseline review.
+- changed specimen or golden digests fail closed and require explicit baseline review;
+- `cargo benchmark all --baseline ...` requires exact case-ID coverage in both directions, so deleting a case cannot silently shrink the reviewed corpus. Selector-scoped comparisons may intentionally use a superset baseline.
 
 To create a candidate baseline intentionally:
 

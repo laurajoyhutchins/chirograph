@@ -13,7 +13,7 @@ fn context() -> AnalysisSourceContext {
 
 #[test]
 fn extracts_explicit_property_path_and_closed_value_set() {
-    let schema = br#"{
+    let schema = br##"{
         "type": "object",
         "properties": {
             "profile": {
@@ -26,7 +26,7 @@ fn extracts_explicit_property_path_and_closed_value_set() {
                 }
             }
         }
-    }"#;
+    }"##;
 
     let candidates = extract_json_schema_candidates(&context(), "schema.json", schema).unwrap();
     assert_eq!(candidates.len(), 1);
@@ -52,7 +52,7 @@ fn extracts_explicit_property_path_and_closed_value_set() {
 
 #[test]
 fn omits_open_properties_from_first_slice() {
-    let schema = br#"{
+    let schema = br##"{
         "type": "object",
         "properties": {
             "profile": {
@@ -60,7 +60,7 @@ fn omits_open_properties_from_first_slice() {
                 "properties": { "name": { "type": "string" } }
             }
         }
-    }"#;
+    }"##;
 
     assert!(
         extract_json_schema_candidates(&context(), "schema.json", schema)
@@ -71,11 +71,11 @@ fn omits_open_properties_from_first_slice() {
 
 #[test]
 fn broken_local_reference_fails_closed() {
-    let schema = br#"{
+    let schema = br##"{
         "type": "object",
         "properties": { "profile": { "$ref": "#/$defs/Missing" } },
         "$defs": {}
-    }"#;
+    }"##;
 
     assert!(extract_json_schema_candidates(&context(), "schema.json", schema).is_err());
 }

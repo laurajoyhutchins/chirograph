@@ -377,6 +377,75 @@ fn discover(root: &Path, current: &Path, files: &mut Vec<PathBuf>) -> Result<(),
     Ok(())
 }
 
+fn acquire_rust(
+    bytes: &[u8],
+    path: &str,
+    context: &AcquisitionContext,
+    facts: &mut Vec<AcquiredFact>,
+) -> Result<(), AcquisitionError> {
+    let provenance = SourceProvenance {
+        source: context.source.clone(),
+        revision: context.revision.clone(),
+        locator: path.to_owned(),
+        path: path.to_owned(),
+    };
+    let extraction = extract_rust_facts(bytes, provenance).map_err(|error| {
+        AcquisitionError::AdapterFailure {
+            adapter: "Rust".to_owned(),
+            path: path.to_owned(),
+            message: error.to_string(),
+        }
+    })?;
+    if !extraction.diagnostics.is_empty() {
+        return Err(AcquisitionError::MalformedSyntax {
+            adapter: "Rust".to_owned(),
+            path: path.to_owned(),
+            diagnostic_count: extraction.diagnostics.len(),
+        });
+    }
+
+    for fact in extraction.facts {
+        let span = fact.span;
+        facts.push(AcquiredFact {
+            adapter: "rust".to_owned(),
+            kind: rust_fact_kind(fact.kind).to_owned(),
+            path: fact.provenance.path,
+            locator: format!("{}#bytes={}-{}", path, span.start_byte, span.end_byte),
+            text: fact.text,
+            source: fact.provenance.source,
+            revision: fact.provenance.revision,
+            span: Some(span.into()),
+        });
+    }
+    Ok(())
+}
+
+const fn rust_fact_kind(kind: RustFactKind) -> &'static str {
+    match kind {
+        RustFactKind::Module => "module",
+        RustFactKind::Struct => "struct",
+        RustFactKind::Enum => "enum",
+        RustFactKind::Variant => "variant",
+        RustFactKind::Trait => "trait",
+        RustFactKind::Impl => "impl",
+        RustFactKind::Function => "function",
+        RustFactKind::Method => "method",
+        RustFactKind::Field => "field",
+        RustFactKind::Const => "const",
+        RustFactKind::Static => "static",
+        RustFactKind::TypeExpression => "type_expression",
+        RustFactKind::Attribute => "attribute",
+        RustFactKind::Call => "call",
+        RustFactKind::MacroCall => "macro_call",
+        RustFactKind::If => "if",
+        RustFactKind::Match => "match",
+        RustFactKind::MatchArm => "match_arm",
+        RustFactKind::Return => "return",
+        RustFactKind::Comment => "comment",
+        RustFactKind::Assertion => "assertion",
+    }
+}
+
 fn acquire_json(
     bytes: &[u8],
     path: &str,

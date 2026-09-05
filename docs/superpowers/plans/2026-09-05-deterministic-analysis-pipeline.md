@@ -12,6 +12,8 @@
 
 **Related plan:** `docs/superpowers/plans/2026-09-03-tree-sitter-rust-cargo-slice.md`
 
+> **Discovered acceptance contradiction (2026-09-05):** The pinned Cargo fixture mechanically exposes the consumer path `profile.debug`, while the reviewed golden requires `cargo.profile.debug-info`. Task 4's synthetic `debug_info -> debug-info` example assumed a field shape that is not present upstream. See `docs/benchmarks/cargo-profile-debug-identity-derivability.md`. Do not introduce a type-name normalization, benchmark/golden hint, fuzzy scorer alias, or Cargo-specific recognizer to force the golden identity. Until the benchmark/architecture identity contract is explicitly reconciled, the original Cargo recall acceptance condition is not mechanically satisfiable with all stated boundaries held fixed.
+
 ## Non-negotiable boundaries
 
 - `benchmark/` remains data-only. Do not add executable recognizers, mappings, hints, or generated answers under it.

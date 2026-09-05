@@ -28,12 +28,8 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Run tests
         run: cargo test --workspace --all-features
-      - name: Generate benchmark baseline candidate
-        run: |
-          cargo benchmark all --write-baseline /tmp/chirograph-benchmark-baseline.json --format json > /tmp/chirograph-benchmark-report.json
-          echo 'BEGIN_CHIROGRAPH_BENCHMARK_BASELINE'
-          cat /tmp/chirograph-benchmark-baseline.json
-          echo 'END_CHIROGRAPH_BENCHMARK_BASELINE'
+      - name: Enforce contract benchmark baseline
+        run: cargo benchmark all --baseline benchmark/baseline.json
       - name: Test Overcenter adapter
         run: node --test adapters/overcenter/convert.test.mjs
       - name: Validate adapted evidence through Chirograph

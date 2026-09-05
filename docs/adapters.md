@@ -38,6 +38,16 @@ caller-supplied source / observed behavior
 
 A shared parser substrate may provide byte spans, deterministic traversal, and diagnostics. Language adapters may map syntax nodes into useful source-local facts. Higher layers may rank evidence candidates or construct clause assertions. Keeping these layers visible prevents a benchmark-specific heuristic from quietly becoming a "parser feature."
 
+## Production acquisition runtime
+
+`chirograph-acquisition` is the common production boundary used by `chirograph analyze` before semantic graph assembly. It owns deterministic repository-relative discovery, adapter registration and selection, caller-supplied source/revision context, provenance/span transport, bounded diagnostics, and stable fact ordering. It deliberately does not own logical contract identity, cross-representation alignment, authority, or clause truth.
+
+Adapters implement the public `SourceAdapter` contract by declaring a stable capability record and extracting source-local `AcquiredFact` values from caller-supplied bytes. Tree-sitter-backed languages and semantic structured-data parsers share this runtime envelope without sharing a fake universal syntax vocabulary. The built-in runtime currently proves both paths with Rust and semantic JSON/JSON-with-comments acquisition; additional language and schema adapters should plug into the same registry instead of copying file discovery, parser lifecycle, or provenance machinery.
+
+Adapter identity must be unique. If more than one adapter claims a discovered file, selection fails closed rather than choosing by registration order. Unsupported regular files produce bounded diagnostics instead of evidence of absence. Malformed supported input is an acquisition failure, not partial semantic evidence. Discovery does not follow symlinks and skips common generated/dependency directories.
+
+The acquisition runtime performs no network access, repository checkout, analyzed-project execution, dependency installation, fuzzy matching, benchmark/case dispatch, golden access, or authority inference. Those capabilities, when needed, belong behind separate explicit trust and reasoning boundaries.
+
 ## Source retrieval
 
 Source retrieval and source parsing are separate capabilities. An adapter should be usable with caller-supplied bytes when practical. Live remote retrieval can be useful in demos and tooling, but a benchmark should not score retrieval unless retrieval itself is the phenomenon being measured.

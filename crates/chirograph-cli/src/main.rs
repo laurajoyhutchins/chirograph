@@ -5,13 +5,14 @@ use std::fs;
 use std::path::Path;
 use std::process::ExitCode;
 
+use chirograph_acquisition::{AcquisitionContext, AcquisitionRuntime};
 use chirograph_core::alignment::AlignmentState;
 use chirograph_core::alignment_interchange::parse_alignment_json;
 use chirograph_core::evidence::parse_evidence_json;
 use chirograph_core::graph_json::encode_graph_json;
 use chirograph_core::model::{
     AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph, ContractId,
-    RepresentationId, Revision,
+    RepresentationId, Revision, SourceId,
 };
 use chirograph_core::query::SemanticQuery;
 
@@ -67,9 +68,18 @@ fn analyze(path: &Path) -> Result<String, String> {
         ));
     }
 
-    // Chirograph must not invent logical contracts from the existence of source files alone.
-    // General acquisition/alignment capabilities can populate this graph as they become part of
-    // the public analysis pipeline; until then the honest result is an empty semantic graph.
+    let context = AcquisitionContext::new(
+        SourceId::new("filesystem:analysis-input")
+            .expect("static analysis source identity must be valid"),
+        Revision::Unknown,
+    );
+    AcquisitionRuntime::default()
+        .acquire_tree(path, &context)
+        .map_err(|error| format!("source acquisition failed: {error}"))?;
+
+    // Acquisition is deliberately source-local. The semantic analysis layer owns the separate
+    // decision to promote acquired facts into logical contracts, so acquisition alone cannot
+    // strengthen an empty graph.
     encode_graph_json(&ContractGraph::default())
         .map_err(|error| format!("cannot encode analyzed contract graph: {error:?}"))
 }

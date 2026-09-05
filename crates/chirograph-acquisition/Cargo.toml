@@ -1,0 +1,17 @@
+[package]
+name = "chirograph-acquisition"
+description = "Deterministic polyglot source acquisition runtime for Chirograph"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+chirograph-core = { path = "../chirograph-core" }
+chirograph-rust = { path = "../chirograph-rust" }
+chirograph-tree-sitter = { path = "../chirograph-tree-sitter" }
+serde_json = "1.0"

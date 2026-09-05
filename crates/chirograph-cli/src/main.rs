@@ -5,6 +5,7 @@ use std::fs;
 use std::path::Path;
 use std::process::ExitCode;
 
+use chirograph_analysis::{AnalysisSourceContext, analyze_tree};
 use chirograph_core::alignment::AlignmentState;
 use chirograph_core::alignment_interchange::parse_alignment_json;
 use chirograph_core::evidence::parse_evidence_json;
@@ -15,7 +16,7 @@ use chirograph_core::model::{
 };
 use chirograph_core::query::SemanticQuery;
 
-const HELP: &str = "Usage:\n  chirograph analyze <source-tree> --format graph-json\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph authority <evidence.json> <contract-id> <facet>\n  chirograph alignment <evidence.json> <alignments.json> <representation-id>\n  chirograph --version\n  chirograph --help\n";
+const HELP: &str = "Usage:\n  chirograph analyze <source-tree> --source-repository <owner/repo> --revision <40-hex|unversioned|unknown> --format graph-json\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph authority <evidence.json> <contract-id> <facet>\n  chirograph alignment <evidence.json> <alignments.json> <representation-id>\n  chirograph --version\n  chirograph --help\n";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -37,10 +38,14 @@ fn run(args: Vec<String>) -> Result<String, String> {
         [arg] if arg == "--version" || arg == "-V" => {
             Ok(format!("chirograph {}\n", chirograph_core::version()))
         }
-        [command, path, flag, format]
-            if command == "analyze" && flag == "--format" && format == "graph-json" =>
+        [command, path, repository_flag, repository, revision_flag, revision, format_flag, format]
+            if command == "analyze"
+                && repository_flag == "--source-repository"
+                && revision_flag == "--revision"
+                && format_flag == "--format"
+                && format == "graph-json" =>
         {
-            analyze(Path::new(path))
+            analyze(Path::new(path), repository, revision)
         }
         [command, path] if command == "inspect" => inspect(Path::new(path)),
         [command, path] if command == "contestations" => contestations(Path::new(path)),
@@ -59,19 +64,27 @@ fn run(args: Vec<String>) -> Result<String, String> {
     }
 }
 
-fn analyze(path: &Path) -> Result<String, String> {
-    if !path.is_dir() {
-        return Err(format!(
-            "source tree is not a readable directory: {}",
-            path.display()
-        ));
-    }
-
-    // Chirograph must not invent logical contracts from the existence of source files alone.
-    // General acquisition/alignment capabilities can populate this graph as they become part of
-    // the public analysis pipeline; until then the honest result is an empty semantic graph.
-    encode_graph_json(&ContractGraph::default())
+fn analyze(path: &Path, repository: &str, revision: &str) -> Result<String, String> {
+    let revision = parse_analysis_revision(revision)?;
+    let context = AnalysisSourceContext::github(repository, revision)
+        .map_err(|error| format!("invalid source repository: {error:?}"))?;
+    let graph = analyze_tree(path, &context)
+        .map_err(|error| format!("cannot analyze source tree: {error:?}"))?;
+    encode_graph_json(&graph)
         .map_err(|error| format!("cannot encode analyzed contract graph: {error:?}"))
+}
+
+fn parse_analysis_revision(value: &str) -> Result<Revision, String> {
+    match value {
+        "unversioned" => Ok(Revision::Unversioned),
+        "unknown" => Ok(Revision::Unknown),
+        value if value.len() == 40 && value.bytes().all(|byte| byte.is_ascii_hexdigit()) => {
+            Ok(Revision::Exact(value.to_owned()))
+        }
+        _ => Err(format!(
+            "invalid revision {value:?}: expected 40 hexadecimal characters, \"unversioned\", or \"unknown\""
+        )),
+    }
 }
 
 fn read_graph(path: &Path) -> Result<ContractGraph, String> {

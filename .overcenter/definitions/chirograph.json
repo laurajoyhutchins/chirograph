@@ -15,6 +15,18 @@
       }
     },
     {
+      "id": "audit-reviewed-benchmark-identity-derivability",
+      "priority": 99,
+      "requires": [
+        "implement-deterministic-analysis-pipeline"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "architecture",
+        "skill": "Audit the seven reviewed non-Cargo benchmark cases from the exact current Chirograph authority before further score optimization. For Arrow, Envoy, Kafka, Kubernetes, Pydantic, Rails, and Temporal, trace each golden contract identity and requested representation/relationship/lifecycle claim back to exact fixture evidence and classify it as (a) mechanically derivable now, (b) mechanically derivable after a named generic acquisition/analysis capability, or (c) not currently derivable without editorial or reasoning input. Treat strict identity as a benchmark contract: file/name/token similarity, repetition, majority agreement, benchmark path, case ID, and golden truth are not valid production identity bridges. Identify the smallest reusable capability sequence that can improve each case while preserving false-contract restraint, unresolved alignment, facet-scoped authority, deterministic/model-free scored execution, and the public chirograph analyze boundary. Commit a durable reviewed-corpus derivability audit under docs/benchmarks (not a Superpowers scratch plan). Do not change production code, benchmark goldens, or benchmark/baseline.json. Run the current full benchmark on the exact head for evidence. If any golden identity cannot be justified from allowed analyzer inputs, say so explicitly rather than designing a recognizer around it."
+      }
+    },
+    {
       "id": "bootstrap-rust-workspace",
       "priority": 100,
       "requires": [],
@@ -378,6 +390,92 @@
       }
     },
     {
+      "id": "improve-arrow-analysis-score",
+      "priority": 93,
+      "requires": [
+        "improve-temporal-analysis-score"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development and the reviewed derivability audit to improve arrow/cross-language-schema/field-and-schema through generic cross-language declaration/schema analysis. Add only reusable acquisition needed for FlatBuffers schema and the relevant C++/Cython-style declaration surfaces; prove alignment through explicit qualified identities, bindings, or projection evidence rather than token similarity. Do not invent a Java representation absent from the exact fixture/revision. Structural authority may attach to the schema only when explicitly justified; semantic facets and implements relationships require their own evidence. No Arrow-, Field-, benchmark-, or golden-specific production recognition is allowed. Use only public chirograph analyze, keep the golden and benchmark/baseline.json unchanged, require contract recall > 0 without false-contract/inflation regression, and pass the full reviewed baseline on the exact final head."
+      }
+    },
+    {
+      "id": "improve-envoy-analysis-score",
+      "priority": 96,
+      "requires": [
+        "improve-kafka-analysis-score"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development and the reviewed derivability audit to improve envoy/v2-v3-lifecycle/config-source with generic Proto/schema plus documentation/lifecycle analysis. Add or reuse reusable acquisition for protocol-schema declarations and explicit documentation evidence; establish cross-version identity only from mechanically justified package/message/version evidence, not path proximity or name voting. Emit FROZEN versus ACTIVE lifecycle only when the supplied source explicitly supports those states, and keep structural authority facet-scoped. Do not add Envoy-specific production recognition, benchmark-path logic, golden access, fuzzy matching, or model calls. Use only public chirograph analyze. Leave the golden and benchmark/baseline.json unchanged. Require contract recall > 0 and improve lifecycle/authority metrics only where justified, with no false-contract or inflation regression and full-corpus baseline non-regression on the exact final head."
+      }
+    },
+    {
+      "id": "improve-kafka-analysis-score",
+      "priority": 97,
+      "requires": [
+        "improve-pydantic-analysis-score",
+        "rank-java-evidence-candidates"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development and the reviewed derivability audit to improve kafka/message-spec-generation/produce-request-data through generic structured-message and Java lineage analysis. Reuse the generic Java acquisition/candidate machinery. Mechanically connect message-spec, generator, generated-artifact identity, and wrapper/dependency evidence only where source establishes those relationships; a representation absent from the fixture must not be fabricated merely because the golden expects it. Production code must not contain Kafka repository/case/golden identifiers or special-case ProduceRequest. Keep alignment provenance-bearing and unresolved when identity or direction is ambiguous. Use only the public chirograph analyze path. Leave the case golden and benchmark/baseline.json unchanged. Require contract recall > 0 without false-contract or inflation regression, then pass the full reviewed baseline on the exact final head. Settle only with exact PR/final-head CI, direct graph evidence, case score, and full-corpus non-regression."
+      }
+    },
+    {
+      "id": "improve-kubernetes-analysis-score",
+      "priority": 95,
+      "requires": [
+        "improve-envoy-analysis-score"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development and the reviewed derivability audit to improve kubernetes/go-protobuf-openapi/core-v1-pod through generic Go, Proto, and generated/OpenAPI representation analysis. Implement only reusable acquisition/alignment mechanisms required by the source. Preserve exact package-qualified identity and explicit generation/projection evidence. The negative controls are mandatory: PodSpec, PodStatus, and PodList must remain non-contracts/unaligned neighboring or dependent types; more files or matching names may never promote them. Do not special-case Kubernetes, Pod, benchmark paths, or golden IDs in production code. Use only public chirograph analyze, leave the golden and benchmark/baseline.json unchanged, require contract recall > 0 with no false-contract/inflation regression, and pass the full reviewed baseline on the exact final head before settlement."
+      }
+    },
+    {
+      "id": "improve-pydantic-analysis-score",
+      "priority": 98,
+      "requires": [
+        "audit-reviewed-benchmark-identity-derivability",
+        "migrate-pydantic-to-python-specimen"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development and the reviewed derivability audit to improve pydantic/validation-vs-serialization/json-schema-mode through generic production capabilities only. Reuse the generic Python acquisition boundary and deterministic analysis pipeline. Derive contract/representation identity from explicit source-level externally meaningful evidence, preserve validation and serialization as intentional perspectives rather than drift, and add verification/test relationships only when mechanically evidenced. Do not branch on Pydantic, benchmark paths, case IDs, golden IDs, or expected answers; do not use fuzzy matching, model calls, majority voting, or hidden benchmark metadata. Exercise only the public chirograph analyze path. Leave the case golden and benchmark/baseline.json unchanged during this score-improving slice. Require contract recall > 0 with no increase in false-contract rate and no inflation regression, then run the full reviewed corpus against the existing baseline on the exact final head. Settle only with exact PR/final-head CI, direct public graph output, case score, full-corpus non-regression, and unchanged-golden/baseline evidence."
+      }
+    },
+    {
+      "id": "improve-rails-analysis-score",
+      "priority": 92,
+      "requires": [
+        "improve-arrow-analysis-score"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development and the reviewed derivability audit to improve rails/migration-db-schema-authority/schema-dump-current-state through generic Ruby/documentation/current-state analysis only where the fixture provides mechanically sufficient evidence. Preserve the distinction between live current state, generated schema dump, historical migrations, and schema-dumper machinery. Do not fabricate a live database observation, schema dump file, or migration set that is not present in the supplied source merely to match the golden. If strict golden contract identity or a requested representation cannot be mechanically derived from allowed analyzer inputs, fail closed and return a benchmark-design blocker instead of adding Rails-specific recognition or reading golden/case metadata. Use only public chirograph analyze. Any valid score improvement must leave the golden and benchmark/baseline.json unchanged, avoid false-contract/inflation regression, and pass the full reviewed baseline on the exact final head."
+      }
+    },
+    {
+      "id": "improve-temporal-analysis-score",
+      "priority": 94,
+      "requires": [
+        "improve-kubernetes-analysis-score"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "contract-analysis-engineer",
+        "skill": "Use test-driven development and the reviewed derivability audit to improve temporal/multi-dialect-persistence/executions-table through generic SQL/CQL schema acquisition plus reusable verification-link evidence from Go tests. Align dialect-specific table representations only when table identity and structural evidence are explicit and compatible; equivalent-to claims require direct mechanically comparable schema evidence, and no dialect becomes globally authoritative by convention. Treat test validation as a separate verification facet. Do not add Temporal-, executions-, benchmark-, or golden-specific production recognition. Use only public chirograph analyze, leave the golden and benchmark/baseline.json unchanged, require contract recall > 0 without false-contract/inflation regression, and pass the full reviewed baseline on the exact final head."
+      }
+    },
+    {
       "id": "migrate-pydantic-to-python-specimen",
       "priority": 87,
       "requires": [
@@ -423,6 +521,18 @@
         "kind": "agent",
         "role": "contract-analysis-engineer",
         "skill": "Extend the generic Tree-sitter Java adapter with a small deterministic evidence-candidate layer. Do not infer clause truth or supports/contradicts stances. Given language-level Java facts plus a semantic query, mechanically tokenize and normalize identifiers/text, rank facts by relevant term overlap and useful fact kind, and return provenance-preserving candidate observations for higher-level Chirograph or agent judgment. Keep project-specific concepts out of chirograph-core and adapters/java. Update the Kafka idempotence acceptance specimen so it discovers the documentation and validator evidence through the generic candidate layer rather than hard-coded Kafka symbol/condition names, while still producing ordinary chirograph-evidence-v1 and the same CONTESTED clause. Use TDD, add generic ranking tests including false-positive resistance, keep exact revision/source locations, run full CI, and finish with exact commit/PR/CI evidence."
+      }
+    },
+    {
+      "id": "ratchet-reviewed-benchmark-floor",
+      "priority": 91,
+      "requires": [
+        "improve-rails-analysis-score"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "verification",
+        "skill": "After all post-Cargo score slices settle, establish a durable reviewed benchmark regression floor from one exact authoritative Chirograph revision. First run the complete repository verification and full eight-case benchmark using the public analyzer and current reviewed goldens. Confirm every claimed score gain is still present, no case regressed in false-contract rate or contract inflation, and no score slice relied on benchmark metadata or specimen-specific production recognition. If any case remains blocked by a derivability finding, do not hide it by editing golden truth or relaxing scoring; fail closed and use Overcenter project.amend to add the narrow benchmark-design correction required by the reviewed audit before this transition can complete. Otherwise update benchmark/baseline.json only as a separate post-improvement ratchet to the exact observed full-corpus results, preserving specimen/golden digests and current baseline semantics, then rerun the full benchmark against the new baseline plus fmt/check/clippy/test. Finish only with exact integrated commit, PR/final-head CI, full benchmark report, baseline diff, and Overcenter settlement evidence."
       }
     },
     {

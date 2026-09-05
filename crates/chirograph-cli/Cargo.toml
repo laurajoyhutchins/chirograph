@@ -12,4 +12,5 @@ name = "chirograph"
 path = "src/main.rs"
 
 [dependencies]
+chirograph-analysis = { path = "../chirograph-analysis" }
 chirograph-core = { path = "../chirograph-core" }

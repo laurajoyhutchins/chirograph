@@ -3,6 +3,7 @@
 //! Deterministic production analysis between source acquisition and Chirograph graphs.
 
 mod alignment;
+mod analyze;
 mod assembly;
 mod candidate;
 mod context;
@@ -12,6 +13,7 @@ mod json_schema;
 mod rust_projection;
 
 pub use alignment::{AlignmentDecision, CandidateKey, align_candidates};
+pub use analyze::analyze_tree;
 pub use assembly::{AnalysisAssembly, assemble_contract_graph};
 pub use candidate::{CandidateEvidence, CandidateMechanism, RepresentationCandidate, SemanticPath};
 pub use context::AnalysisSourceContext;

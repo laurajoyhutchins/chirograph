@@ -83,6 +83,8 @@ fn unique_differing_pair_promotes_one_contract_and_confirmed_alignments() {
 
     assert_eq!(assembly.graph.contracts.len(), 1);
     assert_eq!(assembly.graph.representations.len(), 2);
+    assert_eq!(assembly.decisions.len(), 1);
+    assert_eq!(assembly.decisions[0].state, AlignmentState::Confirmed);
     let contract = ContractId::new("fixture-project.profile.debug-info").unwrap();
     assert_eq!(assembly.graph.contracts[0].id, contract);
 
@@ -100,7 +102,7 @@ fn unique_differing_pair_promotes_one_contract_and_confirmed_alignments() {
 }
 
 #[test]
-fn equal_closed_values_are_not_promoted_as_drift() {
+fn equal_closed_values_confirm_identity_without_promoting_drift() {
     let context = context();
     let rust = candidate(
         RepresentationKind::SourceCode,
@@ -119,8 +121,11 @@ fn equal_closed_values_are_not_promoted_as_drift() {
 
     let assembly = assemble_contract_graph(&context, &[rust, schema]).unwrap();
     assert!(assembly.graph.contracts.is_empty());
+    assert!(assembly.graph.representations.is_empty());
+    assert!(assembly.graph.observations.is_empty());
     assert!(assembly.alignments.claims.is_empty());
-    assert_eq!(assembly.alignments.representations.len(), 2);
+    assert_eq!(assembly.decisions.len(), 1);
+    assert_eq!(assembly.decisions[0].state, AlignmentState::Confirmed);
 }
 
 #[test]
@@ -159,7 +164,8 @@ fn ambiguous_or_unrelated_candidates_remain_unpromoted() {
         assemble_contract_graph(&context, &[source_a, source_b, schema, unrelated]).unwrap();
     assert!(assembly.graph.contracts.is_empty());
     assert!(assembly.alignments.claims.is_empty());
-    assert_eq!(assembly.alignments.representations.len(), 4);
+    assert_eq!(assembly.decisions.len(), 2);
+    assert!(assembly.decisions.iter().all(|decision| decision.state == AlignmentState::Unresolved));
 }
 
 #[test]

@@ -1,6 +1,8 @@
 use std::collections::BTreeSet;
 
-use chirograph_analysis::{AnalysisSourceContext, CandidateMechanism, extract_json_schema_candidates};
+use chirograph_analysis::{
+    AnalysisSourceContext, CandidateMechanism, extract_json_schema_candidates,
+};
 use chirograph_core::model::{RepresentationKind, Revision};
 
 fn context() -> AnalysisSourceContext {
@@ -41,7 +43,11 @@ fn extracts_explicit_property_path_and_closed_value_set() {
             "none".to_owned(),
         ]))
     );
-    assert!(candidate.mechanisms.contains(&CandidateMechanism::JsonSchemaProperty));
+    assert!(
+        candidate
+            .mechanisms
+            .contains(&CandidateMechanism::JsonSchemaProperty)
+    );
     assert!(
         candidate
             .mechanisms

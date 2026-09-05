@@ -74,7 +74,7 @@ pub fn discover_sources(root: &Path) -> Result<Vec<DiscoveredSource>, AnalysisEr
 
 - [ ] **Step 1: Write failing source-context tests**
 
-Require `github("rust-lang/cargo", Revision::Exact(...))` to derive `SourceId("github:rust-lang/cargo")` and namespace `cargo`. Reject malformed repository identities and empty namespace components.
+Require `github("acme/fixture-project", Revision::Exact(...))` to derive `SourceId("github:acme/fixture-project")` and namespace `fixture-project`. Reject malformed repository identities and empty namespace components.
 
 - [ ] **Step 2: Write failing discovery tests**
 
@@ -132,7 +132,9 @@ pub struct CandidateEvidence {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RepresentationCandidate {
     pub kind: RepresentationKind,
+    pub qualified_local_identity: String,
     pub locator: String,
+    pub facets: BTreeSet<ContractFacet>,
     pub semantic_path: SemanticPath,
     pub closed_values: Option<BTreeSet<String>>,
     pub mechanisms: BTreeSet<CandidateMechanism>,
@@ -140,7 +142,7 @@ pub struct RepresentationCandidate {
 }
 ```
 
-`SemanticPath` is an explicit consumer-facing path, not a tokenized symbol name. Candidate evidence must be sorted/deduplicated stably and must retain exact revision and locator.
+`qualified_local_identity` is the adapter-observed declaration/schema identity inside the supplied source context; it is not a benchmark ID and is not itself sufficient for alignment. `SemanticPath` is an explicit consumer-facing path, not a tokenized symbol name. `facets` records only facets mechanically supported by the candidate evidence. Candidate evidence must be sorted/deduplicated stably, retain exact revision, and use locators precise enough to preserve the originating source span or structured-data location.
 
 - [ ] **Step 1: Write failing invariants**
 
@@ -228,12 +230,16 @@ cargo test -p chirograph-analysis --test rust_projection
 
 ---
 
-## Task 5: Add conservative identity bridging and graph assembly
+## Task 5: Add conservative identity bridging, explicit alignment decisions, and graph assembly
 
 **Files:**
+- Create: `crates/chirograph-analysis/src/alignment.rs`
 - Create: `crates/chirograph-analysis/src/assemble.rs`
+- Create: `crates/chirograph-analysis/tests/alignment.rs`
 - Create: `crates/chirograph-analysis/tests/assemble.rs`
 - Modify: `crates/chirograph-analysis/src/lib.rs`
+
+The alignment stage is explicit and provenance-bearing. It uses the existing `chirograph_core::alignment::AlignmentState` values rather than silently collapsing candidates into graph membership. Define a stable candidate key from source, revision, representation kind, qualified local identity, and locator, and record each decision with the exact evidence that justified it. `Confirmed` may enter graph assembly; `Unresolved` is retained in the internal analysis result/diagnostics but does not become a graph contract or representation; `Rejected` is emitted only when explicit evidence proves non-identity, not merely because confirmation evidence is absent. The first slice does not need to invent rejected decisions.
 
 **First-slice promotion rule:**
 
@@ -259,25 +265,30 @@ These identities must be derived from source context, semantic path, and represe
 
 Create the minimum valid `ContractGraph` containing source, contract, two representations, and the source observations needed to justify them. It is acceptable for the first slice to omit authority, relationship, clause, and finding claims until their independent evidence rules are implemented. Do not invent those claims merely to improve additional metrics.
 
-- [ ] **Step 1: Write the positive synthetic RED test**
+- [ ] **Step 1: Write the positive alignment RED test**
 
-Two explicit candidates at the same path with different closed sets produce exactly one contract and exactly two representations with deterministic IDs.
+Two explicit candidates at the same path with different closed sets and the required mechanisms produce one `Confirmed` alignment decision with deterministic contract seed, candidate keys, structural facet, and evidence closure. The decision must be identical under input permutation.
 
-- [ ] **Step 2: Write negative RED tests**
+- [ ] **Step 2: Write unresolved alignment RED tests**
 
-Require an empty graph for: equal value sets, same-name/no-path evidence, one-to-many ambiguous path matches, schema-only evidence, Rust-only evidence, and candidates with mismatched source revisions.
+Require `Unresolved` rather than a guessed confirmation for same-name/no-path evidence, one-to-many ambiguous path matches, schema-only evidence, Rust-only evidence, and candidates with mismatched source revisions. Repeating weak candidates must not change `Unresolved` to `Confirmed`.
 
-- [ ] **Step 3: Write permutation determinism test**
+- [ ] **Step 3: Write assembly RED tests**
 
-Reverse candidate/evidence input order and assert canonical `encode_graph_json` bytes are identical.
+Only a confirmed decision may produce graph membership. The positive case produces exactly one structural contract and exactly two structural representations with deterministic IDs. Equal value sets in this first slice produce no confirmed decision and therefore an empty graph. Unresolved decisions produce no placeholder contracts.
 
-- [ ] **Step 4: Implement assembly**
+- [ ] **Step 4: Write permutation determinism test**
 
-Reuse `chirograph-core` constructors and graph validation. Do not alter scorer identity rules.
+Reverse candidate, decision, and evidence input order and assert canonical `encode_graph_json` bytes are identical.
 
-- [ ] **Step 5: Verify**
+- [ ] **Step 5: Implement alignment then assembly**
+
+Keep `alignment.rs` responsible for evidence-to-state decisions and `assemble.rs` responsible only for projecting confirmed decisions into `ContractGraph`. Reuse `chirograph-core` constructors, `AlignmentState`, and graph validation. Do not alter scorer identity rules. The first slice assigns only the `Structural` facet because the compared serialized field path and closed value set are structural evidence; it does not infer executable or semantic facets.
+
+- [ ] **Step 6: Verify**
 
 ```sh
+cargo test -p chirograph-analysis --test alignment
 cargo test -p chirograph-analysis --test assemble
 ```
 
@@ -435,7 +446,8 @@ Verify the final diff leaves `benchmark/baseline.json` and the Cargo `golden.yam
 - [ ] `chirograph-core` remains Tree-sitter-free and language-agnostic.
 - [ ] The existing Tree-sitter substrate and Rust adapter plan are reused instead of reimplemented.
 - [ ] Source identity/revision are explicit public inputs and survive every emitted observation.
-- [ ] Candidate construction remains pre-semantic; only the assembler promotes justified claims.
+- [ ] Candidate construction remains pre-semantic; explicit provenance-bearing alignment decisions sit between candidates and graph assembly.
+- [ ] Candidate local identity and supported facets are preserved without treating either as sufficient alignment evidence.
 - [ ] The first-slice promotion rule requires an exact semantic-path bridge plus comparable closed value sets and direct drift evidence.
 - [ ] Same-name, ambiguous, repeated, or majority evidence cannot promote alignment.
 - [ ] The analyzer cannot observe benchmark scenario/case identity or golden truth.

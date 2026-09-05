@@ -208,6 +208,18 @@
       }
     },
     {
+      "id": "harden-contract-benchmark-regression-boundary",
+      "priority": 76,
+      "requires": [
+        "wire-contract-benchmark-ci"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "verification",
+        "skill": "Use test-driven development. Close the final benchmark regression-boundary holes without changing scoring goals: undefined-to-zero higher-is-better metrics must not be reported as improvements; an unavailable false-contract rate becoming positive must fail as a regression while becoming observable at zero may improve; an `all` baseline comparison must require exact corpus/baseline case-id coverage so deleted cases cannot disappear silently, while selector-scoped comparisons may continue using a superset baseline. Add focused regression tests proving a newly emitted entirely false contract/relationship cannot pass from the zero-output baseline and proving stale extra baseline cases fail on full-corpus comparison. Keep the CLI small, hermetic, and data-only. Update benchmark methodology/root development docs only where needed to state the exact coverage and canonical benchmark commands. Finish with fmt/check/clippy/test and full `cargo benchmark all --baseline benchmark/baseline.json` evidence on the exact final head."
+      }
+    },
+    {
       "id": "implement-benchmark-corpus-model",
       "priority": 92,
       "requires": [

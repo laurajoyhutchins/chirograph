@@ -72,6 +72,7 @@ struct Root {
     profiles: Profiles,
 }
 
+#[derive(Serialize)]
 struct Profiles(BTreeMap<ProfileName, Profile>);
 
 #[serde(rename_all = "kebab-case")]

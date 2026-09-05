@@ -22,6 +22,40 @@ enum DebugInfo {
 "#;
 
 #[test]
+fn tuple_newtype_emits_one_unnamed_field_with_inner_type() {
+    let source = br#"
+#[derive(Serialize)]
+struct Profiles(BTreeMap<ProfileName, Profile>);
+struct Profile { value: Value }
+enum Value { One, Two }
+"#;
+    let extraction = extract_rust_facts(
+        source,
+        SourceProvenance {
+            source: SourceId::new("github:acme/fixture-project").unwrap(),
+            revision: Revision::Exact("0123456789abcdef0123456789abcdef01234567".into()),
+            locator: "src/lib.rs".into(),
+            path: "src/lib.rs".into(),
+        },
+    )
+    .unwrap();
+    let fields = extraction
+        .facts
+        .iter()
+        .filter(|fact| fact.kind == RustFactKind::Field && fact.container == ["Profiles"])
+        .collect::<Vec<_>>();
+    assert_eq!(fields.len(), 1, "tuple wrapper facts: {:#?}", extraction.facts);
+    assert!(fields[0].name.is_none());
+    assert!(extraction.facts.iter().any(|fact| {
+        fact.kind == RustFactKind::TypeExpression
+            && fact.container == ["Profiles"]
+            && fact.span.start_byte >= fields[0].span.start_byte
+            && fact.span.end_byte <= fields[0].span.end_byte
+            && fact.text.contains("Profile")
+    }), "tuple wrapper type facts: {:#?}", extraction.facts);
+}
+
+#[test]
 fn source_facts_keep_leading_attributes_in_the_parent_container() {
     let extraction = extract_rust_facts(
         SOURCE.as_bytes(),

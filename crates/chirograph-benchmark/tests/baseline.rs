@@ -187,7 +187,8 @@ fn newly_observed_zero_quality_metrics_do_not_pass_as_improvements() {
         !comparison
             .improvements
             .iter()
-            .any(|item| item.contains("contract_precision") || item.contains("relationship_precision"))
+            .any(|item| item.contains("contract_precision")
+                || item.contains("relationship_precision"))
     );
 }
 

@@ -103,6 +103,56 @@ enum DebugInfo {
 }
 
 #[test]
+fn derives_closed_string_vocabulary_from_manual_deserialize_match() {
+    let source = br#"
+#[serde(rename_all = "kebab-case")]
+struct Root {
+    debug: DebugInfo,
+}
+
+enum DebugInfo {
+    None,
+    LineTablesOnly,
+    Full,
+}
+
+impl<'de> serde::Deserialize<'de> for DebugInfo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        match value.as_str() {
+            "none" => Ok(Self::None),
+            "line-tables-only" => Ok(Self::LineTablesOnly),
+            "full" => Ok(Self::Full),
+            _ => Err(serde::de::Error::custom("unsupported debug info")),
+        }
+    }
+}
+"#;
+
+    let candidates = extract_rust_candidates(&context(), "src/lib.rs", source).unwrap();
+    let candidate = candidates
+        .iter()
+        .find(|candidate| candidate.semantic_path.dotted() == "debug")
+        .expect("manual Deserialize match should justify the enum string vocabulary");
+
+    assert_eq!(
+        candidate.closed_values,
+        Some(BTreeSet::from([
+            "full".to_owned(),
+            "line-tables-only".to_owned(),
+            "none".to_owned(),
+        ]))
+    );
+    assert!(candidate.evidence.iter().any(|evidence| {
+        evidence.fact.contains("manual Deserialize")
+            && evidence.fact.contains("closed string vocabulary")
+    }));
+}
+
+#[test]
 fn ambiguous_same_named_type_edges_do_not_resolve() {
     let source = br#"
 mod left {

@@ -113,14 +113,7 @@ fn walk(
                 {
                     continue;
                 }
-                emit_fact(
-                    parsed,
-                    child,
-                    RustFactKind::Field,
-                    None,
-                    container,
-                    facts,
-                );
+                emit_fact(parsed, child, RustFactKind::Field, None, container, facts);
             }
         }
 

@@ -1,0 +1,414 @@
+#![forbid(unsafe_code)]
+
+//! Deterministic source discovery and adapter dispatch for Chirograph.
+//!
+//! This crate owns acquisition mechanics only. It does not infer logical contract
+//! identity, alignment, authority, or clause truth.
+
+use std::error::Error;
+use std::fmt;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use chirograph_core::model::{Revision, SourceId};
+use serde_json::Value;
+
+const MAX_DIAGNOSTICS: usize = 64;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AcquisitionContext {
+    pub source: SourceId,
+    pub revision: Revision,
+}
+
+impl AcquisitionContext {
+    #[must_use]
+    pub fn new(source: SourceId, revision: Revision) -> Self {
+        Self { source, revision }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum AdapterFamily {
+    TreeSitter,
+    StructuredSemantic,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AdapterCapability {
+    pub adapter: String,
+    pub family: AdapterFamily,
+    pub extensions: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DiagnosticKind {
+    UnsupportedSource,
+    DiagnosticsTruncated,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AcquisitionDiagnostic {
+    pub kind: DiagnosticKind,
+    pub path: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AcquiredFact {
+    pub adapter: String,
+    pub kind: String,
+    pub path: String,
+    pub locator: String,
+    pub text: String,
+    pub source: SourceId,
+    pub revision: Revision,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct AcquisitionReport {
+    pub capabilities: Vec<AdapterCapability>,
+    pub facts: Vec<AcquiredFact>,
+    pub diagnostics: Vec<AcquisitionDiagnostic>,
+}
+
+#[derive(Debug)]
+pub enum AcquisitionError {
+    InvalidRoot(PathBuf),
+    Io { path: String, source: std::io::Error },
+    AmbiguousAdapter { path: String, adapters: Vec<String> },
+    InvalidJson { path: String, source: serde_json::Error },
+}
+
+impl fmt::Display for AcquisitionError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidRoot(path) => write!(
+                formatter,
+                "source tree is not a readable directory: {}",
+                path.display()
+            ),
+            Self::Io { path, source } => write!(formatter, "cannot acquire {path}: {source}"),
+            Self::AmbiguousAdapter { path, adapters } => write!(
+                formatter,
+                "ambiguous acquisition adapter for {path}: {}",
+                adapters.join(", ")
+            ),
+            Self::InvalidJson { path, source } => {
+                write!(formatter, "invalid JSON source {path}: {source}")
+            }
+        }
+    }
+}
+
+impl Error for AcquisitionError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Io { source, .. } => Some(source),
+            Self::InvalidJson { source, .. } => Some(source),
+            Self::InvalidRoot(_) | Self::AmbiguousAdapter { .. } => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum RegisteredAdapter {
+    Json,
+}
+
+impl RegisteredAdapter {
+    const fn id(self) -> &'static str {
+        match self {
+            Self::Json => "json",
+        }
+    }
+
+    const fn family(self) -> AdapterFamily {
+        match self {
+            Self::Json => AdapterFamily::StructuredSemantic,
+        }
+    }
+
+    const fn extensions(self) -> &'static [&'static str] {
+        match self {
+            Self::Json => &["json"],
+        }
+    }
+
+    fn supports(self, path: &Path) -> bool {
+        let extension = path.extension().and_then(|value| value.to_str());
+        self.extensions().contains(&extension.unwrap_or_default())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AcquisitionRuntime {
+    adapters: Vec<RegisteredAdapter>,
+}
+
+impl Default for AcquisitionRuntime {
+    fn default() -> Self {
+        Self {
+            adapters: vec![RegisteredAdapter::Json],
+        }
+    }
+}
+
+impl AcquisitionRuntime {
+    #[must_use]
+    pub fn capabilities(&self) -> Vec<AdapterCapability> {
+        let mut capabilities = self
+            .adapters
+            .iter()
+            .map(|adapter| AdapterCapability {
+                adapter: adapter.id().to_owned(),
+                family: adapter.family(),
+                extensions: adapter
+                    .extensions()
+                    .iter()
+                    .map(|extension| (*extension).to_owned())
+                    .collect(),
+            })
+            .collect::<Vec<_>>();
+        capabilities.sort_by(|left, right| left.adapter.cmp(&right.adapter));
+        capabilities
+    }
+
+    pub fn acquire_tree(
+        &self,
+        root: &Path,
+        context: &AcquisitionContext,
+    ) -> Result<AcquisitionReport, AcquisitionError> {
+        if !root.is_dir() {
+            return Err(AcquisitionError::InvalidRoot(root.to_path_buf()));
+        }
+
+        let mut files = Vec::new();
+        discover(root, root, &mut files)?;
+        files.sort();
+
+        let mut report = AcquisitionReport {
+            capabilities: self.capabilities(),
+            ..AcquisitionReport::default()
+        };
+
+        for relative_path in files {
+            let matches = self
+                .adapters
+                .iter()
+                .copied()
+                .filter(|adapter| adapter.supports(&relative_path))
+                .collect::<Vec<_>>();
+            let path = normalized_path(&relative_path);
+
+            match matches.as_slice() {
+                [] => push_diagnostic(
+                    &mut report.diagnostics,
+                    AcquisitionDiagnostic {
+                        kind: DiagnosticKind::UnsupportedSource,
+                        path,
+                        message: "no registered acquisition adapter".to_owned(),
+                    },
+                ),
+                [adapter] => self.acquire_file(
+                    *adapter,
+                    root,
+                    &relative_path,
+                    context,
+                    &mut report,
+                )?,
+                _ => {
+                    return Err(AcquisitionError::AmbiguousAdapter {
+                        path,
+                        adapters: matches
+                            .iter()
+                            .map(|adapter| adapter.id().to_owned())
+                            .collect(),
+                    });
+                }
+            }
+        }
+
+        report.facts.sort_by(|left, right| {
+            (
+                &left.path,
+                &left.locator,
+                &left.adapter,
+                &left.kind,
+                &left.text,
+            )
+                .cmp(&(
+                    &right.path,
+                    &right.locator,
+                    &right.adapter,
+                    &right.kind,
+                    &right.text,
+                ))
+        });
+        report.diagnostics.sort_by(|left, right| {
+            (&left.path, left.kind, &left.message).cmp(&(&right.path, right.kind, &right.message))
+        });
+        Ok(report)
+    }
+
+    fn acquire_file(
+        &self,
+        adapter: RegisteredAdapter,
+        root: &Path,
+        relative_path: &Path,
+        context: &AcquisitionContext,
+        report: &mut AcquisitionReport,
+    ) -> Result<(), AcquisitionError> {
+        let path = normalized_path(relative_path);
+        let absolute_path = root.join(relative_path);
+        let bytes = fs::read(&absolute_path).map_err(|source| AcquisitionError::Io {
+            path: path.clone(),
+            source,
+        })?;
+
+        match adapter {
+            RegisteredAdapter::Json => acquire_json(&bytes, &path, context, &mut report.facts),
+        }
+    }
+}
+
+fn discover(root: &Path, current: &Path, files: &mut Vec<PathBuf>) -> Result<(), AcquisitionError> {
+    let mut entries = fs::read_dir(current)
+        .map_err(|source| AcquisitionError::Io {
+            path: display_relative(root, current),
+            source,
+        })?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|source| AcquisitionError::Io {
+            path: display_relative(root, current),
+            source,
+        })?;
+    entries.sort_by_key(|entry| entry.file_name());
+
+    for entry in entries {
+        let file_type = entry.file_type().map_err(|source| AcquisitionError::Io {
+            path: display_relative(root, &entry.path()),
+            source,
+        })?;
+        if file_type.is_symlink() {
+            continue;
+        }
+        if file_type.is_dir() {
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            if matches!(
+                name.as_ref(),
+                ".git" | "target" | "node_modules" | ".venv" | "__pycache__"
+            ) {
+                continue;
+            }
+            discover(root, &entry.path(), files)?;
+        } else if file_type.is_file() {
+            let relative = entry
+                .path()
+                .strip_prefix(root)
+                .expect("discovered entry must remain under acquisition root")
+                .to_path_buf();
+            files.push(relative);
+        }
+    }
+    Ok(())
+}
+
+fn acquire_json(
+    bytes: &[u8],
+    path: &str,
+    context: &AcquisitionContext,
+    facts: &mut Vec<AcquiredFact>,
+) -> Result<(), AcquisitionError> {
+    let value: Value = serde_json::from_slice(bytes).map_err(|source| AcquisitionError::InvalidJson {
+        path: path.to_owned(),
+        source,
+    })?;
+    walk_json(&value, "", path, context, facts);
+    Ok(())
+}
+
+fn walk_json(
+    value: &Value,
+    pointer: &str,
+    path: &str,
+    context: &AcquisitionContext,
+    facts: &mut Vec<AcquiredFact>,
+) {
+    let (kind, text) = match value {
+        Value::Null => ("null", "null".to_owned()),
+        Value::Bool(value) => ("boolean", value.to_string()),
+        Value::Number(value) => ("number", value.to_string()),
+        Value::String(value) => ("string", value.clone()),
+        Value::Array(values) => ("array", format!("{} items", values.len())),
+        Value::Object(values) => ("object", format!("{} properties", values.len())),
+    };
+    facts.push(AcquiredFact {
+        adapter: "json".to_owned(),
+        kind: kind.to_owned(),
+        path: path.to_owned(),
+        locator: if pointer.is_empty() {
+            "#".to_owned()
+        } else {
+            format!("#{pointer}")
+        },
+        text,
+        source: context.source.clone(),
+        revision: context.revision.clone(),
+    });
+
+    match value {
+        Value::Array(values) => {
+            for (index, value) in values.iter().enumerate() {
+                walk_json(
+                    value,
+                    &format!("{pointer}/{index}"),
+                    path,
+                    context,
+                    facts,
+                );
+            }
+        }
+        Value::Object(values) => {
+            let mut keys = values.keys().collect::<Vec<_>>();
+            keys.sort();
+            for key in keys {
+                let escaped = key.replace('~', "~0").replace('/', "~1");
+                walk_json(
+                    &values[key],
+                    &format!("{pointer}/{escaped}"),
+                    path,
+                    context,
+                    facts,
+                );
+            }
+        }
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+    }
+}
+
+fn push_diagnostic(diagnostics: &mut Vec<AcquisitionDiagnostic>, diagnostic: AcquisitionDiagnostic) {
+    if diagnostics.len() < MAX_DIAGNOSTICS {
+        diagnostics.push(diagnostic);
+    } else if diagnostics.len() == MAX_DIAGNOSTICS {
+        diagnostics.push(AcquisitionDiagnostic {
+            kind: DiagnosticKind::DiagnosticsTruncated,
+            path: String::new(),
+            message: format!("diagnostics truncated after {MAX_DIAGNOSTICS} entries"),
+        });
+    }
+}
+
+fn display_relative(root: &Path, path: &Path) -> String {
+    path.strip_prefix(root)
+        .map(normalized_path)
+        .unwrap_or_else(|_| normalized_path(path))
+}
+
+fn normalized_path(path: &Path) -> String {
+    path.components()
+        .map(|component| component.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/")
+}

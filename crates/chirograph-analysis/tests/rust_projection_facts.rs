@@ -41,13 +41,15 @@ fn source_facts_preserve_projection_edges_and_serde_evidence() {
         (RustFactKind::Struct, Some("Profile"), Vec::<&str>::new()),
         (RustFactKind::Field, Some("debug_info"), vec!["Profile"]),
         (RustFactKind::Enum, Some("DebugInfo"), Vec::<&str>::new()),
-        (RustFactKind::Variant, Some("LineTablesOnly"), vec!["DebugInfo"]),
+        (
+            RustFactKind::Variant,
+            Some("LineTablesOnly"),
+            vec!["DebugInfo"],
+        ),
     ] {
         assert!(
             facts.iter().any(|fact| {
-                fact.kind == kind
-                    && fact.name.as_deref() == name
-                    && fact.container == container
+                fact.kind == kind && fact.name.as_deref() == name && fact.container == container
             }),
             "missing {kind:?} {name:?} in {container:?}; facts={facts:#?}"
         );
@@ -64,7 +66,10 @@ fn source_facts_preserve_projection_edges_and_serde_evidence() {
         );
     }
 
-    for (container, text) in [(vec!["Manifest"], "Profile"), (vec!["Profile"], "DebugInfo")] {
+    for (container, text) in [
+        (vec!["Manifest"], "Profile"),
+        (vec!["Profile"], "DebugInfo"),
+    ] {
         assert!(
             facts.iter().any(|fact| {
                 fact.kind == RustFactKind::TypeExpression

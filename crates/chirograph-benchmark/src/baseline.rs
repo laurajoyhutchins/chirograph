@@ -169,10 +169,9 @@ fn compare_result(
             let previous = baseline.result.score.as_ref().ok_or_else(|| {
                 format!("baseline scored case {} is missing its score", baseline.id)
             })?;
-            let current_score = current
-                .score
-                .as_ref()
-                .ok_or_else(|| format!("current scored case {} is missing its score", current.id))?;
+            let current_score = current.score.as_ref().ok_or_else(|| {
+                format!("current scored case {} is missing its score", current.id)
+            })?;
             compare_scores(&current.id, previous, current_score, comparison);
         }
         (CaseStatus::Scored, current_failure) => comparison.regressions.push(format!(
@@ -354,7 +353,10 @@ fn validate_baseline(baseline: &BenchmarkBaselineV1) -> Result<(), String> {
     let mut ids = BTreeSet::new();
     for case in &baseline.cases {
         if case.id.is_empty() || !ids.insert(case.id.as_str()) {
-            return Err(format!("invalid or duplicate baseline case id: {}", case.id));
+            return Err(format!(
+                "invalid or duplicate baseline case id: {}",
+                case.id
+            ));
         }
         validate_sha256(&case.specimen_sha256, "specimen", &case.id)?;
         validate_sha256(&case.golden_sha256, "golden", &case.id)?;
@@ -373,7 +375,9 @@ fn validate_result(result: &CaseResult) -> Result<(), String> {
     match (&result.status, &result.score) {
         (CaseStatus::Scored, Some(_)) => Ok(()),
         (CaseStatus::ExecutionFailure | CaseStatus::InvalidOutput, None) => Ok(()),
-        (CaseStatus::Scored, None) => Err(format!("scored case {} is missing its score", result.id)),
+        (CaseStatus::Scored, None) => {
+            Err(format!("scored case {} is missing its score", result.id))
+        }
         (_, Some(_)) => Err(format!(
             "non-scored case {} must not carry a score",
             result.id

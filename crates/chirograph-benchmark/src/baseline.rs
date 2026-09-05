@@ -67,6 +67,7 @@ pub fn write_baseline(path: &Path, baseline: &BenchmarkBaselineV1) -> Result<(),
 }
 
 fn sha256_file(path: &Path) -> Result<String, String> {
-    let bytes = fs::read(path).map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+    let bytes =
+        fs::read(path).map_err(|error| format!("cannot read {}: {error}", path.display()))?;
     Ok(format!("{:x}", Sha256::digest(bytes)))
 }

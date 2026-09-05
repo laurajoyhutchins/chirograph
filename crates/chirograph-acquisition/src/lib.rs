@@ -197,7 +197,10 @@ impl fmt::Display for AcquisitionError {
                 "malformed {adapter} source {path}: {diagnostic_count} parse diagnostics"
             ),
             Self::DuplicateAdapterId { adapter } => {
-                write!(formatter, "duplicate acquisition adapter identity: {adapter}")
+                write!(
+                    formatter,
+                    "duplicate acquisition adapter identity: {adapter}"
+                )
             }
         }
     }
@@ -270,9 +273,7 @@ impl Default for AcquisitionRuntime {
 }
 
 impl AcquisitionRuntime {
-    pub fn with_adapters(
-        adapters: Vec<Box<dyn SourceAdapter>>,
-    ) -> Result<Self, AcquisitionError> {
+    pub fn with_adapters(adapters: Vec<Box<dyn SourceAdapter>>) -> Result<Self, AcquisitionError> {
         let mut identities = adapters
             .iter()
             .map(|adapter| adapter.capability().adapter)
@@ -341,13 +342,9 @@ impl AcquisitionRuntime {
                         message: "no registered acquisition adapter".to_owned(),
                     },
                 ),
-                [adapter] => self.acquire_file(
-                    adapter.as_ref(),
-                    root,
-                    &relative_path,
-                    context,
-                    &mut report,
-                )?,
+                [adapter] => {
+                    self.acquire_file(adapter.as_ref(), root, &relative_path, context, &mut report)?
+                }
                 _ => {
                     let mut adapters = matches
                         .iter()

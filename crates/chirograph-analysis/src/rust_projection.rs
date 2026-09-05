@@ -272,12 +272,28 @@ fn unique_field_target(
     field: &RustFact,
     by_name: &BTreeMap<String, Vec<usize>>,
 ) -> Option<usize> {
-    let type_fact = facts.iter().find(|fact| {
+    let mut type_facts = facts.iter().filter(|fact| {
         fact.kind == RustFactKind::TypeExpression
             && fact.container == field.container
             && fact.span.start_byte >= field.span.start_byte
             && fact.span.end_byte <= field.span.end_byte
-    })?;
+    });
+    let mut type_fact = type_facts.next()?;
+    for candidate in type_facts {
+        let current_width = type_fact.span.end_byte.saturating_sub(type_fact.span.start_byte);
+        let candidate_width = candidate
+            .span
+            .end_byte
+            .saturating_sub(candidate.span.start_byte);
+        if candidate_width > current_width {
+            type_fact = candidate;
+        } else if candidate_width == current_width
+            && (candidate.span.start_byte != type_fact.span.start_byte
+                || candidate.span.end_byte != type_fact.span.end_byte)
+        {
+            return None;
+        }
+    }
     let identifiers = identifiers(&type_fact.text);
     let mut resolved = BTreeSet::new();
     for identifier in identifiers {

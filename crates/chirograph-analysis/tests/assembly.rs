@@ -76,7 +76,10 @@ fn unique_differing_pair_promotes_one_contract_and_confirmed_alignments() {
 
     let assembly = assemble_contract_graph(&context, &[schema, rust]).unwrap();
     assembly.graph.validate().unwrap();
-    assembly.alignments.validate_against(&assembly.graph).unwrap();
+    assembly
+        .alignments
+        .validate_against(&assembly.graph)
+        .unwrap();
 
     assert_eq!(assembly.graph.contracts.len(), 1);
     assert_eq!(assembly.graph.representations.len(), 2);
@@ -88,11 +91,9 @@ fn unique_differing_pair_promotes_one_contract_and_confirmed_alignments() {
         RepresentationId::new("fixture-project.profile.debug-info.schema").unwrap(),
     ] {
         assert_eq!(
-            assembly.alignments.state_for(
-                &representation,
-                &contract,
-                ContractFacet::Structural
-            ),
+            assembly
+                .alignments
+                .state_for(&representation, &contract, ContractFacet::Structural),
             Some(AlignmentState::Confirmed)
         );
     }
@@ -154,11 +155,8 @@ fn ambiguous_or_unrelated_candidates_remain_unpromoted() {
         &["One", "Two"],
     );
 
-    let assembly = assemble_contract_graph(
-        &context,
-        &[source_a, source_b, schema, unrelated],
-    )
-    .unwrap();
+    let assembly =
+        assemble_contract_graph(&context, &[source_a, source_b, schema, unrelated]).unwrap();
     assert!(assembly.graph.contracts.is_empty());
     assert!(assembly.alignments.claims.is_empty());
     assert_eq!(assembly.alignments.representations.len(), 4);

@@ -43,6 +43,41 @@ pub struct AdapterCapability {
     pub extensions: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AdapterError {
+    message: String,
+}
+
+impl AdapterError {
+    #[must_use]
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+        }
+    }
+}
+
+impl fmt::Display for AdapterError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(&self.message)
+    }
+}
+
+impl Error for AdapterError {}
+
+#[derive(Debug, Clone, Copy)]
+pub struct AdapterInput<'a> {
+    pub bytes: &'a [u8],
+    pub path: &'a str,
+    pub context: &'a AcquisitionContext,
+}
+
+pub trait SourceAdapter: fmt::Debug + Send + Sync {
+    fn capability(&self) -> AdapterCapability;
+
+    fn acquire(&self, input: AdapterInput<'_>) -> Result<Vec<AcquiredFact>, AdapterError>;
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DiagnosticKind {
     UnsupportedSource,
@@ -123,6 +158,9 @@ pub enum AcquisitionError {
         path: String,
         diagnostic_count: usize,
     },
+    DuplicateAdapterId {
+        adapter: String,
+    },
 }
 
 impl fmt::Display for AcquisitionError {
@@ -158,6 +196,9 @@ impl fmt::Display for AcquisitionError {
                 formatter,
                 "malformed {adapter} source {path}: {diagnostic_count} parse diagnostics"
             ),
+            Self::DuplicateAdapterId { adapter } => {
+                write!(formatter, "duplicate acquisition adapter identity: {adapter}")
+            }
         }
     }
 }
@@ -170,73 +211,89 @@ impl Error for AcquisitionError {
             Self::InvalidRoot(_)
             | Self::AmbiguousAdapter { .. }
             | Self::AdapterFailure { .. }
-            | Self::MalformedSyntax { .. } => None,
+            | Self::MalformedSyntax { .. }
+            | Self::DuplicateAdapterId { .. } => None,
         }
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum RegisteredAdapter {
-    Json,
-    Rust,
-}
+#[derive(Debug)]
+struct JsonAdapter;
 
-impl RegisteredAdapter {
-    const fn id(self) -> &'static str {
-        match self {
-            Self::Json => "json",
-            Self::Rust => "rust",
+impl SourceAdapter for JsonAdapter {
+    fn capability(&self) -> AdapterCapability {
+        AdapterCapability {
+            adapter: "json".to_owned(),
+            family: AdapterFamily::StructuredSemantic,
+            extensions: vec!["json".to_owned()],
         }
     }
 
-    const fn family(self) -> AdapterFamily {
-        match self {
-            Self::Json => AdapterFamily::StructuredSemantic,
-            Self::Rust => AdapterFamily::TreeSitter,
-        }
-    }
-
-    const fn extensions(self) -> &'static [&'static str] {
-        match self {
-            Self::Json => &["json"],
-            Self::Rust => &["rs"],
-        }
-    }
-
-    fn supports(self, path: &Path) -> bool {
-        let extension = path.extension().and_then(|value| value.to_str());
-        self.extensions().contains(&extension.unwrap_or_default())
+    fn acquire(&self, input: AdapterInput<'_>) -> Result<Vec<AcquiredFact>, AdapterError> {
+        let mut facts = Vec::new();
+        acquire_json(input.bytes, input.path, input.context, &mut facts)
+            .map_err(|error| AdapterError::new(error.to_string()))?;
+        Ok(facts)
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
+struct RustAdapter;
+
+impl SourceAdapter for RustAdapter {
+    fn capability(&self) -> AdapterCapability {
+        AdapterCapability {
+            adapter: "rust".to_owned(),
+            family: AdapterFamily::TreeSitter,
+            extensions: vec!["rs".to_owned()],
+        }
+    }
+
+    fn acquire(&self, input: AdapterInput<'_>) -> Result<Vec<AcquiredFact>, AdapterError> {
+        let mut facts = Vec::new();
+        acquire_rust(input.bytes, input.path, input.context, &mut facts)
+            .map_err(|error| AdapterError::new(error.to_string()))?;
+        Ok(facts)
+    }
+}
+
+#[derive(Debug)]
 pub struct AcquisitionRuntime {
-    adapters: Vec<RegisteredAdapter>,
+    adapters: Vec<Box<dyn SourceAdapter>>,
 }
 
 impl Default for AcquisitionRuntime {
     fn default() -> Self {
-        Self {
-            adapters: vec![RegisteredAdapter::Json, RegisteredAdapter::Rust],
-        }
+        Self::with_adapters(vec![Box::new(JsonAdapter), Box::new(RustAdapter)])
+            .expect("built-in acquisition adapter identities must be unique")
     }
 }
 
 impl AcquisitionRuntime {
+    pub fn with_adapters(
+        adapters: Vec<Box<dyn SourceAdapter>>,
+    ) -> Result<Self, AcquisitionError> {
+        let mut identities = adapters
+            .iter()
+            .map(|adapter| adapter.capability().adapter)
+            .collect::<Vec<_>>();
+        identities.sort();
+        for pair in identities.windows(2) {
+            if pair[0] == pair[1] {
+                return Err(AcquisitionError::DuplicateAdapterId {
+                    adapter: pair[0].clone(),
+                });
+            }
+        }
+        Ok(Self { adapters })
+    }
+
     #[must_use]
     pub fn capabilities(&self) -> Vec<AdapterCapability> {
         let mut capabilities = self
             .adapters
             .iter()
-            .map(|adapter| AdapterCapability {
-                adapter: adapter.id().to_owned(),
-                family: adapter.family(),
-                extensions: adapter
-                    .extensions()
-                    .iter()
-                    .map(|extension| (*extension).to_owned())
-                    .collect(),
-            })
+            .map(|adapter| adapter.capability())
             .collect::<Vec<_>>();
         capabilities.sort_by(|left, right| left.adapter.cmp(&right.adapter));
         capabilities
@@ -261,11 +318,17 @@ impl AcquisitionRuntime {
         };
 
         for relative_path in files {
+            let extension = relative_path.extension().and_then(|value| value.to_str());
             let matches = self
                 .adapters
                 .iter()
-                .copied()
-                .filter(|adapter| adapter.supports(&relative_path))
+                .filter(|adapter| {
+                    adapter
+                        .capability()
+                        .extensions
+                        .iter()
+                        .any(|candidate| Some(candidate.as_str()) == extension)
+                })
                 .collect::<Vec<_>>();
             let path = normalized_path(&relative_path);
 
@@ -278,17 +341,20 @@ impl AcquisitionRuntime {
                         message: "no registered acquisition adapter".to_owned(),
                     },
                 ),
-                [adapter] => {
-                    self.acquire_file(*adapter, root, &relative_path, context, &mut report)?
-                }
+                [adapter] => self.acquire_file(
+                    adapter.as_ref(),
+                    root,
+                    &relative_path,
+                    context,
+                    &mut report,
+                )?,
                 _ => {
-                    return Err(AcquisitionError::AmbiguousAdapter {
-                        path,
-                        adapters: matches
-                            .iter()
-                            .map(|adapter| adapter.id().to_owned())
-                            .collect(),
-                    });
+                    let mut adapters = matches
+                        .iter()
+                        .map(|adapter| adapter.capability().adapter)
+                        .collect::<Vec<_>>();
+                    adapters.sort();
+                    return Err(AcquisitionError::AmbiguousAdapter { path, adapters });
                 }
             }
         }
@@ -317,7 +383,7 @@ impl AcquisitionRuntime {
 
     fn acquire_file(
         &self,
-        adapter: RegisteredAdapter,
+        adapter: &dyn SourceAdapter,
         root: &Path,
         relative_path: &Path,
         context: &AcquisitionContext,
@@ -329,11 +395,20 @@ impl AcquisitionRuntime {
             path: path.clone(),
             source,
         })?;
-
-        match adapter {
-            RegisteredAdapter::Json => acquire_json(&bytes, &path, context, &mut report.facts),
-            RegisteredAdapter::Rust => acquire_rust(&bytes, &path, context, &mut report.facts),
-        }
+        let capability = adapter.capability();
+        let facts = adapter
+            .acquire(AdapterInput {
+                bytes: &bytes,
+                path: &path,
+                context,
+            })
+            .map_err(|error| AcquisitionError::AdapterFailure {
+                adapter: capability.adapter,
+                path: path.clone(),
+                message: error.to_string(),
+            })?;
+        report.facts.extend(facts);
+        Ok(())
     }
 }
 

@@ -95,3 +95,23 @@ fn analyze_rejects_malformed_supported_source() {
         "expected explicit malformed-source diagnostic, got: {stderr}"
     );
 }
+
+#[test]
+fn analyze_rejects_malformed_rust_source() {
+    let root = fixture_tree();
+    fs::write(root.join("broken.rs"), "pub struct Broken {\n")
+        .expect("malformed Rust fixture should be written");
+
+    let output = analyze(&root);
+    fs::remove_dir_all(&root).expect("temporary source tree should be removed");
+
+    assert!(
+        !output.status.success(),
+        "malformed Rust source must fail closed"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("broken.rs") && stderr.contains("Rust"),
+        "expected explicit Rust parse diagnostic, got: {stderr}"
+    );
+}

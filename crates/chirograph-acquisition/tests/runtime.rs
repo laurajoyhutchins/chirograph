@@ -226,3 +226,28 @@ fn acquisition_is_independent_of_root_path_and_creation_order() {
 
     assert_eq!(first_report, second_report);
 }
+
+#[cfg(unix)]
+#[test]
+fn discovery_does_not_follow_symlinks_outside_the_root() {
+    use std::os::unix::fs::symlink;
+
+    let root = temp_root("symlink-root");
+    let outside = temp_root("symlink-outside");
+    fs::write(outside.join("escaped.json"), "{\"escaped\":true}\n")
+        .expect("outside fixture should be written");
+    symlink(outside.join("escaped.json"), root.join("escaped.json"))
+        .expect("fixture symlink should be created");
+
+    let report = AcquisitionRuntime::default()
+        .acquire_tree(&root, &context())
+        .expect("symlink-safe acquisition should succeed");
+
+    fs::remove_dir_all(&root).expect("temporary acquisition root should be removed");
+    fs::remove_dir_all(&outside).expect("temporary outside root should be removed");
+
+    assert!(
+        report.facts.iter().all(|fact| fact.path != "escaped.json"),
+        "acquisition must not read a symlink target outside the supplied root"
+    );
+}

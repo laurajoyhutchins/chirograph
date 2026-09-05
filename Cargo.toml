@@ -3,6 +3,7 @@ members = [
     "crates/chirograph-benchmark",
     "crates/chirograph-cli",
     "crates/chirograph-core",
+    "crates/chirograph-rust",
     "crates/chirograph-tree-sitter",
 ]
 resolver = "3"

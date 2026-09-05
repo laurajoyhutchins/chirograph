@@ -70,10 +70,9 @@ fn write_baseline_records_case_result_and_corpus_digests() {
         "write-baseline failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    let value: serde_json::Value = serde_json::from_str(
-        &fs::read_to_string(&baseline).expect("baseline should be written"),
-    )
-    .expect("baseline should be JSON");
+    let value: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&baseline).expect("baseline should be written"))
+            .expect("baseline should be JSON");
     assert_eq!(value["schema"], "chirograph-benchmark-baseline-v1");
     assert_eq!(value["cases"].as_array().map(Vec::len), Some(1));
     assert_eq!(

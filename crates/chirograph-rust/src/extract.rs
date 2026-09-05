@@ -83,7 +83,14 @@ fn walk(
 
     if !malformed {
         if let Some(kind) = kind {
-            emit_fact(parsed, node, kind, explicit_name(parsed, node), container, facts);
+            emit_fact(
+                parsed,
+                node,
+                kind,
+                explicit_name(parsed, node),
+                container,
+                facts,
+            );
             if kind == RustFactKind::MacroCall && is_assertion_macro(parsed, node) {
                 emit_fact(
                     parsed,

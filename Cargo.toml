@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "crates/chirograph-acquisition",
     "crates/chirograph-benchmark",
     "crates/chirograph-cli",
     "crates/chirograph-core",

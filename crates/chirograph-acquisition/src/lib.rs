@@ -75,9 +75,18 @@ pub struct AcquisitionReport {
 #[derive(Debug)]
 pub enum AcquisitionError {
     InvalidRoot(PathBuf),
-    Io { path: String, source: std::io::Error },
-    AmbiguousAdapter { path: String, adapters: Vec<String> },
-    InvalidJson { path: String, source: serde_json::Error },
+    Io {
+        path: String,
+        source: std::io::Error,
+    },
+    AmbiguousAdapter {
+        path: String,
+        adapters: Vec<String>,
+    },
+    InvalidJson {
+        path: String,
+        source: serde_json::Error,
+    },
 }
 
 impl fmt::Display for AcquisitionError {
@@ -210,13 +219,9 @@ impl AcquisitionRuntime {
                         message: "no registered acquisition adapter".to_owned(),
                     },
                 ),
-                [adapter] => self.acquire_file(
-                    *adapter,
-                    root,
-                    &relative_path,
-                    context,
-                    &mut report,
-                )?,
+                [adapter] => {
+                    self.acquire_file(*adapter, root, &relative_path, context, &mut report)?
+                }
                 _ => {
                     return Err(AcquisitionError::AmbiguousAdapter {
                         path,
@@ -321,10 +326,11 @@ fn acquire_json(
     context: &AcquisitionContext,
     facts: &mut Vec<AcquiredFact>,
 ) -> Result<(), AcquisitionError> {
-    let value: Value = serde_json::from_slice(bytes).map_err(|source| AcquisitionError::InvalidJson {
-        path: path.to_owned(),
-        source,
-    })?;
+    let value: Value =
+        serde_json::from_slice(bytes).map_err(|source| AcquisitionError::InvalidJson {
+            path: path.to_owned(),
+            source,
+        })?;
     walk_json(&value, "", path, context, facts);
     Ok(())
 }
@@ -361,13 +367,7 @@ fn walk_json(
     match value {
         Value::Array(values) => {
             for (index, value) in values.iter().enumerate() {
-                walk_json(
-                    value,
-                    &format!("{pointer}/{index}"),
-                    path,
-                    context,
-                    facts,
-                );
+                walk_json(value, &format!("{pointer}/{index}"), path, context, facts);
             }
         }
         Value::Object(values) => {
@@ -388,7 +388,10 @@ fn walk_json(
     }
 }
 
-fn push_diagnostic(diagnostics: &mut Vec<AcquisitionDiagnostic>, diagnostic: AcquisitionDiagnostic) {
+fn push_diagnostic(
+    diagnostics: &mut Vec<AcquisitionDiagnostic>,
+    diagnostic: AcquisitionDiagnostic,
+) {
     if diagnostics.len() < MAX_DIAGNOSTICS {
         diagnostics.push(diagnostic);
     } else if diagnostics.len() == MAX_DIAGNOSTICS {

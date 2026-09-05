@@ -112,3 +112,25 @@ fn one_to_many_and_one_sided_paths_stay_unresolved() {
             .all(|decision| decision.state == AlignmentState::Unresolved)
     );
 }
+
+#[test]
+fn incompatible_exact_revisions_stay_unresolved() {
+    let rust = candidate(
+        RepresentationKind::SourceCode,
+        "fixture::DebugInfo",
+        &["profile", "debug-info"],
+        &["none", "full"],
+    );
+    let mut schema = candidate(
+        RepresentationKind::Schema,
+        "#/$defs/DebugInfo",
+        &["profile", "debug-info"],
+        &["none", "full"],
+    );
+    schema.evidence[0].revision =
+        Revision::Exact("1123456789abcdef0123456789abcdef01234567".into());
+
+    let decisions = align_candidates(&[rust, schema]).unwrap();
+    assert_eq!(decisions.len(), 1);
+    assert_eq!(decisions[0].state, AlignmentState::Unresolved);
+}

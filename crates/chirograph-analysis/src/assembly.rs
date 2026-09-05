@@ -10,14 +10,15 @@ use chirograph_core::model::{
 };
 
 use crate::{
-    AnalysisError, AnalysisSourceContext, CandidateEvidence, CandidateMechanism,
-    RepresentationCandidate, SemanticPath,
+    AlignmentDecision, AnalysisError, AnalysisSourceContext, CandidateEvidence, CandidateMechanism,
+    RepresentationCandidate, SemanticPath, align_candidates,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnalysisAssembly {
     pub graph: ContractGraph,
     pub alignments: AlignmentCatalog,
+    pub decisions: Vec<AlignmentDecision>,
 }
 
 pub fn assemble_contract_graph(
@@ -28,12 +29,70 @@ pub fn assemble_contract_graph(
         validate_candidate_provenance(context, candidate)?;
     }
 
+    let decisions = align_candidates(candidates)?;
     let mut ordered = candidates.to_vec();
     ordered.sort_by(compare_candidates);
 
-    let mut evidence = ordered
+    let mut grouped = BTreeMap::<SemanticPath, Vec<usize>>::new();
+    for (index, candidate) in ordered.iter().enumerate() {
+        grouped
+            .entry(candidate.semantic_path.clone())
+            .or_default()
+            .push(index);
+    }
+
+    let mut promotions = Vec::<(SemanticPath, usize, usize)>::new();
+    for decision in &decisions {
+        if decision.state != AlignmentState::Confirmed {
+            continue;
+        }
+        let indexes = grouped
+            .get(&decision.semantic_path)
+            .expect("alignment decisions derive from candidate groups");
+        let source_index = indexes
+            .iter()
+            .copied()
+            .find(|index| ordered[*index].kind == RepresentationKind::SourceCode)
+            .expect("confirmed alignment has one source-code candidate");
+        let schema_index = indexes
+            .iter()
+            .copied()
+            .find(|index| ordered[*index].kind == RepresentationKind::Schema)
+            .expect("confirmed alignment has one schema candidate");
+        let source_candidate = &ordered[source_index];
+        let schema_candidate = &ordered[schema_index];
+        if !eligible_source_drift(source_candidate) || !eligible_schema_drift(schema_candidate) {
+            continue;
+        }
+        let (Some(source_values), Some(schema_values)) = (
+            source_candidate.closed_values.as_ref(),
+            schema_candidate.closed_values.as_ref(),
+        ) else {
+            continue;
+        };
+        if source_values == schema_values {
+            continue;
+        }
+        promotions.push((decision.semantic_path.clone(), source_index, schema_index));
+    }
+
+    if promotions.is_empty() {
+        return Ok(AnalysisAssembly {
+            graph: ContractGraph::default(),
+            alignments: AlignmentCatalog::default(),
+            decisions,
+        });
+    }
+
+    let mut evidence = promotions
         .iter()
-        .flat_map(|candidate| candidate.evidence.iter().cloned())
+        .flat_map(|(_, source_index, schema_index)| {
+            ordered[*source_index]
+                .evidence
+                .iter()
+                .chain(&ordered[*schema_index].evidence)
+                .cloned()
+        })
         .collect::<Vec<_>>();
     evidence.sort_by(compare_evidence);
     evidence.dedup();
@@ -50,14 +109,6 @@ pub fn assemble_contract_graph(
         })
         .collect::<Vec<_>>();
 
-    let mut grouped = BTreeMap::<SemanticPath, Vec<usize>>::new();
-    for (index, candidate) in ordered.iter().enumerate() {
-        grouped
-            .entry(candidate.semantic_path.clone())
-            .or_default()
-            .push(index);
-    }
-
     let mut graph = ContractGraph {
         sources: vec![Source {
             id: context.source.clone(),
@@ -67,45 +118,11 @@ pub fn assemble_contract_graph(
         observations,
         ..ContractGraph::default()
     };
-    let mut promoted = BTreeMap::<usize, (ContractId, RepresentationId)>::new();
+    let mut alignments = AlignmentCatalog::default();
 
-    for (path, indexes) in &grouped {
-        if indexes.len() != 2 {
-            continue;
-        }
-        let source_indexes = indexes
-            .iter()
-            .copied()
-            .filter(|index| ordered[*index].kind == RepresentationKind::SourceCode)
-            .collect::<Vec<_>>();
-        let schema_indexes = indexes
-            .iter()
-            .copied()
-            .filter(|index| ordered[*index].kind == RepresentationKind::Schema)
-            .collect::<Vec<_>>();
-        if source_indexes.len() != 1 || schema_indexes.len() != 1 {
-            continue;
-        }
-
-        let source_index = source_indexes[0];
-        let schema_index = schema_indexes[0];
+    for (path, source_index, schema_index) in promotions {
         let source_candidate = &ordered[source_index];
         let schema_candidate = &ordered[schema_index];
-        if !eligible_source_candidate(source_candidate)
-            || !eligible_schema_candidate(schema_candidate)
-        {
-            continue;
-        }
-        let (Some(source_values), Some(schema_values)) = (
-            source_candidate.closed_values.as_ref(),
-            schema_candidate.closed_values.as_ref(),
-        ) else {
-            continue;
-        };
-        if source_values == schema_values {
-            continue;
-        }
-
         let contract_id = ContractId::new(format!("{}.{}", context.namespace, path.dotted()))
             .map_err(|error| AnalysisError::Graph(format!("invalid contract id: {error:?}")))?;
         let implementation_id =
@@ -138,8 +155,25 @@ pub fn assemble_contract_graph(
             locator: schema_candidate.locator.clone(),
             facets: vec![ContractFacet::Structural],
         });
-        promoted.insert(source_index, (contract_id.clone(), implementation_id));
-        promoted.insert(schema_index, (contract_id, schema_id));
+
+        for (candidate, representation_id) in [
+            (source_candidate, implementation_id),
+            (schema_candidate, schema_id),
+        ] {
+            alignments.representations.push(ObservedRepresentation {
+                id: representation_id.clone(),
+                source: context.source.clone(),
+                kind: candidate.kind,
+                locator: candidate.locator.clone(),
+            });
+            alignments.claims.push(AlignmentClaim {
+                representation: representation_id,
+                contract: contract_id.clone(),
+                facet: ContractFacet::Structural,
+                state: AlignmentState::Confirmed,
+                evidence: candidate_observation_ids(&context.namespace, candidate, &evidence),
+            });
+        }
     }
 
     graph
@@ -148,30 +182,6 @@ pub fn assemble_contract_graph(
     graph
         .representations
         .sort_by(|left, right| left.id.cmp(&right.id));
-
-    let mut alignments = AlignmentCatalog::default();
-    for (index, candidate) in ordered.iter().enumerate() {
-        let representation_id = promoted
-            .get(&index)
-            .map(|(_, representation)| representation.clone())
-            .unwrap_or_else(|| observed_representation_id(&context.namespace, index));
-        alignments.representations.push(ObservedRepresentation {
-            id: representation_id.clone(),
-            source: context.source.clone(),
-            kind: candidate.kind,
-            locator: candidate.locator.clone(),
-        });
-
-        if let Some((contract, _)) = promoted.get(&index) {
-            alignments.claims.push(AlignmentClaim {
-                representation: representation_id,
-                contract: contract.clone(),
-                facet: ContractFacet::Structural,
-                state: AlignmentState::Confirmed,
-                evidence: candidate_observation_ids(&context.namespace, candidate, &evidence),
-            });
-        }
-    }
     alignments
         .representations
         .sort_by(|left, right| left.id.cmp(&right.id));
@@ -191,7 +201,11 @@ pub fn assemble_contract_graph(
         .validate_against(&graph)
         .map_err(|error| AnalysisError::InvalidAlignment(format!("{error:?}")))?;
 
-    Ok(AnalysisAssembly { graph, alignments })
+    Ok(AnalysisAssembly {
+        graph,
+        alignments,
+        decisions,
+    })
 }
 
 fn validate_candidate_provenance(
@@ -211,27 +225,16 @@ fn validate_candidate_provenance(
     Ok(())
 }
 
-fn eligible_source_candidate(candidate: &RepresentationCandidate) -> bool {
-    candidate.facets.contains(&ContractFacet::Structural)
-        && candidate
-            .mechanisms
-            .contains(&CandidateMechanism::RustSerializedField)
-        && candidate
-            .mechanisms
-            .contains(&CandidateMechanism::RustTypeReference)
-        && candidate
-            .mechanisms
-            .contains(&CandidateMechanism::RustClosedValueSet)
+fn eligible_source_drift(candidate: &RepresentationCandidate) -> bool {
+    candidate
+        .mechanisms
+        .contains(&CandidateMechanism::RustClosedValueSet)
 }
 
-fn eligible_schema_candidate(candidate: &RepresentationCandidate) -> bool {
-    candidate.facets.contains(&ContractFacet::Structural)
-        && candidate
-            .mechanisms
-            .contains(&CandidateMechanism::JsonSchemaProperty)
-        && candidate
-            .mechanisms
-            .contains(&CandidateMechanism::JsonSchemaClosedValueSet)
+fn eligible_schema_drift(candidate: &RepresentationCandidate) -> bool {
+    candidate
+        .mechanisms
+        .contains(&CandidateMechanism::JsonSchemaClosedValueSet)
 }
 
 fn candidate_observation_ids(
@@ -255,11 +258,6 @@ fn candidate_observation_ids(
 fn observation_id(namespace: &str, index: usize) -> ObservationId {
     ObservationId::new(format!("{namespace}.observation.{:04}", index + 1))
         .expect("validated namespace and ordinal form a valid observation id")
-}
-
-fn observed_representation_id(namespace: &str, index: usize) -> RepresentationId {
-    RepresentationId::new(format!("{namespace}.observed.{:04}", index + 1))
-        .expect("validated namespace and ordinal form a valid representation id")
 }
 
 fn compare_candidates(left: &RepresentationCandidate, right: &RepresentationCandidate) -> Ordering {

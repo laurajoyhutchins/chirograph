@@ -165,7 +165,12 @@ fn ambiguous_or_unrelated_candidates_remain_unpromoted() {
     assert!(assembly.graph.contracts.is_empty());
     assert!(assembly.alignments.claims.is_empty());
     assert_eq!(assembly.decisions.len(), 2);
-    assert!(assembly.decisions.iter().all(|decision| decision.state == AlignmentState::Unresolved));
+    assert!(
+        assembly
+            .decisions
+            .iter()
+            .all(|decision| decision.state == AlignmentState::Unresolved)
+    );
 }
 
 #[test]

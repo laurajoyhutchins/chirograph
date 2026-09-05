@@ -15,7 +15,12 @@ fn context() -> AnalysisSourceContext {
     .unwrap()
 }
 
-fn candidate(kind: RepresentationKind, identity: &str, path: &[&str], values: &[&str]) -> RepresentationCandidate {
+fn candidate(
+    kind: RepresentationKind,
+    identity: &str,
+    path: &[&str],
+    values: &[&str],
+) -> RepresentationCandidate {
     let context = context();
     let mechanisms = match kind {
         RepresentationKind::SourceCode => BTreeSet::from([
@@ -101,5 +106,9 @@ fn one_to_many_and_one_sided_paths_stay_unresolved() {
 
     let decisions = align_candidates(&[source_a, source_b, schema, schema_only]).unwrap();
     assert_eq!(decisions.len(), 2);
-    assert!(decisions.iter().all(|decision| decision.state == AlignmentState::Unresolved));
+    assert!(
+        decisions
+            .iter()
+            .all(|decision| decision.state == AlignmentState::Unresolved)
+    );
 }

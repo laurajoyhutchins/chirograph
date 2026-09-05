@@ -45,16 +45,17 @@ enum DebugInfo {
 #[test]
 fn analyze_tree_discovers_extracts_aligns_and_assembles() {
     let root = fixture_tree("pipeline");
-    let context = AnalysisSourceContext::github(
-        "acme/fixture-project",
-        Revision::Exact(REVISION.into()),
-    )
-    .unwrap();
+    let context =
+        AnalysisSourceContext::github("acme/fixture-project", Revision::Exact(REVISION.into()))
+            .unwrap();
 
     let graph = analyze_tree(&root, &context).unwrap();
     fs::remove_dir_all(&root).unwrap();
 
     graph.validate().unwrap();
     assert_eq!(graph.contracts.len(), 1);
-    assert_eq!(graph.contracts[0].id.as_str(), "fixture-project.profile.debug-info");
+    assert_eq!(
+        graph.contracts[0].id.as_str(),
+        "fixture-project.profile.debug-info"
+    );
 }

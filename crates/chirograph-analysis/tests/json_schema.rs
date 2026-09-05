@@ -76,6 +76,36 @@ fn omits_open_properties_from_first_slice() {
 }
 
 #[test]
+fn unsupported_branch_shapes_do_not_abort_unrelated_defensible_candidates() {
+    let schema = br##"{
+        "type": "object",
+        "properties": {
+            "ambiguous": {
+                "anyOf": [
+                    { "type": "string" },
+                    { "type": "integer" }
+                ]
+            },
+            "mixed-enum": {
+                "enum": ["one", 2]
+            },
+            "profile": {
+                "type": "object",
+                "properties": {
+                    "debug-info": {
+                        "enum": ["none", "full"]
+                    }
+                }
+            }
+        }
+    }"##;
+
+    let candidates = extract_json_schema_candidates(&context(), "schema.json", schema).unwrap();
+    assert_eq!(candidates.len(), 1);
+    assert_eq!(candidates[0].semantic_path.dotted(), "profile.debug-info");
+}
+
+#[test]
 fn broken_local_reference_fails_closed() {
     let schema = br##"{
         "type": "object",

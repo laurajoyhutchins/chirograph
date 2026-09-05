@@ -1,0 +1,14 @@
+schema: chirograph-benchmark-specimen-v1
+id: cargo/schema-enum-drift/toml-debug-info-spellings
+repository: cargo
+scenario: schema-enum-drift
+upstream:
+  repository: rust-lang/cargo
+  revision: 2ceefa0090080354b80cc2f5415039bdb0d2bf0b
+files:
+  - fixture_path: fixture/crates/cargo-util-schemas/src/manifest/mod.rs
+    upstream_path: crates/cargo-util-schemas/src/manifest/mod.rs
+    sha256: fc503d6532663f2b0f3217b53f235b6c24690e9c85116f1364ec134ca78cd92c
+  - fixture_path: fixture/crates/cargo-util-schemas/manifest.schema.json
+    upstream_path: crates/cargo-util-schemas/manifest.schema.json
+    sha256: a8f038d7ef99e69810c5cafd17d340b9aa42f7c9dd01e9ff70fb4205fec2f21e

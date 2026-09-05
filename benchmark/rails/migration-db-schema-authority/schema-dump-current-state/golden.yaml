@@ -1,0 +1,47 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: rails.database.schema-current-state
+    facets: [structural, semantic]
+representations:
+  - id: rails.database.live-schema
+    contract: rails.database.schema-current-state
+    kind: executable-surface
+    locator: runtime:database-schema
+    facets: [structural, semantic]
+  - id: rails.schema-dump
+    contract: rails.database.schema-current-state
+    kind: generated-artifact
+    locator: db/schema.rb-or-structure.sql
+    facets: [structural]
+  - id: rails.migrations
+    contract: rails.database.schema-current-state
+    kind: source-code
+    locator: db/migrate/*
+    facets: [semantic]
+  - id: rails.schema-dumper
+    contract: rails.database.schema-current-state
+    kind: source-code
+    locator: activerecord/lib/active_record/schema_dumper.rb::ActiveRecord::SchemaDumper
+    facets: [structural]
+authority_claims:
+  - contract: rails.database.schema-current-state
+    facet: structural
+    representation: rails.database.live-schema
+    basis: observed-behavior
+relationships:
+  - from: {kind: representation, id: rails.database.live-schema}
+    kind: projects
+    to: {kind: representation, id: rails.schema-dump}
+  - from: {kind: representation, id: rails.schema-dumper}
+    kind: generates
+    to: {kind: representation, id: rails.schema-dump}
+clauses: []
+lifecycle:
+  - subject: {kind: representation, id: rails.database.live-schema}
+    status: active
+  - subject: {kind: representation, id: rails.schema-dump}
+    status: generated
+  - subject: {kind: representation, id: rails.migrations}
+    status: historical
+expected_findings: []
+non_contracts: []

@@ -1,0 +1,36 @@
+schema: chirograph-benchmark-golden-v1
+contracts:
+  - id: arrow.schema.field
+    facets: [structural, semantic]
+representations:
+  - id: arrow.schema.field.flatbuffers
+    contract: arrow.schema.field
+    kind: schema
+    locator: format/Schema.fbs::Field
+    facets: [structural, semantic]
+  - id: arrow.schema.field.cpp
+    contract: arrow.schema.field
+    kind: type-definition
+    locator: cpp/src/arrow/type.h::arrow::Field
+    facets: [structural, semantic]
+  - id: arrow.schema.field.python
+    contract: arrow.schema.field
+    kind: type-definition
+    locator: python/pyarrow/includes/libarrow.pxd::CField
+    facets: [structural]
+authority_claims:
+  - contract: arrow.schema.field
+    facet: structural
+    representation: arrow.schema.field.flatbuffers
+    basis: explicit-declaration
+relationships:
+  - from: {kind: representation, id: arrow.schema.field.cpp}
+    kind: implements
+    to: {kind: contract, id: arrow.schema.field}
+  - from: {kind: representation, id: arrow.schema.field.python}
+    kind: implements
+    to: {kind: contract, id: arrow.schema.field}
+clauses: []
+lifecycle: []
+expected_findings: []
+non_contracts: []

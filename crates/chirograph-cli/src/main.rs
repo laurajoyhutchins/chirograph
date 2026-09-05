@@ -8,13 +8,14 @@ use std::process::ExitCode;
 use chirograph_core::alignment::AlignmentState;
 use chirograph_core::alignment_interchange::parse_alignment_json;
 use chirograph_core::evidence::parse_evidence_json;
+use chirograph_core::graph_json::encode_graph_json;
 use chirograph_core::model::{
     AuthorityBasis, ClauseKind, ClauseStatus, ContractFacet, ContractGraph, ContractId,
     RepresentationId, Revision,
 };
 use chirograph_core::query::SemanticQuery;
 
-const HELP: &str = "Usage:\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph authority <evidence.json> <contract-id> <facet>\n  chirograph alignment <evidence.json> <alignments.json> <representation-id>\n  chirograph --version\n  chirograph --help\n";
+const HELP: &str = "Usage:\n  chirograph analyze <source-tree> --format graph-json\n  chirograph inspect <evidence.json>\n  chirograph contestations <evidence.json>\n  chirograph evidence <evidence.json> <contract-id>\n  chirograph authority <evidence.json> <contract-id> <facet>\n  chirograph alignment <evidence.json> <alignments.json> <representation-id>\n  chirograph --version\n  chirograph --help\n";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -36,6 +37,11 @@ fn run(args: Vec<String>) -> Result<String, String> {
         [arg] if arg == "--version" || arg == "-V" => {
             Ok(format!("chirograph {}\n", chirograph_core::version()))
         }
+        [command, path, flag, format]
+            if command == "analyze" && flag == "--format" && format == "graph-json" =>
+        {
+            analyze(Path::new(path))
+        }
         [command, path] if command == "inspect" => inspect(Path::new(path)),
         [command, path] if command == "contestations" => contestations(Path::new(path)),
         [command, path, contract] if command == "evidence" => evidence(Path::new(path), contract),
@@ -51,6 +57,21 @@ fn run(args: Vec<String>) -> Result<String, String> {
         }
         _ => Err(format!("invalid arguments\n\n{HELP}")),
     }
+}
+
+fn analyze(path: &Path) -> Result<String, String> {
+    if !path.is_dir() {
+        return Err(format!(
+            "source tree is not a readable directory: {}",
+            path.display()
+        ));
+    }
+
+    // Chirograph must not invent logical contracts from the existence of source files alone.
+    // General acquisition/alignment capabilities can populate this graph as they become part of
+    // the public analysis pipeline; until then the honest result is an empty semantic graph.
+    encode_graph_json(&ContractGraph::default())
+        .map_err(|error| format!("cannot encode analyzed contract graph: {error:?}"))
 }
 
 fn read_graph(path: &Path) -> Result<ContractGraph, String> {

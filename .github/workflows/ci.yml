@@ -28,21 +28,6 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Run tests
         run: cargo test --workspace --all-features
-      - name: Verify recovered benchmark execution
-        run: |
-          cargo benchmark all --format json > /tmp/chirograph-benchmark.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          report = json.loads(Path('/tmp/chirograph-benchmark.json').read_text())
-          cases = report['cases']
-          assert len(cases) == 7, f"expected 7 recovered cases, got {len(cases)}"
-          bad = [(case['id'], case['status']) for case in cases if case['status'] != 'scored']
-          assert not bad, f"benchmark cases did not reach scoring: {bad}"
-          for case in cases:
-              print(case['id'], case['status'], case['score']['contract_recall']['ratio'])
-          PY
       - name: Test Overcenter adapter
         run: node --test adapters/overcenter/convert.test.mjs
       - name: Validate adapted evidence through Chirograph

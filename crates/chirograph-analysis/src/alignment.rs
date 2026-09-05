@@ -146,10 +146,7 @@ fn eligible_schema_identity(candidate: &RepresentationCandidate) -> bool {
             .contains(&CandidateMechanism::JsonSchemaProperty)
 }
 
-fn compare_candidates(
-    left: &RepresentationCandidate,
-    right: &RepresentationCandidate,
-) -> Ordering {
+fn compare_candidates(left: &RepresentationCandidate, right: &RepresentationCandidate) -> Ordering {
     left.semantic_path
         .cmp(&right.semantic_path)
         .then_with(|| kind_rank(left.kind).cmp(&kind_rank(right.kind)))

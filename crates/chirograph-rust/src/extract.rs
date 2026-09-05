@@ -103,6 +103,27 @@ fn walk(
             }
         }
 
+        if node.kind() == "ordered_field_declaration_list" {
+            let mut cursor = node.walk();
+            for child in node.named_children(&mut cursor) {
+                if matches!(child.kind(), "attribute_item" | "visibility_modifier")
+                    || child.is_error()
+                    || child.is_missing()
+                    || child.has_error()
+                {
+                    continue;
+                }
+                emit_fact(
+                    parsed,
+                    child,
+                    RustFactKind::Field,
+                    None,
+                    container,
+                    facts,
+                );
+            }
+        }
+
         if let Some(type_node) = node.child_by_field_name("type")
             && !type_node.is_error()
             && !type_node.is_missing()
@@ -164,7 +185,7 @@ fn direct_kind(node: Node<'_>, in_impl: bool) -> Option<RustFactKind> {
         "impl_item" => Some(RustFactKind::Impl),
         "function_item" if in_impl => Some(RustFactKind::Method),
         "function_item" => Some(RustFactKind::Function),
-        "field_declaration" | "tuple_field_declaration" => Some(RustFactKind::Field),
+        "field_declaration" => Some(RustFactKind::Field),
         "const_item" => Some(RustFactKind::Const),
         "static_item" => Some(RustFactKind::Static),
         "attribute_item" => Some(RustFactKind::Attribute),

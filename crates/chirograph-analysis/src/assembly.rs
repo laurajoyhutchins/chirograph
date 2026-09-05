@@ -106,19 +106,16 @@ pub fn assemble_contract_graph(
             continue;
         }
 
-        let contract_id = ContractId::new(format!(
-            "{}.{}",
-            context.namespace,
-            path.dotted()
-        ))
-        .map_err(|error| AnalysisError::Graph(format!("invalid contract id: {error:?}")))?;
-        let implementation_id = RepresentationId::new(format!(
-            "{}.implementation",
-            contract_id.as_str()
-        ))
-        .map_err(|error| AnalysisError::Graph(format!("invalid representation id: {error:?}")))?;
-        let schema_id = RepresentationId::new(format!("{}.schema", contract_id.as_str()))
-            .map_err(|error| AnalysisError::Graph(format!("invalid representation id: {error:?}")))?;
+        let contract_id = ContractId::new(format!("{}.{}", context.namespace, path.dotted()))
+            .map_err(|error| AnalysisError::Graph(format!("invalid contract id: {error:?}")))?;
+        let implementation_id =
+            RepresentationId::new(format!("{}.implementation", contract_id.as_str())).map_err(
+                |error| AnalysisError::Graph(format!("invalid representation id: {error:?}")),
+            )?;
+        let schema_id =
+            RepresentationId::new(format!("{}.schema", contract_id.as_str())).map_err(|error| {
+                AnalysisError::Graph(format!("invalid representation id: {error:?}"))
+            })?;
 
         graph.contracts.push(Contract {
             id: contract_id.clone(),
@@ -145,8 +142,12 @@ pub fn assemble_contract_graph(
         promoted.insert(schema_index, (contract_id, schema_id));
     }
 
-    graph.contracts.sort_by(|left, right| left.id.cmp(&right.id));
-    graph.representations.sort_by(|left, right| left.id.cmp(&right.id));
+    graph
+        .contracts
+        .sort_by(|left, right| left.id.cmp(&right.id));
+    graph
+        .representations
+        .sort_by(|left, right| left.id.cmp(&right.id));
 
     let mut alignments = AlignmentCatalog::default();
     for (index, candidate) in ordered.iter().enumerate() {
@@ -197,9 +198,11 @@ fn validate_candidate_provenance(
     context: &AnalysisSourceContext,
     candidate: &RepresentationCandidate,
 ) -> Result<(), AnalysisError> {
-    if candidate.evidence.iter().any(|evidence| {
-        evidence.source != context.source || evidence.revision != context.revision
-    }) {
+    if candidate
+        .evidence
+        .iter()
+        .any(|evidence| evidence.source != context.source || evidence.revision != context.revision)
+    {
         return Err(AnalysisError::InvalidCandidate(format!(
             "candidate {} has evidence outside explicit analysis provenance",
             candidate.qualified_local_identity
@@ -259,14 +262,14 @@ fn observed_representation_id(namespace: &str, index: usize) -> RepresentationId
         .expect("validated namespace and ordinal form a valid representation id")
 }
 
-fn compare_candidates(
-    left: &RepresentationCandidate,
-    right: &RepresentationCandidate,
-) -> Ordering {
+fn compare_candidates(left: &RepresentationCandidate, right: &RepresentationCandidate) -> Ordering {
     left.semantic_path
         .cmp(&right.semantic_path)
         .then_with(|| kind_rank(left.kind).cmp(&kind_rank(right.kind)))
-        .then_with(|| left.qualified_local_identity.cmp(&right.qualified_local_identity))
+        .then_with(|| {
+            left.qualified_local_identity
+                .cmp(&right.qualified_local_identity)
+        })
         .then_with(|| left.locator.cmp(&right.locator))
         .then_with(|| left.facets.cmp(&right.facets))
         .then_with(|| left.closed_values.cmp(&right.closed_values))

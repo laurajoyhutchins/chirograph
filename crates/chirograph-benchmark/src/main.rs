@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use chirograph_benchmark::aggregate::aggregate_report;
 use chirograph_benchmark::baseline::{
-    build_baseline, compare_baseline, read_baseline, write_baseline,
+    build_baseline, compare_baseline, compare_baseline_complete, read_baseline, write_baseline,
 };
 use chirograph_benchmark::corpus::discover_corpus;
 use chirograph_benchmark::model::BenchmarkCase;
@@ -92,7 +92,11 @@ fn run_selection(options: RunOptions) -> Result<(), String> {
 
     let comparison = if let Some(path) = &options.baseline {
         let baseline = read_baseline(path)?;
-        Some(compare_baseline(&baseline, &selected, &results)?)
+        Some(if options.selector == "all" {
+            compare_baseline_complete(&baseline, &selected, &results)?
+        } else {
+            compare_baseline(&baseline, &selected, &results)?
+        })
     } else {
         None
     };

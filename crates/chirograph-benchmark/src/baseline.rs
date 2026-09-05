@@ -89,10 +89,27 @@ pub fn compare_baseline(
     cases: &[&BenchmarkCase],
     results: &[CaseResult],
 ) -> Result<BaselineComparison, String> {
+    let current = current_baseline_cases(cases, results)?;
+    compare_baseline_cases(baseline, &current)
+}
+
+pub fn compare_baseline_complete(
+    baseline: &BenchmarkBaselineV1,
+    cases: &[&BenchmarkCase],
+    results: &[CaseResult],
+) -> Result<BaselineComparison, String> {
+    let current = current_baseline_cases(cases, results)?;
+    compare_baseline_cases_complete(baseline, &current)
+}
+
+fn current_baseline_cases(
+    cases: &[&BenchmarkCase],
+    results: &[CaseResult],
+) -> Result<Vec<(CaseResult, BaselineDigests)>, String> {
     if cases.len() != results.len() {
         return Err("baseline cases and results must have equal length".to_owned());
     }
-    let current = cases
+    cases
         .iter()
         .zip(results)
         .map(|(case, result)| {
@@ -104,8 +121,7 @@ pub fn compare_baseline(
             }
             Ok((result.clone(), digests_for_case(case)?))
         })
-        .collect::<Result<Vec<_>, String>>()?;
-    compare_baseline_cases(baseline, &current)
+        .collect()
 }
 
 pub fn compare_baseline_cases(
@@ -146,6 +162,30 @@ pub fn compare_baseline_cases(
 
     comparison.regressions.sort();
     comparison.improvements.sort();
+    Ok(comparison)
+}
+
+pub fn compare_baseline_cases_complete(
+    baseline: &BenchmarkBaselineV1,
+    current: &[(CaseResult, BaselineDigests)],
+) -> Result<BaselineComparison, String> {
+    let comparison = compare_baseline_cases(baseline, current)?;
+    let current_ids = current
+        .iter()
+        .map(|(result, _)| result.id.as_str())
+        .collect::<BTreeSet<_>>();
+    let stale = baseline
+        .cases
+        .iter()
+        .map(|case| case.id.as_str())
+        .filter(|id| !current_ids.contains(id))
+        .collect::<Vec<_>>();
+    if !stale.is_empty() {
+        return Err(format!(
+            "benchmark baseline contains cases absent from current benchmark corpus: {}",
+            stale.join(", ")
+        ));
+    }
     Ok(comparison)
 }
 
@@ -296,6 +336,9 @@ fn compare_higher(
         (Some(_), None) => comparison
             .regressions
             .push(format!("{case_id} {metric} became unavailable")),
+        (None, Some(now)) if now <= EPSILON => comparison
+            .regressions
+            .push(format!("{case_id} {metric} became observable at zero")),
         (None, Some(now)) => comparison
             .improvements
             .push(format!("{case_id} {metric} became observable at {now:.6}")),
@@ -320,6 +363,12 @@ fn compare_lower(
         (Some(_), None) => comparison
             .regressions
             .push(format!("{case_id} {metric} became unavailable")),
+        (None, Some(now)) if now > EPSILON => comparison
+            .regressions
+            .push(format!("{case_id} {metric} became observable at {now:.6}")),
+        (None, Some(_)) => comparison
+            .improvements
+            .push(format!("{case_id} {metric} became observable at zero")),
         _ => {}
     }
 }

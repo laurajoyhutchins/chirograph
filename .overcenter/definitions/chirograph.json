@@ -378,6 +378,18 @@
       }
     },
     {
+      "id": "plan-deterministic-analysis-pipeline",
+      "priority": 99,
+      "requires": [
+        "design-deterministic-analysis-pipeline"
+      ],
+      "executor": {
+        "kind": "agent",
+        "role": "architecture",
+        "skill": "Use the Superpowers writing-plans skill. Write and commit docs/superpowers/plans/2026-09-05-deterministic-analysis-pipeline.md only. Turn the approved deterministic analysis pipeline design into a comprehensive TDD implementation plan grounded in the exact current repository. Reuse, rather than duplicate, the existing 2026-09-03 Tree-sitter Rust/Cargo plan and existing Overcenter transitions for the shared Tree-sitter substrate and generic Rust adapter. Specify exact files, interfaces, tests, commands, dependency ordering, public CLI provenance inputs, benchmark runner changes, conservative representation candidate/alignment/graph assembly, generic structured schema observations, Cargo-first acceptance, anti-leakage tests, and full-corpus non-regression. Preserve the data-only benchmark, no golden-truth access, no specimen-specific production recognition, unresolved ambiguity, facet-scoped authority, exact provenance, deterministic/model-free scored path, and false-contract restraint. Do not implement production code. Self-review the plan against the approved design for completeness, scope, contradictions, placeholders, and benchmark leakage, then stop for execution approach selection."
+      }
+    },
+    {
       "id": "prove-cross-representation-drift",
       "priority": 40,
       "requires": [

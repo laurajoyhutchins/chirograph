@@ -25,7 +25,11 @@ pub fn discover_sources(root: &Path) -> Result<Vec<DiscoveredSource>, AnalysisEr
     Ok(found)
 }
 
-fn walk(root: &Path, directory: &Path, found: &mut Vec<DiscoveredSource>) -> Result<(), AnalysisError> {
+fn walk(
+    root: &Path,
+    directory: &Path,
+    found: &mut Vec<DiscoveredSource>,
+) -> Result<(), AnalysisError> {
     let mut entries = fs::read_dir(directory)?.collect::<Result<Vec<_>, _>>()?;
     entries.sort_by_key(|entry| entry.file_name());
 
@@ -52,7 +56,10 @@ fn walk(root: &Path, directory: &Path, found: &mut Vec<DiscoveredSource>) -> Res
                 .strip_prefix(root)
                 .map_err(|_| AnalysisError::InvalidSourceRoot(root.display().to_string()))?
                 .to_path_buf();
-            found.push(DiscoveredSource { relative_path, kind });
+            found.push(DiscoveredSource {
+                relative_path,
+                kind,
+            });
         }
     }
     Ok(())

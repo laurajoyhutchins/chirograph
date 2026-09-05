@@ -8,10 +8,8 @@ fn fixture_tree() -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("clock should be after the Unix epoch")
         .as_nanos();
-    let root = std::env::temp_dir().join(format!(
-        "chirograph-analyze-{}-{nonce}",
-        std::process::id()
-    ));
+    let root =
+        std::env::temp_dir().join(format!("chirograph-analyze-{}-{nonce}", std::process::id()));
     fs::create_dir_all(&root).expect("temporary source tree should be created");
     fs::write(
         root.join("example.rs"),
@@ -50,7 +48,10 @@ fn analyze_source_tree_emits_deterministic_canonical_graph_json() {
         "second analyze failed: {}",
         String::from_utf8_lossy(&second.stderr)
     );
-    assert_eq!(first.stdout, second.stdout, "analysis must be deterministic");
+    assert_eq!(
+        first.stdout, second.stdout,
+        "analysis must be deterministic"
+    );
 
     let stdout = String::from_utf8(first.stdout).expect("stdout should be UTF-8");
     assert!(

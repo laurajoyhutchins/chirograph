@@ -251,3 +251,85 @@ fn discovery_does_not_follow_symlinks_outside_the_root() {
         "acquisition must not read a symlink target outside the supplied root"
     );
 }
+
+#[test]
+fn default_runtime_acquires_go_source_with_exact_spans() {
+    let root = temp_root("go-runtime");
+    fs::write(
+        root.join("widget.go"),
+        r#"package widget
+
+// Widget carries a stable identifier.
+type Widget struct {
+    ID string `json:"id"`
+}
+
+func NewWidget(id string) Widget {
+    return Widget{ID: id}
+}
+
+func (w Widget) Valid() bool {
+    if w.ID == "" {
+        panic("missing id")
+    }
+    return true
+}
+
+func TestWidget(t *testing.T) {
+    candidate := Widget{ID: "x"}
+    if !candidate.Valid() {
+        t.Fatalf("expected valid widget")
+    }
+}
+"#,
+    )
+    .expect("Go fixture should be written");
+    let context = context();
+
+    let runtime = AcquisitionRuntime::default();
+    let capabilities = runtime.capabilities();
+    assert!(capabilities.iter().any(|capability| {
+        capability.adapter == "go"
+            && capability.family == AdapterFamily::TreeSitter
+            && capability.extensions == ["go"]
+    }));
+
+    let report = runtime
+        .acquire_tree(&root, &context)
+        .expect("Go acquisition should succeed");
+    fs::remove_dir_all(&root).expect("temporary acquisition root should be removed");
+
+    let go_facts = report
+        .facts
+        .iter()
+        .filter(|fact| fact.adapter == "go")
+        .collect::<Vec<_>>();
+    assert!(!go_facts.is_empty(), "Go source must be dispatched");
+    assert!(go_facts.iter().all(|fact| {
+        fact.source == context.source
+            && fact.revision == context.revision
+            && fact.path == "widget.go"
+            && fact.span.is_some()
+    }));
+    for kind in [
+        "package",
+        "type",
+        "struct",
+        "field",
+        "tag",
+        "method",
+        "receiver",
+        "function",
+        "call",
+        "if",
+        "panic",
+        "return",
+        "comment",
+        "assertion",
+    ] {
+        assert!(
+            go_facts.iter().any(|fact| fact.kind == kind),
+            "missing expected Go fact kind: {kind}"
+        );
+    }
+}

@@ -11,6 +11,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use chirograph_core::model::{Revision, SourceId};
+use chirograph_go::{GoFactKind, extract_go_facts};
 use chirograph_rust::{RustFactKind, extract_rust_facts};
 use chirograph_tree_sitter::{SourceProvenance, SourceSpan};
 use serde_json::Value;
@@ -241,6 +242,26 @@ impl SourceAdapter for JsonAdapter {
 }
 
 #[derive(Debug)]
+struct GoAdapter;
+
+impl SourceAdapter for GoAdapter {
+    fn capability(&self) -> AdapterCapability {
+        AdapterCapability {
+            adapter: "go".to_owned(),
+            family: AdapterFamily::TreeSitter,
+            extensions: vec!["go".to_owned()],
+        }
+    }
+
+    fn acquire(&self, input: AdapterInput<'_>) -> Result<Vec<AcquiredFact>, AdapterError> {
+        let mut facts = Vec::new();
+        acquire_go(input.bytes, input.path, input.context, &mut facts)
+            .map_err(|error| AdapterError::new(error.to_string()))?;
+        Ok(facts)
+    }
+}
+
+#[derive(Debug)]
 struct RustAdapter;
 
 impl SourceAdapter for RustAdapter {
@@ -267,8 +288,12 @@ pub struct AcquisitionRuntime {
 
 impl Default for AcquisitionRuntime {
     fn default() -> Self {
-        Self::with_adapters(vec![Box::new(JsonAdapter), Box::new(RustAdapter)])
-            .expect("built-in acquisition adapter identities must be unique")
+        Self::with_adapters(vec![
+            Box::new(GoAdapter),
+            Box::new(JsonAdapter),
+            Box::new(RustAdapter),
+        ])
+        .expect("built-in acquisition adapter identities must be unique")
     }
 }
 
@@ -450,6 +475,74 @@ fn discover(root: &Path, current: &Path, files: &mut Vec<PathBuf>) -> Result<(),
         }
     }
     Ok(())
+}
+
+fn acquire_go(
+    bytes: &[u8],
+    path: &str,
+    context: &AcquisitionContext,
+    facts: &mut Vec<AcquiredFact>,
+) -> Result<(), AcquisitionError> {
+    let provenance = SourceProvenance {
+        source: context.source.clone(),
+        revision: context.revision.clone(),
+        locator: path.to_owned(),
+        path: path.to_owned(),
+    };
+    let extraction =
+        extract_go_facts(bytes, provenance).map_err(|error| AcquisitionError::AdapterFailure {
+            adapter: "Go".to_owned(),
+            path: path.to_owned(),
+            message: error.to_string(),
+        })?;
+    if !extraction.diagnostics.is_empty() {
+        return Err(AcquisitionError::MalformedSyntax {
+            adapter: "Go".to_owned(),
+            path: path.to_owned(),
+            diagnostic_count: extraction.diagnostics.len(),
+        });
+    }
+
+    for fact in extraction.facts {
+        let span = fact.span;
+        facts.push(AcquiredFact {
+            adapter: "go".to_owned(),
+            kind: go_fact_kind(fact.kind).to_owned(),
+            path: fact.provenance.path,
+            locator: format!("{}#bytes={}-{}", path, span.start_byte, span.end_byte),
+            text: fact.text,
+            source: fact.provenance.source,
+            revision: fact.provenance.revision,
+            span: Some(span.into()),
+        });
+    }
+    Ok(())
+}
+
+const fn go_fact_kind(kind: GoFactKind) -> &'static str {
+    match kind {
+        GoFactKind::Package => "package",
+        GoFactKind::Type => "type",
+        GoFactKind::Struct => "struct",
+        GoFactKind::Interface => "interface",
+        GoFactKind::Field => "field",
+        GoFactKind::Tag => "tag",
+        GoFactKind::Const => "const",
+        GoFactKind::Var => "var",
+        GoFactKind::Function => "function",
+        GoFactKind::Method => "method",
+        GoFactKind::Receiver => "receiver",
+        GoFactKind::Parameter => "parameter",
+        GoFactKind::TypeExpression => "type_expression",
+        GoFactKind::Call => "call",
+        GoFactKind::If => "if",
+        GoFactKind::Switch => "switch",
+        GoFactKind::For => "for",
+        GoFactKind::Return => "return",
+        GoFactKind::Panic => "panic",
+        GoFactKind::Comment => "comment",
+        GoFactKind::Assertion => "assertion",
+    }
 }
 
 fn acquire_rust(

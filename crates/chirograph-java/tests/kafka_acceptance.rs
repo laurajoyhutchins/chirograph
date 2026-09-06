@@ -5,7 +5,8 @@ use chirograph_java::{JavaFactKind, extract_java_facts};
 use chirograph_tree_sitter::SourceProvenance;
 
 const KAFKA_REVISION: &str = "b57cf6e56eb59a952db7236b4da67cc2fdbb8cdf";
-const UPSTREAM_PATH: &str = "clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java";
+const UPSTREAM_PATH: &str =
+    "clients/src/main/java/org/apache/kafka/common/requests/ProduceRequest.java";
 
 #[test]
 fn acquires_pinned_kafka_produce_request_without_repository_specific_logic() {
@@ -14,7 +15,8 @@ fn acquires_pinned_kafka_produce_request_without_repository_specific_logic() {
     );
     let source = fs::read(&fixture).expect("pinned Kafka Java fixture should be readable");
     let provenance = SourceProvenance {
-        source: SourceId::new("github:apache/kafka").expect("Kafka source identity should be valid"),
+        source: SourceId::new("github:apache/kafka")
+            .expect("Kafka source identity should be valid"),
         revision: Revision::Exact(KAFKA_REVISION.to_owned()),
         locator: UPSTREAM_PATH.to_owned(),
         path: UPSTREAM_PATH.to_owned(),
@@ -57,7 +59,8 @@ fn acquires_pinned_kafka_produce_request_without_repository_specific_logic() {
         );
     }
 
-    let source_text = std::str::from_utf8(&source).expect("Kafka fixture should be UTF-8 Java source");
+    let source_text =
+        std::str::from_utf8(&source).expect("Kafka fixture should be UTF-8 Java source");
     assert!(extraction.facts.iter().all(|fact| {
         fact.provenance.source.as_str() == "github:apache/kafka"
             && fact.provenance.revision == Revision::Exact(KAFKA_REVISION.to_owned())

@@ -15,7 +15,8 @@ fn acquire_pinned(
     revision: &str,
     upstream_path: &str,
 ) -> chirograph_go::GoExtraction {
-    let bytes = fs::read(repository_root().join(fixture_path)).expect("pinned fixture should exist");
+    let bytes =
+        fs::read(repository_root().join(fixture_path)).expect("pinned fixture should exist");
     let provenance = SourceProvenance {
         source: SourceId::new(source).expect("source id should be valid"),
         revision: Revision::Exact(revision.to_owned()),

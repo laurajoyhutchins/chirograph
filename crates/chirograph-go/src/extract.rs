@@ -150,8 +150,11 @@ fn emit_derived_facts(
 
     if matches!(
         node.kind(),
-        "field_declaration" | "parameter_declaration" | "variadic_parameter_declaration"
-            | "const_spec" | "var_spec"
+        "field_declaration"
+            | "parameter_declaration"
+            | "variadic_parameter_declaration"
+            | "const_spec"
+            | "var_spec"
     ) && let Some(type_node) = clean_field(node, "type")
     {
         emit_fact(
@@ -188,7 +191,14 @@ fn emit_derived_facts(
             .map(|function| parsed.text(function))
             .unwrap_or_default();
         if function == "panic" {
-            emit_fact(parsed, node, GoFactKind::Panic, Some("panic".to_owned()), container, facts);
+            emit_fact(
+                parsed,
+                node,
+                GoFactKind::Panic,
+                Some("panic".to_owned()),
+                container,
+                facts,
+            );
         }
         if is_assertion_call(parsed, node) {
             emit_fact(
@@ -241,7 +251,7 @@ fn emit_fact(
     });
 }
 
-fn clean_field(node: Node<'_>, field: &str) -> Option<Node<'_>> {
+fn clean_field<'tree>(node: Node<'tree>, field: &str) -> Option<Node<'tree>> {
     node.child_by_field_name(field)
         .filter(|child| !child.is_error() && !child.is_missing() && !child.has_error())
 }
@@ -288,9 +298,9 @@ fn container_segment(
     kind: Option<GoFactKind>,
 ) -> Option<String> {
     match kind {
-        Some(
-            GoFactKind::Type | GoFactKind::Function | GoFactKind::Method,
-        ) => explicit_name(parsed, node),
+        Some(GoFactKind::Type | GoFactKind::Function | GoFactKind::Method) => {
+            explicit_name(parsed, node)
+        }
         _ => None,
     }
 }

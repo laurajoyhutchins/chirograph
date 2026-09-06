@@ -86,9 +86,7 @@ fn emit_node_facts(parsed: &ParsedSource, node: Node<'_>, facts: &mut Vec<JavaFa
             Some(JavaFactKind::Parameter)
         }
         "annotation" | "marker_annotation" => Some(JavaFactKind::Annotation),
-        "annotation_argument_list" | "element_value_pair" => {
-            Some(JavaFactKind::AnnotationArgument)
-        }
+        "annotation_argument_list" | "element_value_pair" => Some(JavaFactKind::AnnotationArgument),
         "method_invocation" | "object_creation_expression" => Some(JavaFactKind::Call),
         "if_statement" => Some(JavaFactKind::If),
         "switch_expression" => Some(JavaFactKind::Switch),

@@ -54,8 +54,8 @@ func TestWidget(t *testing.T) {
 
 #[test]
 fn extracts_generic_go_source_facts_with_exact_provenance() {
-    let extraction = extract_go_facts(SOURCE.as_bytes(), provenance())
-        .expect("generic Go source should parse");
+    let extraction =
+        extract_go_facts(SOURCE.as_bytes(), provenance()).expect("generic Go source should parse");
 
     assert!(extraction.diagnostics.is_empty());
     for kind in [

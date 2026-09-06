@@ -333,3 +333,108 @@ func TestWidget(t *testing.T) {
         );
     }
 }
+
+#[test]
+fn default_runtime_acquires_java_source_with_exact_spans() {
+    let root = temp_root("java-runtime");
+    fs::write(
+        root.join("Widget.java"),
+        r#"package example.contract;
+
+/** Widget carries a stable identifier. */
+@Deprecated
+public final class Widget {
+    public static final String KIND = "widget";
+    private final String value;
+
+    public Widget(String value) {
+        this.value = value;
+    }
+
+    public String value() {
+        if (value == null) {
+            throw new IllegalStateException("missing value");
+        }
+        return value;
+    }
+
+    public void verify() {
+        assert value != null;
+        Assertions.assertNotNull(value);
+    }
+}
+"#,
+    )
+    .expect("Java fixture should be written");
+    let context = context();
+
+    let runtime = AcquisitionRuntime::default();
+    let capabilities = runtime.capabilities();
+    assert!(capabilities.iter().any(|capability| {
+        capability.adapter == "java"
+            && capability.family == AdapterFamily::TreeSitter
+            && capability.extensions == ["java"]
+    }));
+
+    let report = runtime
+        .acquire_tree(&root, &context)
+        .expect("Java acquisition should succeed");
+    fs::remove_dir_all(&root).expect("temporary acquisition root should be removed");
+
+    let java_facts = report
+        .facts
+        .iter()
+        .filter(|fact| fact.adapter == "java")
+        .collect::<Vec<_>>();
+    assert!(!java_facts.is_empty(), "Java source must be dispatched");
+    assert!(java_facts.iter().all(|fact| {
+        fact.source == context.source
+            && fact.revision == context.revision
+            && fact.path == "Widget.java"
+            && fact.span.is_some()
+    }));
+    for kind in [
+        "package",
+        "class",
+        "field",
+        "constant",
+        "literal",
+        "signature",
+        "method",
+        "constructor",
+        "parameter",
+        "annotation",
+        "call",
+        "if",
+        "return",
+        "throw",
+        "comment",
+        "assertion",
+    ] {
+        assert!(
+            java_facts.iter().any(|fact| fact.kind == kind),
+            "missing expected Java runtime fact kind: {kind}"
+        );
+    }
+}
+
+#[test]
+fn default_runtime_rejects_malformed_java_source() {
+    let root = temp_root("java-malformed");
+    fs::write(root.join("Broken.java"), "class Broken { void f( {")
+        .expect("malformed Java fixture should be written");
+
+    let error = AcquisitionRuntime::default()
+        .acquire_tree(&root, &context())
+        .expect_err("malformed Java must fail closed");
+    fs::remove_dir_all(&root).expect("temporary acquisition root should be removed");
+
+    assert!(matches!(
+        error,
+        AcquisitionError::MalformedSyntax {
+            ref adapter,
+            ref path,
+            diagnostic_count,
+        } if adapter == "java" && path == "Broken.java" && diagnostic_count > 0
+    ));
+}

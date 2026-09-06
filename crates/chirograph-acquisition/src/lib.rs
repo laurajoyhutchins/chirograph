@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 
 use chirograph_core::model::{Revision, SourceId};
 use chirograph_go::{GoFactKind, extract_go_facts};
+use chirograph_java::{JavaFactKind, extract_java_facts};
 use chirograph_rust::{RustFactKind, extract_rust_facts};
 use chirograph_tree_sitter::{SourceProvenance, SourceSpan};
 use serde_json::Value;
@@ -47,6 +48,7 @@ pub struct AdapterCapability {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AdapterError {
     message: String,
+    diagnostic_count: Option<usize>,
 }
 
 impl AdapterError {
@@ -54,6 +56,14 @@ impl AdapterError {
     pub fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
+            diagnostic_count: None,
+        }
+    }
+
+    fn malformed_syntax(diagnostic_count: usize) -> Self {
+        Self {
+            message: format!("parser reported {diagnostic_count} syntax diagnostics"),
+            diagnostic_count: Some(diagnostic_count),
         }
     }
 }
@@ -262,6 +272,25 @@ impl SourceAdapter for GoAdapter {
 }
 
 #[derive(Debug)]
+struct JavaAdapter;
+
+impl SourceAdapter for JavaAdapter {
+    fn capability(&self) -> AdapterCapability {
+        AdapterCapability {
+            adapter: "java".to_owned(),
+            family: AdapterFamily::TreeSitter,
+            extensions: vec!["java".to_owned()],
+        }
+    }
+
+    fn acquire(&self, input: AdapterInput<'_>) -> Result<Vec<AcquiredFact>, AdapterError> {
+        let mut facts = Vec::new();
+        acquire_java(input.bytes, input.path, input.context, &mut facts)?;
+        Ok(facts)
+    }
+}
+
+#[derive(Debug)]
 struct RustAdapter;
 
 impl SourceAdapter for RustAdapter {
@@ -290,6 +319,7 @@ impl Default for AcquisitionRuntime {
     fn default() -> Self {
         Self::with_adapters(vec![
             Box::new(GoAdapter),
+            Box::new(JavaAdapter),
             Box::new(JsonAdapter),
             Box::new(RustAdapter),
         ])
@@ -424,10 +454,17 @@ impl AcquisitionRuntime {
                 path: &path,
                 context,
             })
-            .map_err(|error| AcquisitionError::AdapterFailure {
-                adapter: capability.adapter,
-                path: path.clone(),
-                message: error.to_string(),
+            .map_err(|error| match error.diagnostic_count {
+                Some(diagnostic_count) => AcquisitionError::MalformedSyntax {
+                    adapter: capability.adapter.clone(),
+                    path: path.clone(),
+                    diagnostic_count,
+                },
+                None => AcquisitionError::AdapterFailure {
+                    adapter: capability.adapter,
+                    path: path.clone(),
+                    message: error.to_string(),
+                },
             })?;
         report.facts.extend(facts);
         Ok(())
@@ -542,6 +579,71 @@ const fn go_fact_kind(kind: GoFactKind) -> &'static str {
         GoFactKind::Panic => "panic",
         GoFactKind::Comment => "comment",
         GoFactKind::Assertion => "assertion",
+    }
+}
+
+fn acquire_java(
+    bytes: &[u8],
+    path: &str,
+    context: &AcquisitionContext,
+    facts: &mut Vec<AcquiredFact>,
+) -> Result<(), AdapterError> {
+    let provenance = SourceProvenance {
+        source: context.source.clone(),
+        revision: context.revision.clone(),
+        locator: path.to_owned(),
+        path: path.to_owned(),
+    };
+    let extraction = extract_java_facts(bytes, provenance)
+        .map_err(|error| AdapterError::new(error.to_string()))?;
+    if !extraction.diagnostics.is_empty() {
+        return Err(AdapterError::malformed_syntax(extraction.diagnostics.len()));
+    }
+
+    for fact in extraction.facts {
+        let span = fact.span;
+        facts.push(AcquiredFact {
+            adapter: "java".to_owned(),
+            kind: java_fact_kind(fact.kind).to_owned(),
+            path: fact.provenance.path,
+            locator: format!("{}#bytes={}-{}", path, span.start_byte, span.end_byte),
+            text: fact.text,
+            source: fact.provenance.source,
+            revision: fact.provenance.revision,
+            span: Some(span.into()),
+        });
+    }
+    Ok(())
+}
+
+const fn java_fact_kind(kind: JavaFactKind) -> &'static str {
+    match kind {
+        JavaFactKind::Package => "package",
+        JavaFactKind::Import => "import",
+        JavaFactKind::Class => "class",
+        JavaFactKind::Interface => "interface",
+        JavaFactKind::Enum => "enum",
+        JavaFactKind::EnumConstant => "enum_constant",
+        JavaFactKind::Record => "record",
+        JavaFactKind::AnnotationDeclaration => "annotation_declaration",
+        JavaFactKind::Field => "field",
+        JavaFactKind::Constant => "constant",
+        JavaFactKind::Literal => "literal",
+        JavaFactKind::TypeParameter => "type_parameter",
+        JavaFactKind::TypeExpression => "type_expression",
+        JavaFactKind::Signature => "signature",
+        JavaFactKind::Method => "method",
+        JavaFactKind::Constructor => "constructor",
+        JavaFactKind::Parameter => "parameter",
+        JavaFactKind::Annotation => "annotation",
+        JavaFactKind::AnnotationArgument => "annotation_argument",
+        JavaFactKind::Call => "call",
+        JavaFactKind::If => "if",
+        JavaFactKind::Switch => "switch",
+        JavaFactKind::Return => "return",
+        JavaFactKind::Throw => "throw",
+        JavaFactKind::Comment => "comment",
+        JavaFactKind::Assertion => "assertion",
     }
 }
 

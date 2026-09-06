@@ -261,19 +261,24 @@ fn default_runtime_acquires_go_source_with_exact_spans() {
 
 // Widget carries a stable identifier.
 type Widget struct {
-    ID string `json:\"id\"`
+    ID string `json:"id"`
+}
+
+func NewWidget(id string) Widget {
+    return Widget{ID: id}
 }
 
 func (w Widget) Valid() bool {
-    if w.ID == \"\" {
-        panic(\"missing id\")
+    if w.ID == "" {
+        panic("missing id")
     }
     return true
 }
 
 func TestWidget(t *testing.T) {
-    if !Widget{ID: \"x\"}.Valid() {
-        t.Fatalf(\"expected valid widget\")
+    candidate := Widget{ID: "x"}
+    if !candidate.Valid() {
+        t.Fatalf("expected valid widget")
     }
 }
 "#,

@@ -74,7 +74,10 @@ fn analyze_with_explicit_context_emits_deterministic_canonical_graph_json() {
         "second analyze failed: {}",
         String::from_utf8_lossy(&second.stderr)
     );
-    assert_eq!(first.stdout, second.stdout, "analysis must be deterministic");
+    assert_eq!(
+        first.stdout, second.stdout,
+        "analysis must be deterministic"
+    );
 
     let stdout = String::from_utf8(first.stdout).expect("stdout should be UTF-8");
     assert!(

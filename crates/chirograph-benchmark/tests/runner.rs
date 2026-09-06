@@ -114,7 +114,7 @@ fn classifies_public_process_boundary_fail_closed() {
     let valid = executable(
         &root,
         &format!(
-            "test \"$#\" -eq 4\ntest \"$1\" = analyze\ntest \"$2\" = \"{fixture}\"\ntest \"$3\" = --format\ntest \"$4\" = graph-json\ncat <<'JSON'\n{valid_graph}\nJSON"
+            "test \"$#\" -eq 8\ntest \"$1\" = analyze\ntest \"$2\" = \"{fixture}\"\ntest \"$3\" = --source-repository\ntest \"$4\" = owner/repo\ntest \"$5\" = --revision\ntest \"$6\" = 0123456789abcdef0123456789abcdef01234567\ntest \"$7\" = --format\ntest \"$8\" = graph-json\ncat <<'JSON'\n{valid_graph}\nJSON"
         ),
     );
     let result = run_case(&benchmark_case, &valid);

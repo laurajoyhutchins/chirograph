@@ -597,9 +597,7 @@ fn acquire_java(
     let extraction = extract_java_facts(bytes, provenance)
         .map_err(|error| AdapterError::new(error.to_string()))?;
     if !extraction.diagnostics.is_empty() {
-        return Err(AdapterError::malformed_syntax(
-            extraction.diagnostics.len(),
-        ));
+        return Err(AdapterError::malformed_syntax(extraction.diagnostics.len()));
     }
 
     for fact in extraction.facts {

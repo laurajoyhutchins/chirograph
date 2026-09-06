@@ -113,8 +113,10 @@ fn extracts_generic_java_source_facts_with_exact_provenance() {
 
 #[test]
 fn extraction_is_deterministic_for_identical_source_and_provenance() {
-    let first = extract_java_facts(SOURCE.as_bytes(), provenance()).expect("first parse should work");
-    let second = extract_java_facts(SOURCE.as_bytes(), provenance()).expect("second parse should work");
+    let first =
+        extract_java_facts(SOURCE.as_bytes(), provenance()).expect("first parse should work");
+    let second =
+        extract_java_facts(SOURCE.as_bytes(), provenance()).expect("second parse should work");
     assert_eq!(first, second);
 }
 

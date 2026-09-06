@@ -489,13 +489,12 @@ fn acquire_go(
         locator: path.to_owned(),
         path: path.to_owned(),
     };
-    let extraction = extract_go_facts(bytes, provenance).map_err(|error| {
-        AcquisitionError::AdapterFailure {
+    let extraction =
+        extract_go_facts(bytes, provenance).map_err(|error| AcquisitionError::AdapterFailure {
             adapter: "Go".to_owned(),
             path: path.to_owned(),
             message: error.to_string(),
-        }
-    })?;
+        })?;
     if !extraction.diagnostics.is_empty() {
         return Err(AcquisitionError::MalformedSyntax {
             adapter: "Go".to_owned(),

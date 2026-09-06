@@ -115,3 +115,23 @@ fn analyze_rejects_malformed_rust_source() {
         "expected explicit Rust parse diagnostic, got: {stderr}"
     );
 }
+
+#[test]
+fn analyze_rejects_malformed_go_source() {
+    let root = fixture_tree();
+    fs::write(root.join("broken.go"), "package broken\nfunc Broken(\n")
+        .expect("malformed Go fixture should be written");
+
+    let output = analyze(&root);
+    fs::remove_dir_all(&root).expect("temporary source tree should be removed");
+
+    assert!(
+        !output.status.success(),
+        "malformed Go source must fail closed"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("broken.go") && stderr.contains("Go"),
+        "expected explicit Go parse diagnostic, got: {stderr}"
+    );
+}

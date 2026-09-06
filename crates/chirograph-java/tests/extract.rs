@@ -108,6 +108,7 @@ fn extracts_generic_java_source_facts_with_exact_provenance() {
             && fact.provenance.path == "Widget.java"
             && fact.span.start_byte < fact.span.end_byte
             && fact.span.end_byte <= SOURCE.len()
+            && SOURCE.get(fact.span.start_byte..fact.span.end_byte) == Some(fact.text.as_str())
     }));
 }
 

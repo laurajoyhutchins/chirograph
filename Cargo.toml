@@ -4,6 +4,7 @@ members = [
     "crates/chirograph-benchmark",
     "crates/chirograph-cli",
     "crates/chirograph-core",
+    "crates/chirograph-go",
     "crates/chirograph-rust",
     "crates/chirograph-tree-sitter",
 ]
